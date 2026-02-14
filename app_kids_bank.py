@@ -4,10 +4,42 @@ import pandas as pd
 from datetime import datetime
 import time
 
-# --- 1. CONFIGURAÇÃO (Deve ser a primeira linha) ---
-st.set_page_config(page_title="RipariBank", page_icon="💰", layout="centered")
+# --- 1. CONFIGURAÇÃO VISUAL & CSS (Upgrade de Layout) ---
+st.set_page_config(page_title="RipariBank", page_icon="🏦", layout="centered")
 
-# --- 2. BANCO DE DADOS (CONEXÃO DIRETA) ---
+# CSS Customizado para Mobile-First e Estética Premium
+st.markdown("""
+<style>
+    /* Ajuste de padding para mobile ganhar espaço */
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 1rem;
+    }
+    /* Botões com largura total e bordas arredondadas (Melhor para toque) */
+    .stButton>button {
+        width: 100%;
+        border-radius: 12px;
+        height: 3em;
+        font-weight: bold;
+    }
+    /* Estilo para métricas */
+    div[data-testid="stMetric"] {
+        background-color: #f0f2f6;
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+    }
+    /* Dark mode support override (opcional, ajusta o fundo da metrica se estiver escuro) */
+    @media (prefers-color-scheme: dark) {
+        div[data-testid="stMetric"] {
+            background-color: #262730;
+            border: 1px solid #464b5f;
+        }
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# --- 2. BANCO DE DADOS (CONEXÃO DIRETA BLINDADA) ---
 DB_FILE = 'kids_bank.db'
 
 def run_query(query, params=(), commit=False):
@@ -28,14 +60,12 @@ def run_query(query, params=(), commit=False):
         conn.close()
 
 def init_db():
-    # Criação de tabelas
     run_query('''CREATE TABLE IF NOT EXISTS users 
                  (id INTEGER PRIMARY KEY, name TEXT, role TEXT, password TEXT)''', commit=True)
     run_query('''CREATE TABLE IF NOT EXISTS transactions 
                  (id INTEGER PRIMARY KEY, user_id INTEGER, amount REAL, 
                   description TEXT, timestamp TEXT, type TEXT)''', commit=True)
     
-    # Verifica admin inicial
     users = run_query("SELECT count(*) FROM users WHERE name = 'daniel.ripari'")
     if users and users[0][0] == 0:
         conn = sqlite3.connect(DB_FILE)
@@ -50,7 +80,6 @@ def init_db():
         conn.commit()
         conn.close()
 
-# Inicializa banco
 init_db()
 
 # --- 3. VARIÁVEIS DE SESSÃO ---
@@ -59,156 +88,184 @@ if 'logged_in' not in st.session_state:
 if 'user_name' not in st.session_state:
     st.session_state.user_name = ""
 
-# --- 4. TELA DE LOGIN ---
+# --- 4. TELA DE LOGIN (LAYOUT CENTRALIZADO) ---
 if not st.session_state.logged_in:
-    st.markdown("## 🔐 RipariBank - Acesso")
-    with st.form("login_form"):
-        user_input = st.text_input("Usuário").lower().strip()
-        pass_input = st.text_input("Senha", type="password")
-        
-        if st.form_submit_button("ENTRAR"):
-            res = run_query("SELECT * FROM users WHERE name=? AND password=?", (user_input, pass_input))
-            if res:
-                # Mapeia colunas pelo índice: 0=id, 1=name, 2=role
-                st.session_state.logged_in = True
-                st.session_state.user_id = res[0][0]
-                st.session_state.user_name = res[0][1]
-                st.session_state.role = res[0][2]
-                st.rerun()
-            else:
-                st.error("Acesso Negado.")
-
-# --- 5. SISTEMA PRINCIPAL (LOGADO) ---
-else:
-    # --- HEADER ---
-    c1, c2 = st.columns([3,1])
-    c1.markdown(f"### Olá, {st.session_state.user_name}")
-    if c2.button("SAIR"):
-        st.session_state.logged_in = False
-        st.rerun()
+    # Espaçamento para centralizar no Desktop
+    col1, col2, col3 = st.columns([1, 6, 1])
     
-    st.divider()
+    with col2:
+        st.markdown("<h1 style='text-align: center;'>🏦 RipariBank</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: gray;'>Gestão de Patrimônio Familiar</p>", unsafe_allow_html=True)
+        st.divider()
+        
+        with st.form("login_form"):
+            user_input = st.text_input("Usuário", placeholder="ex: daniel.ripari").lower().strip()
+            pass_input = st.text_input("Senha", type="password")
+            
+            # Espaço vertical
+            st.markdown("###")
+            if st.form_submit_button("ACESSAR CONTA"):
+                res = run_query("SELECT * FROM users WHERE name=? AND password=?", (user_input, pass_input))
+                if res:
+                    st.session_state.logged_in = True
+                    st.session_state.user_id = res[0][0]
+                    st.session_state.user_name = res[0][1]
+                    st.session_state.role = res[0][2]
+                    st.rerun()
+                else:
+                    st.error("Credenciais não conferem.")
+
+# --- 5. SISTEMA PRINCIPAL (LAYOUT RESPONSIVO) ---
+else:
+    # --- SIDEBAR (PERFIL) ---
+    with st.sidebar:
+        st.image("https://cdn-icons-png.flaticon.com/512/9322/9322127.png", width=80)
+        st.write(f"Olá, **{st.session_state.user_name.title()}**")
+        st.caption(f"Perfil: {st.session_state.role.upper()}")
+        st.divider()
+        if st.button("SAIR / LOGOUT", type="secondary"):
+            st.session_state.logged_in = False
+            st.rerun()
 
     # --- DASHBOARD (Comum a todos) ---
+    st.markdown(f"### 📊 Visão Geral")
+    
+    # Busca Saldo
     res_bal = run_query("SELECT SUM(amount) FROM transactions WHERE user_id=?", (st.session_state.user_id,))
     saldo = res_bal[0][0] if res_bal and res_bal[0][0] else 0.0
-    st.metric("Meu Saldo", f"R$ {saldo:.2f}")
+    
+    # Card de Saldo
+    st.metric("Saldo Disponível", f"R$ {saldo:,.2f}")
 
-    with st.expander("Ver Extrato"):
-        df_hist = pd.read_sql_query("SELECT timestamp as Data, description as Descrição, amount as Valor, type as Tipo FROM transactions WHERE user_id=? ORDER BY id DESC LIMIT 10", 
-                                    sqlite3.connect(DB_FILE), params=(st.session_state.user_id,))
-        st.dataframe(df_hist, hide_index=True, use_container_width=True)
+    # Gráfico e Extrato
+    tab_extrato, tab_grafico = st.tabs(["📜 Extrato Detalhado", "📈 Análise Visual"])
 
-    # --- ÁREA DE ADMINISTRAÇÃO (A Lógica "Imperativa") ---
+    with tab_extrato:
+        df_hist = pd.read_sql_query(
+            "SELECT timestamp, description, type, amount FROM transactions WHERE user_id=? ORDER BY id DESC LIMIT 15", 
+            sqlite3.connect(DB_FILE), params=(st.session_state.user_id,)
+        )
+        
+        if not df_hist.empty:
+            # Formatação Visual da Tabela
+            st.dataframe(
+                df_hist, 
+                use_container_width=True, 
+                hide_index=True,
+                column_config={
+                    "timestamp": st.column_config.DatetimeColumn("Data", format="DD/MM HH:mm"),
+                    "description": "Motivo",
+                    "type": "Tipo",
+                    "amount": st.column_config.NumberColumn("Valor", format="R$ %.2f")
+                }
+            )
+        else:
+            st.info("Nenhuma movimentação recente.")
+
+    with tab_grafico:
+        if not df_hist.empty:
+            # Gráfico Simples de Barras por Tipo
+            chart_data = df_hist.groupby("type")["amount"].sum().reset_index()
+            # Ajusta valores para serem todos positivos para visualização de volume
+            chart_data['amount'] = chart_data['amount'].abs()
+            st.bar_chart(chart_data, x="type", y="amount", color="type", use_container_width=True)
+        else:
+            st.caption("Sem dados para gráficos.")
+
+    # --- ÁREA DE ADMINISTRAÇÃO (Painel de Comando) ---
     if st.session_state.role == 'admin':
         st.markdown("---")
-        st.subheader("⚙️ Painel de Controle")
-
-        # Seletor de Modo (Radio Button é mais estável que Tabs)
-        modo = st.radio("Opção:", ["Lançamentos", "Gestão de Usuários"], horizontal=True)
-
-        # ---------------------------------------------------------
-        # MODO 1: LANÇAMENTOS FINANCEIROS
-        # ---------------------------------------------------------
-        if modo == "Lançamentos":
+        st.subheader("🛠️ Console Administrativo")
+        
+        # Expander para economizar espaço no mobile
+        with st.expander("💸 Realizar Lançamento (Crédito/Débito)", expanded=True):
             # Carrega usuários 'user' (filhos)
             filhos = pd.read_sql_query("SELECT id, name FROM users WHERE role='user'", sqlite3.connect(DB_FILE))
             
             if filhos.empty:
-                st.warning("Cadastre usuários do tipo 'user' primeiro.")
+                st.warning("Nenhum filho cadastrado.")
             else:
                 with st.form("form_lancamento"):
                     target_name = st.selectbox("Conta Destino:", filhos['name'].tolist())
+                    
                     c1, c2 = st.columns(2)
-                    val = c1.number_input("Valor R$", min_value=0.01, step=1.0)
-                    op = c2.radio("Operação", ["Crédito", "Débito"])
-                    desc = st.text_input("Motivo")
+                    with c1:
+                        # Passo 1.0 facilita digitar no celular
+                        val = st.number_input("Valor (R$)", min_value=0.00, step=1.0) 
+                    with c2:
+                        op = st.radio("Operação", ["Crédito", "Débito"])
                     
-                    # AÇÃO DIRETA NO SUBMIT
-                    if st.form_submit_button("CONFIRMAR LANÇAMENTO"):
-                        # Busca ID baseado no nome selecionado
-                        target_id = filhos[filhos['name'] == target_name]['id'].values[0]
-                        final_val = val if op == "Crédito" else -val
-                        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        
-                        run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (?, ?, ?, ?, ?)", 
-                                  (int(target_id), final_val, desc, ts, op), commit=True)
-                        
-                        st.success(f"Lançamento para {target_name} realizado!")
-                        time.sleep(1)
-                        st.rerun()
+                    desc = st.text_input("Motivo da transação")
+                    
+                    submitted = st.form_submit_button("CONFIRMAR TRANSAÇÃO")
+                    if submitted:
+                        if val > 0 and desc:
+                            target_id = filhos[filhos['name'] == target_name]['id'].values[0]
+                            final_val = val if op == "Crédito" else -val
+                            ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            
+                            run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (?, ?, ?, ?, ?)", 
+                                      (int(target_id), final_val, desc, ts, op), commit=True)
+                            
+                            st.success("✅ Sucesso!")
+                            time.sleep(0.5)
+                            st.rerun()
+                        else:
+                            st.error("Preencha valor e motivo.")
 
-        # ---------------------------------------------------------
-        # MODO 2: GESTÃO DE USUÁRIOS
-        # ---------------------------------------------------------
-        elif modo == "Gestão de Usuários":
-            c_add, c_edit = st.columns(2)
-
-            # --- CRIAR USUÁRIO ---
-            with c_add:
-                st.info("Novo Usuário")
+        with st.expander("👥 Gestão de Usuários (Configurações)"):
+            tab_add, tab_edit = st.tabs(["Novo Usuário", "Editar Existente"])
+            
+            with tab_add:
                 with st.form("form_add_user"):
-                    new_n = st.text_input("Nome (ex: joao)").lower().strip()
+                    st.caption("Cadastrar novo membro")
+                    new_n = st.text_input("Nome.Sobrenome").lower().strip()
                     new_r = st.selectbox("Perfil", ["user", "admin"])
-                    new_p = st.text_input("Senha")
+                    new_p = st.text_input("Senha Inicial")
                     
-                    if st.form_submit_button("CRIAR"):
+                    if st.form_submit_button("CRIAR MEMBRO"):
                         if new_n and new_p:
                             check = run_query("SELECT * FROM users WHERE name=?", (new_n,))
                             if check:
-                                st.error("Usuário já existe!")
+                                st.error("Usuário já existe.")
                             else:
                                 run_query("INSERT INTO users (name, role, password) VALUES (?, ?, ?)", 
                                           (new_n, new_r, new_p), commit=True)
-                                st.success(f"Usuário {new_n} criado!")
-                                time.sleep(1)
+                                st.success(f"Bem-vindo(a) {new_n}!")
+                                time.sleep(0.5)
                                 st.rerun()
-                        else:
-                            st.warning("Preencha todos os campos.")
 
-            # --- EDITAR / EXCLUIR ---
-            with c_edit:
-                st.warning("Gerenciar Existentes")
+            with tab_edit:
                 all_users = pd.read_sql_query("SELECT id, name FROM users ORDER BY name", sqlite3.connect(DB_FILE))
-                
-                # Selectbox fora do form para atualizar dinamicamente
-                target_user = st.selectbox("Selecione:", all_users['name'].unique())
-                # Pega o ID
+                target_user = st.selectbox("Editar quem?", all_users['name'].unique())
                 target_uid = all_users[all_users['name'] == target_user]['id'].values[0]
 
-                # FORMULÁRIO DE SENHA (ISOLADO)
+                # Formulário de Senha
                 with st.form("form_senha"):
-                    st.write(f"Alterar senha de **{target_user}**")
-                    new_pass = st.text_input("Nova Senha")
-                    if st.form_submit_button("ATUALIZAR SENHA"):
+                    new_pass = st.text_input(f"Nova Senha para {target_user}")
+                    if st.form_submit_button("SALVAR NOVA SENHA"):
                         if new_pass:
                             run_query("UPDATE users SET password=? WHERE id=?", (new_pass, int(target_uid)), commit=True)
-                            st.success("Senha alterada!")
-                            time.sleep(1)
+                            st.success("Senha atualizada.")
+                            time.sleep(0.5)
                             st.rerun()
+                
+                st.markdown("###")
+                # Botão de Exclusão Direta
+                col_del_check, col_del_btn = st.columns([2, 3])
+                with col_del_check:
+                    confirm = st.checkbox("Liberar Exclusão", key=f"del_{target_uid}")
+                with col_del_btn:
+                    if st.button("🗑️ EXCLUIR CONTA", type="primary", disabled=not confirm):
+                        if target_uid == st.session_state.user_id:
+                            st.error("Proibido auto-exclusão.")
                         else:
-                            st.error("Senha vazia.")
-
-                st.markdown("---")
-                
-                # BOTÃO DE EXCLUSÃO (FORA DE FORMULÁRIO PARA AÇÃO IMEDIATA)
-                st.write(f"Zona de Perigo: **{target_user}**")
-                # Checkbox de segurança
-                confirm = st.checkbox("Liberar Exclusão", key=f"del_{target_uid}")
-                
-                if st.button("EXCLUIR USUÁRIO", type="primary", disabled=not confirm):
-                    if target_uid == st.session_state.user_id:
-                        st.error("Você não pode excluir a si mesmo.")
-                    else:
-                        # 1. Apaga Transações
-                        run_query("DELETE FROM transactions WHERE user_id=?", (int(target_uid),), commit=True)
-                        # 2. Apaga Usuário
-                        run_query("DELETE FROM users WHERE id=?", (int(target_uid),), commit=True)
-                        
-                        st.success(f"Usuário {target_user} excluído.")
-                        time.sleep(1)
-                        st.rerun()
+                            run_query("DELETE FROM transactions WHERE user_id=?", (int(target_uid),), commit=True)
+                            run_query("DELETE FROM users WHERE id=?", (int(target_uid),), commit=True)
+                            st.success("Conta removida.")
+                            time.sleep(0.5)
+                            st.rerun()
 
 # --- FOOTER ---
 st.markdown("---")
-st.caption("© 2024 RipariBank | Versão Final e Completa")
+st.markdown("<p style='text-align: center; color: gray; font-size: 0.8em;'>© 2024 RipariBank | Technology by RipariTech</p>", unsafe_allow_html=True)
