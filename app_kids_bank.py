@@ -18,15 +18,13 @@ def get_connection():
 def init_db():
     conn = get_connection()
     c = conn.cursor()
-    # Tabela de Usuários
     c.execute('''CREATE TABLE IF NOT EXISTS users 
                  (id INTEGER PRIMARY KEY, name TEXT, role TEXT, password TEXT)''')
-    # Tabela de Transações
     c.execute('''CREATE TABLE IF NOT EXISTS transactions 
                  (id INTEGER PRIMARY KEY, user_id INTEGER, amount REAL, 
                   description TEXT, timestamp TEXT, type TEXT)''')
     
-    # Lógica de Migração/Inserção de Usuários Iniciais
+    # Verifica existência do admin principal
     c.execute("SELECT COUNT(*) FROM users WHERE name = 'daniel.ripari'")
     if c.fetchone()[0] == 0:
         initial_users = [
@@ -40,10 +38,10 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Inicializa o banco na primeira execução
+# Inicializa o banco
 init_db()
 
-# --- FUNÇÕES DE LÓGICA DE NEGÓCIO ---
+# --- FUNÇÕES DE NEGÓCIO ---
 def get_users_df():
     conn = get_connection()
     df = pd.read_sql("SELECT id, name, role FROM users", conn)
@@ -68,99 +66,113 @@ def add_transaction(user_id, amount, description, t_type):
     conn.commit()
     conn.close()
 
-# --- FUNÇÕES DE GESTÃO (CALLBACKS) ---
+# --- FUNÇÕES ADMIN (CORE) ---
+
+def create_user_logic(name, role, password):
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        # Verifica duplicidade
+        c.execute("SELECT count(*) FROM users WHERE name = ?", (name,))
+        if c.fetchone()[0] > 0:
+            return False, "Usuário já existe!"
+        
+        c.execute("INSERT INTO users (name, role, password) VALUES (?, ?, ?)", (name.lower().strip(), role, password))
+        conn.commit()
+        return True, "Usuário criado com sucesso!"
+    except Exception as e:
+        return False, str(e)
+    finally:
+        conn.close()
+
+def update_password_logic(user_id, new_password):
+    if not new_password:
+        return False, "A senha não pode ser vazia."
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        c.execute("UPDATE users SET password = ? WHERE id = ?", (new_password, user_id))
+        conn.commit()
+        return True, "Senha atualizada com sucesso!"
+    except Exception as e:
+        return False, str(e)
+    finally:
+        conn.close()
+
+# Callback de Exclusão (Mantido pois funciona bem para botões fora de form)
 def callback_delete_user(user_id_to_delete):
-    """Callback atômico para exclusão"""
     if user_id_to_delete == st.session_state.user_id:
-        st.session_state.feedback_msg = ("error", "Você não pode excluir a sua própria conta logada!")
+        st.session_state.feedback = ("error", "Você não pode se auto-excluir!")
         return
 
     conn = get_connection()
     c = conn.cursor()
     try:
-        # 1. Limpa transações
         c.execute("DELETE FROM transactions WHERE user_id = ?", (user_id_to_delete,))
-        # 2. Remove usuário
         c.execute("DELETE FROM users WHERE id = ?", (user_id_to_delete,))
         conn.commit()
-        st.session_state.feedback_msg = ("success", "Usuário e histórico removidos definitivamente.")
+        st.session_state.feedback = ("success", "Usuário deletado.")
     except Exception as e:
-        st.session_state.feedback_msg = ("error", f"Erro técnico: {str(e)}")
+        st.session_state.feedback = ("error", str(e))
     finally:
         conn.close()
-
-def create_user(name, role, password):
-    conn = get_connection()
-    c = conn.cursor()
-    try:
-        c.execute("INSERT INTO users (name, role, password) VALUES (?, ?, ?)", (name.lower().strip(), role, password))
-        conn.commit()
-        return True
-    except:
-        return False
-    finally:
-        conn.close()
-
-def update_password(user_id, new_password):
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute("UPDATE users SET password = ? WHERE id = ?", (new_password, user_id))
-    conn.commit()
-    conn.close()
-    return True
 
 # --- INTERFACE ---
 st.title("💰 RipariBank")
-st.subheader("Controle Financeiro Familiar")
 
-# Inicializa estado de feedback se não existir
-if 'feedback_msg' not in st.session_state:
-    st.session_state.feedback_msg = None
+# Gestão de Estado de Feedback
+if 'feedback' not in st.session_state:
+    st.session_state.feedback = None
 
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 
-# Exibe mensagens de feedback pendentes
-if st.session_state.feedback_msg:
-    tipo, msg = st.session_state.feedback_msg
+# Renderiza Feedback Global
+feedback_placeholder = st.empty()
+if st.session_state.feedback:
+    tipo, msg = st.session_state.feedback
     if tipo == 'success':
-        st.success(msg)
+        feedback_placeholder.success(msg)
     else:
-        st.error(msg)
-    st.session_state.feedback_msg = None
+        feedback_placeholder.error(msg)
+    st.session_state.feedback = None # Limpa após exibir
 
+# --- TELA DE LOGIN ---
 if not st.session_state.logged_in:
     with st.container():
-        st.write("### 🔐 Acesso ao Sistema")
-        user_input = st.text_input("Usuário", placeholder="ex: nome.sobrenome").lower().strip()
-        password = st.text_input("Senha", type="password")
-        
-        if st.button("Entrar", type="primary"):
-            conn = get_connection()
-            u_data = pd.read_sql(f"SELECT * FROM users WHERE name=? AND password=?", conn, params=(user_input, password))
-            conn.close()
+        st.write("### 🔐 Login")
+        with st.form("login_form"):
+            user_input = st.text_input("Usuário", placeholder="ex: daniel.ripari").lower().strip()
+            password = st.text_input("Senha", type="password")
+            submitted = st.form_submit_button("Entrar")
             
-            if not u_data.empty:
-                st.session_state.logged_in = True
-                st.session_state.user_id = u_data.iloc[0]['id']
-                st.session_state.user_name = u_data.iloc[0]['name']
-                st.session_state.role = u_data.iloc[0]['role']
-                st.rerun()
-            else:
-                st.error("Credenciais inválidas.")
+            if submitted:
+                conn = get_connection()
+                u_data = pd.read_sql(f"SELECT * FROM users WHERE name=? AND password=?", conn, params=(user_input, password))
+                conn.close()
+                
+                if not u_data.empty:
+                    st.session_state.logged_in = True
+                    st.session_state.user_id = u_data.iloc[0]['id']
+                    st.session_state.user_name = u_data.iloc[0]['name']
+                    st.session_state.role = u_data.iloc[0]['role']
+                    st.rerun()
+                else:
+                    st.error("Dados inválidos.")
+
+# --- TELA PRINCIPAL ---
 else:
-    # SIDEBAR
-    st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2830/2830284.png", width=80)
+    # Sidebar
     st.sidebar.write(f"Olá, **{st.session_state.user_name}**")
-    if st.sidebar.button("Terminar Sessão"):
+    if st.sidebar.button("Sair"):
         st.session_state.logged_in = False
         st.rerun()
 
-    # DASHBOARD GERAL (Visível para todos)
+    # Dashboard Geral
     balance = get_balance(st.session_state.user_id)
-    st.metric("Saldo Atual", f"R$ {balance:.2f}")
+    st.metric("Saldo", f"R$ {balance:.2f}")
 
-    st.write("#### 📜 Movimentações Recentes")
+    st.write("#### 📜 Extrato")
     conn = get_connection()
     history = pd.read_sql(f"SELECT timestamp as Data, type as Tipo, description as Motivo, amount as Valor FROM transactions WHERE user_id=? ORDER BY id DESC LIMIT 10", conn, params=(st.session_state.user_id,))
     conn.close()
@@ -168,98 +180,101 @@ else:
     if not history.empty:
         st.dataframe(history, use_container_width=True, hide_index=True)
     else:
-        st.info("Sem histórico disponível.")
+        st.caption("Sem histórico.")
 
-    # --- ADMIN PANEL ---
+    # --- ÁREA ADMIN ---
     if st.session_state.role == 'admin':
         st.markdown("---")
-        st.write("### ⚙️ Painel de Comando")
+        st.subheader("⚙️ Painel Admin")
         
-        # MUDANÇA CRÍTICA: Substituição de Tabs por Radio Button para estabilidade de estado
-        admin_mode = st.radio(
-            "Selecione a Operação:", 
-            ["💸 Lançamentos Financeiros", "👥 Gestão de Usuários"], 
-            horizontal=True
-        )
+        mode = st.radio("Opção:", ["💸 Lançamentos", "👥 Gestão de Usuários"], horizontal=True)
         
-        st.markdown("---")
-
-        if admin_mode == "💸 Lançamentos Financeiros":
+        # MODO 1: LANÇAMENTOS
+        if mode == "💸 Lançamentos":
             all_users = get_users_df()
             kids = all_users[all_users['role'] == 'user']
+            
             if not kids.empty:
-                target = st.selectbox("Filho(a):", kids['name'], key="sel_k_fin")
-                t_id = kids[kids['name'] == target]['id'].values[0]
+                # Selectbox fora do form para atualizar a UI se mudar o filho
+                target_name = st.selectbox("Selecione o Filho(a):", kids['name'])
+                target_id = kids[kids['name'] == target_name]['id'].values[0]
                 
-                with st.form("trans_form"):
+                # Form blinda a entrada de dados
+                with st.form("transaction_form"):
+                    st.write(f"Lançando para: **{target_name}**")
                     c1, c2 = st.columns(2)
                     with c1:
-                        v = st.number_input("Valor R$", min_value=0.0, step=1.0)
-                        o = st.radio("Operação", ["Crédito", "Débito"], horizontal=True)
+                        val = st.number_input("Valor R$", min_value=0.0, step=1.0)
+                        op = st.radio("Tipo", ["Crédito", "Débito"])
                     with c2:
-                        m = st.text_input("Motivo")
-                        if st.form_submit_button("Efetuar Lançamento", type="primary"):
-                            if v > 0 and m:
-                                add_transaction(t_id, v, m, o)
-                                st.success("Lançamento efetuado!")
-                                time.sleep(1)
-                                st.rerun()
-                            else:
-                                st.warning("Preencha valor e motivo.")
+                        desc = st.text_input("Motivo")
+                    
+                    if st.form_submit_button("Confirmar Lançamento"):
+                        if val > 0 and desc:
+                            add_transaction(target_id, val, desc, op)
+                            st.session_state.feedback = ("success", "Lançamento realizado!")
+                            st.rerun()
+                        else:
+                            st.warning("Preencha todos os campos.")
             else:
-                st.warning("Nenhum usuário 'filho' cadastrado.")
+                st.info("Cadastre filhos primeiro.")
 
-        elif admin_mode == "👥 Gestão de Usuários":
-            users_list = get_users_df()
+        # MODO 2: GESTÃO DE USUÁRIOS
+        elif mode == "👥 Gestão de Usuários":
+            users = get_users_df()
             
-            c_add, c_edit = st.columns(2)
+            col_a, col_b = st.columns(2)
             
-            # Coluna 1: Adicionar
-            with c_add:
-                st.info("➕ Novo Usuário")
-                with st.form("new_user_form"):
-                    n = st.text_input("Username (ex: nome.sobrenome)")
-                    r = st.selectbox("Perfil", ["user", "admin"])
-                    p = st.text_input("Senha Inicial", type="password")
-                    if st.form_submit_button("Criar"):
-                        if n and p:
-                            if create_user(n, r, p):
-                                st.success("Usuário Criado!")
-                                time.sleep(1)
+            # COLUNA A: CRIAR
+            with col_a:
+                st.info("Novo Usuário")
+                with st.form("create_user_form"):
+                    new_n = st.text_input("Nome (ex: joao.ripari)")
+                    new_r = st.selectbox("Perfil", ["user", "admin"])
+                    new_p = st.text_input("Senha")
+                    
+                    if st.form_submit_button("Criar Usuário"):
+                        if new_n and new_p:
+                            suc, msg = create_user_logic(new_n, new_r, new_p)
+                            if suc:
+                                st.session_state.feedback = ("success", msg)
                                 st.rerun()
                             else:
-                                st.error("Erro ao criar.")
+                                st.error(msg)
+                        else:
+                            st.warning("Preencha tudo.")
 
-            # Coluna 2: Editar / Excluir
-            with c_edit:
-                st.warning("🔧 Editar / Excluir")
-                if not users_list.empty:
-                    # Selectbox com chave fixa para evitar resets
-                    target_edit_name = st.selectbox("Selecionar Usuário:", users_list['name'].unique(), key="user_select_edit")
+            # COLUNA B: EDITAR / EXCLUIR
+            with col_b:
+                st.warning("Editar / Excluir")
+                if not users.empty:
+                    edit_name = st.selectbox("Selecione:", users['name'].unique())
+                    edit_id = users[users['name'] == edit_name]['id'].values[0]
                     
-                    # Recupera ID
-                    u_id_to_edit = users_list[users_list['name'] == target_edit_name]['id'].values[0]
-                    
-                    # Alterar Senha
-                    new_p = st.text_input("Nova Senha", type="password", key="new_pwd_input")
-                    if st.button("Atualizar Senha", key="btn_upd_pwd"):
-                        if new_p:
-                            update_password(u_id_to_edit, new_p)
-                            st.success("Senha atualizada!")
+                    # FORMULÁRIO DE SENHA (A solução do problema 2)
+                    # A chave do form inclui o ID para garantir unicidade
+                    with st.form(key=f"pwd_form_{edit_id}"):
+                        st.write(f"Alterar senha de **{edit_name}**")
+                        new_pwd_val = st.text_input("Nova Senha", type="password")
+                        if st.form_submit_button("Salvar Nova Senha"):
+                            suc, msg = update_password_logic(edit_id, new_pwd_val)
+                            if suc:
+                                st.session_state.feedback = ("success", msg)
+                                st.rerun()
+                            else:
+                                st.error(msg)
                     
                     st.divider()
-                    
-                    # Excluir com Callback (CRÍTICO)
-                    st.write(f"🗑️ Excluir **{target_edit_name}**?")
+                    st.write(f"Excluir **{edit_name}**?")
+                    # Botão de exclusão (Mantém on_click pois é atômico)
                     st.button(
                         "Confirmar Exclusão", 
-                        type="secondary",
+                        type="primary", 
+                        key=f"del_btn_{edit_id}",
                         on_click=callback_delete_user,
-                        args=(u_id_to_edit,)
+                        args=(edit_id,)
                     )
-                else:
-                    st.info("Lista vazia.")
 
 # --- FOOTER ---
 st.markdown("---")
-st.caption("© 2024 RipariBank | Engine v1.3 (Stable UI)")
+st.caption("© 2024 RipariBank | System v2.0 (Forms Secured)")
