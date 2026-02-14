@@ -21,10 +21,11 @@ def init_db():
                  (id INTEGER PRIMARY KEY, user_id INTEGER, amount REAL, 
                   description TEXT, timestamp TEXT, type TEXT)''')
     
-    # Inserir dados iniciais se vazio
-    c.execute("SELECT COUNT(*) FROM users")
+    # Lógica de Migração/Inserção de Usuários
+    # Verificamos se o usuário 'daniel.ripari' já existe para não duplicar nem ignorar a nova lista
+    c.execute("SELECT COUNT(*) FROM users WHERE name = 'daniel.ripari'")
     if c.fetchone()[0] == 0:
-        # Novas credenciais solicitadas por Daniel Ripari
+        # Se não existe, inserimos a nova estrutura oficial
         initial_users = [
             ('daniel.ripari', 'admin', '1234'),
             ('ligia.ripari', 'admin', '1234'),
@@ -32,6 +33,7 @@ def init_db():
             ('cecilia.ripari', 'user', 'kids2')
         ]
         c.executemany("INSERT INTO users (name, role, password) VALUES (?, ?, ?)", initial_users)
+    
     conn.commit()
     return conn
 
@@ -70,11 +72,12 @@ if 'logged_in' not in st.session_state:
 if not st.session_state.logged_in:
     with st.container():
         st.write("### 🔐 Acesso ao Sistema")
-        user_select = st.selectbox("Quem é você?", get_users()['name'])
+        # Campo de texto aberto para maior privacidade
+        user_input = st.text_input("Usuário", placeholder="ex: nome.sobrenome").lower().strip()
         password = st.text_input("Senha", type="password")
-        if st.button("Entrar"):
-            # Usando parâmetros para evitar SQL Injection (cortesia do Snape)
-            u_data = pd.read_sql(f"SELECT * FROM users WHERE name=? AND password=?", conn, params=(user_select, password))
+        
+        if st.button("Entrar", type="primary"):
+            u_data = pd.read_sql(f"SELECT * FROM users WHERE name=? AND password=?", conn, params=(user_input, password))
             if not u_data.empty:
                 st.session_state.logged_in = True
                 st.session_state.user_id = u_data.iloc[0]['id']
@@ -83,7 +86,7 @@ if not st.session_state.logged_in:
                 st.success(f"Bem-vindo(a), {st.session_state.user_name}!")
                 st.rerun()
             else:
-                st.error("Senha incorreta!")
+                st.error("Usuário ou senha incorretos. Verifique as credenciais.")
 else:
     # Sidebar de Logout e Info
     st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2830/2830284.png", width=100)
@@ -118,29 +121,31 @@ else:
         st.markdown("---")
         st.write("### 🛠️ Gestão de Saldos (Painel Administrativo)")
         
-        # Filtra apenas os filhos para o selectbox
         users_df = get_users()
         kids_only = users_df[users_df['role'] == 'user']
         
-        target_user = st.selectbox("Escolher conta do filho:", kids_only['name'])
-        target_id = kids_only[kids_only['name'] == target_user]['id'].values[0]
-        
-        with st.expander(f"Realizar Lançamento para {target_user}"):
-            c1, c2 = st.columns(2)
-            with c1:
-                val = st.number_input("Valor R$", min_value=0.0, step=1.0)
-                op = st.radio("Tipo de Lançamento", ["Crédito", "Débito"])
-            with c2:
-                motivo = st.text_input("Descrição", placeholder="Ex: Lavou a louça, Presente...")
-                confirmar = st.button("Executar Transação", type="primary")
+        if not kids_only.empty:
+            target_user = st.selectbox("Escolher conta do filho:", kids_only['name'])
+            target_id = kids_only[kids_only['name'] == target_user]['id'].values[0]
             
-            if confirmar:
-                if val > 0 and motivo:
-                    add_transaction(target_id, val, motivo, op)
-                    st.success(f"Sucesso! R$ {val} ({op}) registrado para {target_user}.")
-                    st.rerun()
-                else:
-                    st.warning("Preencha o valor e o motivo.")
+            with st.expander(f"Realizar Lançamento para {target_user}"):
+                c1, c2 = st.columns(2)
+                with c1:
+                    val = st.number_input("Valor R$", min_value=0.0, step=1.0)
+                    op = st.radio("Tipo de Lançamento", ["Crédito", "Débito"])
+                with c2:
+                    motivo = st.text_input("Descrição", placeholder="Ex: Lavou a louça, Presente...")
+                    confirmar = st.button("Executar Transação", type="primary")
+                
+                if confirmar:
+                    if val > 0 and motivo:
+                        add_transaction(target_id, val, motivo, op)
+                        st.success(f"Sucesso! R$ {val} ({op}) registrado para {target_user}.")
+                        st.rerun()
+                    else:
+                        st.warning("Preencha o valor e o motivo.")
+        else:
+            st.warning("Nenhum usuário do tipo 'filho' encontrado no sistema.")
 
 # --- FOOTER ---
 st.markdown("---")
