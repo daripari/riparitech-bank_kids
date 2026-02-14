@@ -21,11 +21,9 @@ def init_db():
                  (id INTEGER PRIMARY KEY, user_id INTEGER, amount REAL, 
                   description TEXT, timestamp TEXT, type TEXT)''')
     
-    # Lógica de Migração/Inserção de Usuários
-    # Verificamos se o usuário 'daniel.ripari' já existe para não duplicar nem ignorar a nova lista
+    # Lógica de Migração/Inserção de Usuários Iniciais
     c.execute("SELECT COUNT(*) FROM users WHERE name = 'daniel.ripari'")
     if c.fetchone()[0] == 0:
-        # Se não existe, inserimos a nova estrutura oficial
         initial_users = [
             ('daniel.ripari', 'admin', '1234'),
             ('ligia.ripari', 'admin', '1234'),
@@ -43,7 +41,7 @@ if 'conn' not in st.session_state:
 
 conn = st.session_state.conn
 
-# --- FUNÇÕES DE LÓGICA ---
+# --- FUNÇÕES DE LÓGICA DE NEGÓCIO ---
 def get_users():
     return pd.read_sql("SELECT id, name, role FROM users", conn)
 
@@ -61,18 +59,42 @@ def add_transaction(user_id, amount, description, t_type):
               (user_id, final_amount, description, timestamp, t_type))
     conn.commit()
 
+# --- FUNÇÕES DE GESTÃO DE USUÁRIOS (ADMIN ONLY) ---
+def create_user(name, role, password):
+    c = conn.cursor()
+    try:
+        c.execute("INSERT INTO users (name, role, password) VALUES (?, ?, ?)", (name.lower().strip(), role, password))
+        conn.commit()
+        return True
+    except Exception as e:
+        return False
+
+def delete_user(user_id):
+    c = conn.cursor()
+    # Impede deletar o usuário logado
+    if user_id == st.session_state.user_id:
+        return False, "Você não pode excluir a si próprio!"
+    c.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    c.execute("DELETE FROM transactions WHERE user_id = ?", (user_id,)) # Limpa histórico
+    conn.commit()
+    return True, "Usuário removido com sucesso."
+
+def update_password(user_id, new_password):
+    c = conn.cursor()
+    c.execute("UPDATE users SET password = ? WHERE id = ?", (new_password, user_id))
+    conn.commit()
+    return True
+
 # --- INTERFACE ---
 st.title("💰 RipariBank")
 st.subheader("Controle Financeiro Familiar")
 
-# Simulação de Login simples
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 
 if not st.session_state.logged_in:
     with st.container():
         st.write("### 🔐 Acesso ao Sistema")
-        # Campo de texto aberto para maior privacidade
         user_input = st.text_input("Usuário", placeholder="ex: nome.sobrenome").lower().strip()
         password = st.text_input("Senha", type="password")
         
@@ -86,10 +108,10 @@ if not st.session_state.logged_in:
                 st.success(f"Bem-vindo(a), {st.session_state.user_name}!")
                 st.rerun()
             else:
-                st.error("Usuário ou senha incorretos. Verifique as credenciais.")
+                st.error("Usuário ou senha incorretos.")
 else:
-    # Sidebar de Logout e Info
-    st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2830/2830284.png", width=100)
+    # SIDEBAR
+    st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2830/2830284.png", width=80)
     st.sidebar.write(f"Usuário: **{st.session_state.user_name}**")
     st.sidebar.write(f"Perfil: *{st.session_state.role.upper()}*")
     
@@ -97,56 +119,99 @@ else:
         st.session_state.logged_in = False
         st.rerun()
 
-    # --- DASHBOARD ---
+    # --- DASHBOARD DO USUÁRIO ---
     balance = get_balance(st.session_state.user_id)
-    
-    col_bal, col_info = st.columns([1, 1])
-    with col_bal:
-        st.metric("Saldo Disponível", f"R$ {balance:.2f}")
-    
-    with col_info:
-        st.info("Ensino financeiro para a próxima geração Ripari.")
+    st.metric("Saldo Disponível", f"R$ {balance:.2f}")
 
-    # --- HISTÓRICO ---
     st.write("#### 📜 Histórico de Lançamentos")
     history = pd.read_sql(f"SELECT timestamp as Data, type as Tipo, description as Motivo, amount as Valor FROM transactions WHERE user_id=? ORDER BY id DESC LIMIT 10", conn, params=(st.session_state.user_id,))
     
     if not history.empty:
         st.dataframe(history, use_container_width=True, hide_index=True)
     else:
-        st.write("Nenhum lançamento registrado nesta conta.")
+        st.info("Nenhum lançamento nesta conta.")
 
-    # --- VISÃO DOS PAIS (ADMIN) ---
+    # --- ÁREA ADMINISTRATIVA ---
     if st.session_state.role == 'admin':
         st.markdown("---")
-        st.write("### 🛠️ Gestão de Saldos (Painel Administrativo)")
+        st.write("### ⚙️ Painel de Administração")
         
-        users_df = get_users()
-        kids_only = users_df[users_df['role'] == 'user']
+        tab_finance, tab_users = st.tabs(["💰 Gestão Financeira", "👤 Gestão de Usuários"])
         
-        if not kids_only.empty:
-            target_user = st.selectbox("Escolher conta do filho:", kids_only['name'])
-            target_id = kids_only[kids_only['name'] == target_user]['id'].values[0]
+        # --- TAB: GESTÃO FINANCEIRA ---
+        with tab_finance:
+            users_df = get_users()
+            kids_only = users_df[users_df['role'] == 'user']
             
-            with st.expander(f"Realizar Lançamento para {target_user}"):
-                c1, c2 = st.columns(2)
-                with c1:
-                    val = st.number_input("Valor R$", min_value=0.0, step=1.0)
-                    op = st.radio("Tipo de Lançamento", ["Crédito", "Débito"])
-                with c2:
-                    motivo = st.text_input("Descrição", placeholder="Ex: Lavou a louça, Presente...")
-                    confirmar = st.button("Executar Transação", type="primary")
+            if not kids_only.empty:
+                target_user = st.selectbox("Escolher conta para lançar:", kids_only['name'])
+                target_id = kids_only[kids_only['name'] == target_user]['id'].values[0]
                 
-                if confirmar:
-                    if val > 0 and motivo:
-                        add_transaction(target_id, val, motivo, op)
-                        st.success(f"Sucesso! R$ {val} ({op}) registrado para {target_user}.")
-                        st.rerun()
-                    else:
-                        st.warning("Preencha o valor e o motivo.")
-        else:
-            st.warning("Nenhum usuário do tipo 'filho' encontrado no sistema.")
+                with st.expander(f"Lançamento Rápido: {target_user}"):
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        val = st.number_input("Valor R$", min_value=0.0, step=1.0, key="val_trans")
+                        op = st.radio("Tipo", ["Crédito", "Débito"], key="op_trans")
+                    with c2:
+                        motivo = st.text_input("Descrição", placeholder="Ex: Tarefas", key="motivo_trans")
+                        if st.button("Confirmar Lançamento", type="primary"):
+                            if val > 0 and motivo:
+                                add_transaction(target_id, val, motivo, op)
+                                st.success("Transação concluída!")
+                                st.rerun()
+            else:
+                st.warning("Nenhum usuário do tipo 'filho' cadastrado.")
+
+        # --- TAB: GESTÃO DE USUÁRIOS (NOVO MÓDULO) ---
+        with tab_users:
+            all_users = get_users()
+            st.write("#### Usuários Cadastrados")
+            st.dataframe(all_users[['name', 'role']], use_container_width=True, hide_index=True)
+            
+            col_add, col_edit = st.columns(2)
+            
+            # Incluir Usuário
+            with col_add:
+                with st.expander("➕ Incluir Novo Usuário"):
+                    new_name = st.text_input("Nome de Usuário (ex: joao.ripari)")
+                    new_role = st.selectbox("Perfil", ["user", "admin"])
+                    new_pwd = st.text_input("Senha Inicial", type="password")
+                    if st.button("Salvar Novo Usuário"):
+                        if new_name and new_pwd:
+                            if create_user(new_name, new_role, new_pwd):
+                                st.success("Usuário criado!")
+                                st.rerun()
+                            else:
+                                st.error("Erro ao criar usuário.")
+                        else:
+                            st.warning("Preencha todos os campos.")
+
+            # Alterar Senha / Excluir
+            with col_edit:
+                with st.expander("🔧 Alterar ou Excluir"):
+                    edit_user = st.selectbox("Selecionar Usuário", all_users['name'])
+                    edit_id = all_users[all_users['name'] == edit_user]['id'].values[0]
+                    
+                    new_pwd_edit = st.text_input("Nova Senha", type="password", key="new_pwd_edit")
+                    col_btn1, col_btn2 = st.columns(2)
+                    
+                    with col_btn1:
+                        if st.button("Alterar Senha"):
+                            if new_pwd_edit:
+                                update_password(edit_id, new_pwd_edit)
+                                st.success("Senha alterada!")
+                            else:
+                                st.warning("Digite a nova senha.")
+                    
+                    with col_btn2:
+                        if st.button("🗑️ Excluir Usuário", type="secondary"):
+                            success, msg = delete_user(edit_id)
+                            if success:
+                                st.success(msg)
+                                st.rerun()
+                            else:
+                                st.error(msg)
 
 # --- FOOTER ---
 st.markdown("---")
-st.caption("© 2024 RipariBank | Gestão Estratégica Familiar")
+st.caption("© 2024 RipariBank | Módulo de Governança Ativo")
