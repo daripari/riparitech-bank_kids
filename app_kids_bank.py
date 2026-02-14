@@ -5,10 +5,9 @@ from datetime import datetime
 import os
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="Ripari Bank Kids", page_icon="💰", layout="centered")
+st.set_page_config(page_title="RipariBank", page_icon="💰", layout="centered")
 
 # --- DATABASE SETUP ---
-# No Streamlit Cloud, o caminho precisa ser persistente enquanto o container estiver vivo
 DB_FILE = 'kids_bank.db'
 
 def init_db():
@@ -25,10 +24,14 @@ def init_db():
     # Inserir dados iniciais se vazio
     c.execute("SELECT COUNT(*) FROM users")
     if c.fetchone()[0] == 0:
-        # Nota do Snape: Em produção real, usaríamos Hash de senha.
-        c.execute("INSERT INTO users (name, role, password) VALUES (?, ?, ?)", ('Pai', 'admin', '1234'))
-        c.execute("INSERT INTO users (name, role, password) VALUES (?, ?, ?)", ('Filho 1', 'user', 'kids1'))
-        c.execute("INSERT INTO users (name, role, password) VALUES (?, ?, ?)", ('Filho 2', 'user', 'kids2'))
+        # Novas credenciais solicitadas por Daniel Ripari
+        initial_users = [
+            ('daniel.ripari', 'admin', '1234'),
+            ('ligia.ripari', 'admin', '1234'),
+            ('murilo.ripari', 'user', 'kids1'),
+            ('cecilia.ripari', 'user', 'kids2')
+        ]
+        c.executemany("INSERT INTO users (name, role, password) VALUES (?, ?, ?)", initial_users)
     conn.commit()
     return conn
 
@@ -57,8 +60,8 @@ def add_transaction(user_id, amount, description, t_type):
     conn.commit()
 
 # --- INTERFACE ---
-st.title("🧬 RipariTech: Sala de Comando Kids")
-st.subheader("Sistema de Gestão de Mesada")
+st.title("💰 RipariBank")
+st.subheader("Controle Financeiro Familiar")
 
 # Simulação de Login simples
 if 'logged_in' not in st.session_state:
@@ -70,13 +73,14 @@ if not st.session_state.logged_in:
         user_select = st.selectbox("Quem é você?", get_users()['name'])
         password = st.text_input("Senha", type="password")
         if st.button("Entrar"):
+            # Usando parâmetros para evitar SQL Injection (cortesia do Snape)
             u_data = pd.read_sql(f"SELECT * FROM users WHERE name=? AND password=?", conn, params=(user_select, password))
             if not u_data.empty:
                 st.session_state.logged_in = True
                 st.session_state.user_id = u_data.iloc[0]['id']
                 st.session_state.user_name = u_data.iloc[0]['name']
                 st.session_state.role = u_data.iloc[0]['role']
-                st.success(f"Bem-vindo, {st.session_state.user_name}!")
+                st.success(f"Bem-vindo(a), {st.session_state.user_name}!")
                 st.rerun()
             else:
                 st.error("Senha incorreta!")
@@ -98,17 +102,16 @@ else:
         st.metric("Saldo Disponível", f"R$ {balance:.2f}")
     
     with col_info:
-        st.info("O saldo é atualizado em tempo real pelos seus pais.")
+        st.info("Ensino financeiro para a próxima geração Ripari.")
 
     # --- HISTÓRICO ---
-    st.write("#### 📜 Histórico Recente")
+    st.write("#### 📜 Histórico de Lançamentos")
     history = pd.read_sql(f"SELECT timestamp as Data, type as Tipo, description as Motivo, amount as Valor FROM transactions WHERE user_id=? ORDER BY id DESC LIMIT 10", conn, params=(st.session_state.user_id,))
     
     if not history.empty:
-        # Estilização básica da tabela
         st.dataframe(history, use_container_width=True, hide_index=True)
     else:
-        st.write("Nenhuma movimentação encontrada.")
+        st.write("Nenhum lançamento registrado nesta conta.")
 
     # --- VISÃO DOS PAIS (ADMIN) ---
     if st.session_state.role == 'admin':
@@ -128,17 +131,17 @@ else:
                 val = st.number_input("Valor R$", min_value=0.0, step=1.0)
                 op = st.radio("Tipo de Lançamento", ["Crédito", "Débito"])
             with c2:
-                motivo = st.text_input("Descrição do Lançamento", placeholder="Ex: Tarefas de casa")
+                motivo = st.text_input("Descrição", placeholder="Ex: Lavou a louça, Presente...")
                 confirmar = st.button("Executar Transação", type="primary")
             
             if confirmar:
                 if val > 0 and motivo:
                     add_transaction(target_id, val, motivo, op)
-                    st.success("Transação concluída com sucesso!")
+                    st.success(f"Sucesso! R$ {val} ({op}) registrado para {target_user}.")
                     st.rerun()
                 else:
                     st.warning("Preencha o valor e o motivo.")
 
 # --- FOOTER ---
 st.markdown("---")
-st.caption("© 2024 RipariTech Family Banking | v1.1 Production-Ready")
+st.caption("© 2024 RipariBank | Gestão Estratégica Familiar")
