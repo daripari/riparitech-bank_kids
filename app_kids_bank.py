@@ -158,10 +158,16 @@ def init_db():
     run_query('''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT, role TEXT, password TEXT)''', commit=True)
     run_query('''CREATE TABLE IF NOT EXISTS transactions (id INTEGER PRIMARY KEY, user_id INTEGER, amount REAL, description TEXT, timestamp TEXT, type TEXT)''', commit=True)
     
-    if run_query("SELECT count(*) FROM users WHERE name = 'daniel.ripari'")[0][0] == 0:
+    # Seeding inicial (apenas se vazio)
+    if run_query("SELECT count(*) FROM users")[0][0] == 0:
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
-        users = [('daniel.ripari', 'admin', '1234'), ('ligia.ripari', 'admin', '1234'), ('murilo.ripari', 'user', 'kids1'), ('cecilia.ripari', 'user', 'kids2')]
+        users = [
+            ('danielripari', 'admin', '1234'), 
+            ('ligiaripari', 'admin', '1234'), 
+            ('muriloripari', 'user', 'kids1'), 
+            ('ceciliaripari', 'user', 'kids2')
+        ]
         c.executemany("INSERT INTO users (name, role, password) VALUES (?, ?, ?)", users)
         conn.commit()
         conn.close()
@@ -172,7 +178,7 @@ init_db()
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'user_name' not in st.session_state: st.session_state.user_name = ""
 
-# --- 4. LOGIN (DARK & BOLD) ---
+# --- 4. LOGIN (DARK & BOLD & CASE INSENSITIVE) ---
 if not st.session_state.logged_in:
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.markdown("""
@@ -184,11 +190,15 @@ if not st.session_state.logged_in:
     """, unsafe_allow_html=True)
 
     with st.form("login"):
-        u = st.text_input("USUÁRIO", placeholder="daniel.ripari").lower().strip()
-        p = st.text_input("SENHA", type="password")
+        # .lower() e .strip() garantem que "DanielRipari " vire "danielripari"
+        u = st.text_input("USUÁRIO", placeholder="danielripari").lower().strip()
+        # .strip() na senha previne espaço acidental do teclado mobile
+        p = st.text_input("SENHA", type="password").strip()
+        
         st.markdown("<br>", unsafe_allow_html=True)
         if st.form_submit_button("ACESSAR SISTEMA", type="primary"):
-            res = run_query("SELECT * FROM users WHERE name=? AND password=?", (u, p))
+            # Query reforçada com lower(name) para garantir match absoluto
+            res = run_query("SELECT * FROM users WHERE lower(name)=? AND password=?", (u, p))
             if res:
                 st.session_state.logged_in = True
                 st.session_state.user_id = res[0][0]
@@ -196,7 +206,7 @@ if not st.session_state.logged_in:
                 st.session_state.role = res[0][2]
                 st.rerun()
             else:
-                st.toast("Acesso negado", icon="🚫")
+                st.toast("Usuário ou senha incorretos", icon="🚫")
 
 # --- 5. DASHBOARD (COMPACTO) ---
 else:
@@ -283,8 +293,9 @@ else:
             tab_a, tab_b = st.tabs(["NOVO", "GERENCIAR"])
             with tab_a:
                 with st.form("new_u"):
+                    # Força lower e strip na criação também
                     n = st.text_input("Nome").lower().strip()
-                    p = st.text_input("Senha")
+                    p = st.text_input("Senha").strip()
                     r = st.selectbox("Role", ["user", "admin"])
                     if st.form_submit_button("Criar"):
                         if n and p and not run_query("SELECT * FROM users WHERE name=?", (n,)):
@@ -301,7 +312,7 @@ else:
                     
                     # Form senha
                     with st.form("pwd"):
-                        np = st.text_input("Nova Senha")
+                        np = st.text_input("Nova Senha").strip()
                         if st.form_submit_button("Salvar Senha"):
                             run_query("UPDATE users SET password=? WHERE id=?", (np, int(t_uid)), commit=True)
                             st.toast("Senha Salva")
