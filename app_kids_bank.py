@@ -69,8 +69,6 @@ def add_transaction(user_id, amount, description, t_type):
     conn.close()
 
 # --- FUNÇÕES DE GESTÃO (CALLBACKS) ---
-# Callbacks são executados ANTES do re-render da página
-
 def callback_delete_user(user_id_to_delete):
     """Callback atômico para exclusão"""
     if user_id_to_delete == st.session_state.user_id:
@@ -122,7 +120,7 @@ if 'feedback_msg' not in st.session_state:
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 
-# Exibe mensagens de feedback pendentes (ex: sucesso na exclusão)
+# Exibe mensagens de feedback pendentes
 if st.session_state.feedback_msg:
     tipo, msg = st.session_state.feedback_msg
     if tipo == 'success':
@@ -158,7 +156,7 @@ else:
         st.session_state.logged_in = False
         st.rerun()
 
-    # DASHBOARD
+    # DASHBOARD GERAL (Visível para todos)
     balance = get_balance(st.session_state.user_id)
     st.metric("Saldo Atual", f"R$ {balance:.2f}")
 
@@ -172,81 +170,96 @@ else:
     else:
         st.info("Sem histórico disponível.")
 
-    # ADMIN PANEL
+    # --- ADMIN PANEL ---
     if st.session_state.role == 'admin':
         st.markdown("---")
-        st.write("### ⚙️ Gestão Administrativa")
+        st.write("### ⚙️ Painel de Comando")
         
-        tab_fin, tab_adm = st.tabs(["💸 Lançamentos", "👥 Utilizadores"])
+        # MUDANÇA CRÍTICA: Substituição de Tabs por Radio Button para estabilidade de estado
+        admin_mode = st.radio(
+            "Selecione a Operação:", 
+            ["💸 Lançamentos Financeiros", "👥 Gestão de Usuários"], 
+            horizontal=True
+        )
         
-        with tab_fin:
+        st.markdown("---")
+
+        if admin_mode == "💸 Lançamentos Financeiros":
             all_users = get_users_df()
             kids = all_users[all_users['role'] == 'user']
             if not kids.empty:
-                target = st.selectbox("Filho(a):", kids['name'], key="sel_k")
+                target = st.selectbox("Filho(a):", kids['name'], key="sel_k_fin")
                 t_id = kids[kids['name'] == target]['id'].values[0]
                 
                 with st.form("trans_form"):
-                    v = st.number_input("Valor R$", min_value=0.0, step=1.0)
-                    m = st.text_input("Motivo")
-                    o = st.radio("Operação", ["Crédito", "Débito"], horizontal=True)
-                    if st.form_submit_button("Efetuar Lançamento"):
-                        if v > 0 and m:
-                            add_transaction(t_id, v, m, o)
-                            st.success("Lançamento efetuado!")
-                            time.sleep(1) # Pequena pausa
-                            st.rerun()
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        v = st.number_input("Valor R$", min_value=0.0, step=1.0)
+                        o = st.radio("Operação", ["Crédito", "Débito"], horizontal=True)
+                    with c2:
+                        m = st.text_input("Motivo")
+                        if st.form_submit_button("Efetuar Lançamento", type="primary"):
+                            if v > 0 and m:
+                                add_transaction(t_id, v, m, o)
+                                st.success("Lançamento efetuado!")
+                                time.sleep(1)
+                                st.rerun()
+                            else:
+                                st.warning("Preencha valor e motivo.")
             else:
-                st.warning("Nenhum usuário 'user' cadastrado.")
+                st.warning("Nenhum usuário 'filho' cadastrado.")
 
-        with tab_adm:
+        elif admin_mode == "👥 Gestão de Usuários":
             users_list = get_users_df()
-            st.dataframe(users_list[['name', 'role']], use_container_width=True, hide_index=True)
             
             c_add, c_edit = st.columns(2)
             
+            # Coluna 1: Adicionar
             with c_add:
-                with st.expander("Novo Utilizador"):
-                    n = st.text_input("Username")
+                st.info("➕ Novo Usuário")
+                with st.form("new_user_form"):
+                    n = st.text_input("Username (ex: nome.sobrenome)")
                     r = st.selectbox("Perfil", ["user", "admin"])
-                    p = st.text_input("Senha", type="password")
-                    if st.button("Adicionar"):
+                    p = st.text_input("Senha Inicial", type="password")
+                    if st.form_submit_button("Criar"):
                         if n and p:
                             if create_user(n, r, p):
-                                st.success("Criado!")
+                                st.success("Usuário Criado!")
                                 time.sleep(1)
                                 st.rerun()
-            
+                            else:
+                                st.error("Erro ao criar.")
+
+            # Coluna 2: Editar / Excluir
             with c_edit:
-                with st.expander("Editar / Remover"):
-                    # Seletor seguro baseado em nomes únicos
-                    if not users_list.empty:
-                        target_edit_name = st.selectbox("Utilizador:", users_list['name'].unique())
-                        
-                        # Recupera ID com segurança
-                        u_id_to_edit = users_list[users_list['name'] == target_edit_name]['id'].values[0]
-                        
-                        st.write(f"Editando: **{target_edit_name}**")
-                        
-                        new_p = st.text_input("Nova Senha", type="password", key="npwd")
-                        if st.button("Alterar Senha"):
-                            if new_p:
-                                update_password(u_id_to_edit, new_p)
-                                st.success("Senha atualizada!")
-                        
-                        st.markdown("---")
-                        st.error("Área de Exclusão")
-                        
-                        # Botão com Callback
-                        st.button(
-                            f"🗑️ Excluir {target_edit_name}", 
-                            type="primary",
-                            on_click=callback_delete_user,
-                            args=(u_id_to_edit,)
-                        )
-                    else:
-                        st.info("Lista vazia.")
+                st.warning("🔧 Editar / Excluir")
+                if not users_list.empty:
+                    # Selectbox com chave fixa para evitar resets
+                    target_edit_name = st.selectbox("Selecionar Usuário:", users_list['name'].unique(), key="user_select_edit")
+                    
+                    # Recupera ID
+                    u_id_to_edit = users_list[users_list['name'] == target_edit_name]['id'].values[0]
+                    
+                    # Alterar Senha
+                    new_p = st.text_input("Nova Senha", type="password", key="new_pwd_input")
+                    if st.button("Atualizar Senha", key="btn_upd_pwd"):
+                        if new_p:
+                            update_password(u_id_to_edit, new_p)
+                            st.success("Senha atualizada!")
+                    
+                    st.divider()
+                    
+                    # Excluir com Callback (CRÍTICO)
+                    st.write(f"🗑️ Excluir **{target_edit_name}**?")
+                    st.button(
+                        "Confirmar Exclusão", 
+                        type="secondary",
+                        on_click=callback_delete_user,
+                        args=(u_id_to_edit,)
+                    )
+                else:
+                    st.info("Lista vazia.")
 
 # --- FOOTER ---
 st.markdown("---")
-st.caption("© 2024 RipariBank | Versão Estável")
+st.caption("© 2024 RipariBank | Engine v1.3 (Stable UI)")
