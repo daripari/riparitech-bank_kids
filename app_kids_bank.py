@@ -74,10 +74,14 @@ def delete_user(user_id):
     # Impede deletar o usuário logado
     if user_id == st.session_state.user_id:
         return False, "Você não pode excluir a si próprio!"
-    c.execute("DELETE FROM users WHERE id = ?", (user_id,))
-    c.execute("DELETE FROM transactions WHERE user_id = ?", (user_id,)) # Limpa histórico
-    conn.commit()
-    return True, "Usuário removido com sucesso."
+    
+    try:
+        c.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        c.execute("DELETE FROM transactions WHERE user_id = ?", (user_id,)) # Limpa histórico
+        conn.commit()
+        return True, "Usuário removido com sucesso."
+    except Exception as e:
+        return False, f"Erro ao deletar: {str(e)}"
 
 def update_password(user_id, new_password):
     c = conn.cursor()
@@ -144,17 +148,17 @@ else:
             kids_only = users_df[users_df['role'] == 'user']
             
             if not kids_only.empty:
-                target_user = st.selectbox("Escolher conta para lançar:", kids_only['name'])
+                target_user = st.selectbox("Escolher conta para lançar:", kids_only['name'], key="select_kid_trans")
                 target_id = kids_only[kids_only['name'] == target_user]['id'].values[0]
                 
-                with st.expander(f"Lançamento Rápido: {target_user}"):
+                with st.expander(f"Lançamento Rápido: {target_user}", expanded=True):
                     c1, c2 = st.columns(2)
                     with c1:
                         val = st.number_input("Valor R$", min_value=0.0, step=1.0, key="val_trans")
                         op = st.radio("Tipo", ["Crédito", "Débito"], key="op_trans")
                     with c2:
                         motivo = st.text_input("Descrição", placeholder="Ex: Tarefas", key="motivo_trans")
-                        if st.button("Confirmar Lançamento", type="primary"):
+                        if st.button("Confirmar Lançamento", type="primary", key="btn_confirm_trans"):
                             if val > 0 and motivo:
                                 add_transaction(target_id, val, motivo, op)
                                 st.success("Transação concluída!")
@@ -162,7 +166,7 @@ else:
             else:
                 st.warning("Nenhum usuário do tipo 'filho' cadastrado.")
 
-        # --- TAB: GESTÃO DE USUÁRIOS (NOVO MÓDULO) ---
+        # --- TAB: GESTÃO DE USUÁRIOS ---
         with tab_users:
             all_users = get_users()
             st.write("#### Usuários Cadastrados")
@@ -173,10 +177,10 @@ else:
             # Incluir Usuário
             with col_add:
                 with st.expander("➕ Incluir Novo Usuário"):
-                    new_name = st.text_input("Nome de Usuário (ex: joao.ripari)")
-                    new_role = st.selectbox("Perfil", ["user", "admin"])
-                    new_pwd = st.text_input("Senha Inicial", type="password")
-                    if st.button("Salvar Novo Usuário"):
+                    new_name = st.text_input("Nome de Usuário", key="new_user_name")
+                    new_role = st.selectbox("Perfil", ["user", "admin"], key="new_user_role")
+                    new_pwd = st.text_input("Senha Inicial", type="password", key="new_user_pwd")
+                    if st.button("Salvar Novo Usuário", key="btn_save_user"):
                         if new_name and new_pwd:
                             if create_user(new_name, new_role, new_pwd):
                                 st.success("Usuário criado!")
@@ -189,28 +193,29 @@ else:
             # Alterar Senha / Excluir
             with col_edit:
                 with st.expander("🔧 Alterar ou Excluir"):
-                    edit_user = st.selectbox("Selecionar Usuário", all_users['name'])
+                    edit_user = st.selectbox("Selecionar Usuário", all_users['name'], key="select_user_edit")
                     edit_id = all_users[all_users['name'] == edit_user]['id'].values[0]
                     
-                    new_pwd_edit = st.text_input("Nova Senha", type="password", key="new_pwd_edit")
-                    col_btn1, col_btn2 = st.columns(2)
+                    new_pwd_edit = st.text_input("Nova Senha", type="password", key="new_pwd_edit_val")
                     
-                    with col_btn1:
-                        if st.button("Alterar Senha"):
-                            if new_pwd_edit:
-                                update_password(edit_id, new_pwd_edit)
-                                st.success("Senha alterada!")
-                            else:
-                                st.warning("Digite a nova senha.")
+                    if st.button("Alterar Senha", key="btn_update_pwd"):
+                        if new_pwd_edit:
+                            update_password(edit_id, new_pwd_edit)
+                            st.success("Senha alterada com sucesso!")
+                        else:
+                            st.warning("Digite a nova senha.")
                     
-                    with col_btn2:
-                        if st.button("🗑️ Excluir Usuário", type="secondary"):
-                            success, msg = delete_user(edit_id)
-                            if success:
-                                st.success(msg)
-                                st.rerun()
-                            else:
-                                st.error(msg)
+                    st.markdown("---")
+                    st.write("⚠️ **Zona de Perigo**")
+                    confirm_delete = st.checkbox(f"Confirmo que desejo excluir {edit_user}", key="chk_confirm_del")
+                    
+                    if st.button("🗑️ Excluir Usuário", type="secondary", key="btn_delete_user", disabled=not confirm_delete):
+                        success, msg = delete_user(edit_id)
+                        if success:
+                            st.success(msg)
+                            st.rerun()
+                        else:
+                            st.error(msg)
 
 # --- FOOTER ---
 st.markdown("---")
