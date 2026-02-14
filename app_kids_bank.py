@@ -3,6 +3,7 @@ import sqlite3
 import pandas as pd
 from datetime import datetime
 import os
+import time
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="RipariBank", page_icon="💰", layout="centered")
@@ -67,7 +68,29 @@ def add_transaction(user_id, amount, description, t_type):
     conn.commit()
     conn.close()
 
-# --- FUNÇÕES DE GESTÃO DE USUÁRIOS ---
+# --- FUNÇÕES DE GESTÃO (CALLBACKS) ---
+# Callbacks são executados ANTES do re-render da página
+
+def callback_delete_user(user_id_to_delete):
+    """Callback atômico para exclusão"""
+    if user_id_to_delete == st.session_state.user_id:
+        st.session_state.feedback_msg = ("error", "Você não pode excluir a sua própria conta logada!")
+        return
+
+    conn = get_connection()
+    c = conn.cursor()
+    try:
+        # 1. Limpa transações
+        c.execute("DELETE FROM transactions WHERE user_id = ?", (user_id_to_delete,))
+        # 2. Remove usuário
+        c.execute("DELETE FROM users WHERE id = ?", (user_id_to_delete,))
+        conn.commit()
+        st.session_state.feedback_msg = ("success", "Usuário e histórico removidos definitivamente.")
+    except Exception as e:
+        st.session_state.feedback_msg = ("error", f"Erro técnico: {str(e)}")
+    finally:
+        conn.close()
+
 def create_user(name, role, password):
     conn = get_connection()
     c = conn.cursor()
@@ -77,25 +100,6 @@ def create_user(name, role, password):
         return True
     except:
         return False
-    finally:
-        conn.close()
-
-def delete_user_action(user_id):
-    """Função robusta para deletar usuário e seus dados"""
-    if user_id == st.session_state.user_id:
-        return False, "Erro: Não pode excluir a própria conta!"
-    
-    conn = get_connection()
-    c = conn.cursor()
-    try:
-        # 1. Limpa transações primeiro (integridade)
-        c.execute("DELETE FROM transactions WHERE user_id = ?", (user_id,))
-        # 2. Remove o usuário
-        c.execute("DELETE FROM users WHERE id = ?", (user_id,))
-        conn.commit()
-        return True, "Utilizador e histórico removidos com sucesso!"
-    except Exception as e:
-        return False, f"Falha técnica: {str(e)}"
     finally:
         conn.close()
 
@@ -111,8 +115,21 @@ def update_password(user_id, new_password):
 st.title("💰 RipariBank")
 st.subheader("Controle Financeiro Familiar")
 
+# Inicializa estado de feedback se não existir
+if 'feedback_msg' not in st.session_state:
+    st.session_state.feedback_msg = None
+
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
+
+# Exibe mensagens de feedback pendentes (ex: sucesso na exclusão)
+if st.session_state.feedback_msg:
+    tipo, msg = st.session_state.feedback_msg
+    if tipo == 'success':
+        st.success(msg)
+    else:
+        st.error(msg)
+    st.session_state.feedback_msg = None
 
 if not st.session_state.logged_in:
     with st.container():
@@ -177,9 +194,10 @@ else:
                         if v > 0 and m:
                             add_transaction(t_id, v, m, o)
                             st.success("Lançamento efetuado!")
+                            time.sleep(1) # Pequena pausa
                             st.rerun()
             else:
-                st.warning("Nenhum filho cadastrado.")
+                st.warning("Nenhum usuário 'user' cadastrado.")
 
         with tab_adm:
             users_list = get_users_df()
@@ -196,30 +214,39 @@ else:
                         if n and p:
                             if create_user(n, r, p):
                                 st.success("Criado!")
+                                time.sleep(1)
                                 st.rerun()
             
             with c_edit:
                 with st.expander("Editar / Remover"):
-                    target_edit = st.selectbox("Utilizador:", users_list['name'])
-                    u_id_edit = users_list[users_list['name'] == target_edit]['id'].values[0]
-                    
-                    new_p = st.text_input("Nova Senha", type="password", key="npwd")
-                    if st.button("Alterar Senha"):
-                        if new_p:
-                            update_password(u_id_edit, new_p)
-                            st.success("Senha atualizada!")
-                    
-                    st.markdown("---")
-                    st.error("Área de Exclusão")
-                    confirm = st.checkbox(f"Confirmar remoção de {target_edit}", key="chk_del")
-                    if st.button("🗑️ Remover Definitivamente", disabled=not confirm, type="primary"):
-                        success, msg = delete_user_action(u_id_edit)
-                        if success:
-                            st.success(msg)
-                            st.rerun()
-                        else:
-                            st.error(msg)
+                    # Seletor seguro baseado em nomes únicos
+                    if not users_list.empty:
+                        target_edit_name = st.selectbox("Utilizador:", users_list['name'].unique())
+                        
+                        # Recupera ID com segurança
+                        u_id_to_edit = users_list[users_list['name'] == target_edit_name]['id'].values[0]
+                        
+                        st.write(f"Editando: **{target_edit_name}**")
+                        
+                        new_p = st.text_input("Nova Senha", type="password", key="npwd")
+                        if st.button("Alterar Senha"):
+                            if new_p:
+                                update_password(u_id_to_edit, new_p)
+                                st.success("Senha atualizada!")
+                        
+                        st.markdown("---")
+                        st.error("Área de Exclusão")
+                        
+                        # Botão com Callback
+                        st.button(
+                            f"🗑️ Excluir {target_edit_name}", 
+                            type="primary",
+                            on_click=callback_delete_user,
+                            args=(u_id_to_edit,)
+                        )
+                    else:
+                        st.info("Lista vazia.")
 
-# FOOTER
+# --- FOOTER ---
 st.markdown("---")
-st.caption("RipariBank v1.2 - Protocolo de Segurança RipariTech")
+st.caption("© 2024 RipariBank | Versão Estável")
