@@ -296,7 +296,7 @@ else:
             c3.button("3", key="n3", on_click=k_press, args=("3",))
             c4.button("_-_", key="nsub", on_click=k_press, args=("-",))
 
-            c1.button(" + ", key="n0", on_click=k_press, args=("0",))
+            c1.button("0", key="n0", on_click=k_press, args=("0",))
             c2.button(".", key="ndot", on_click=k_press, args=(".",))
             c3.button("C", key="nclr", on_click=k_clr)
             c4.button("_+_", key="nadd", on_click=k_press, args=("+",))
