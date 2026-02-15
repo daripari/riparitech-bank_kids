@@ -11,7 +11,7 @@ st.set_page_config(page_title="Banco da Família Obsidian", page_icon="💎", la
 # --- 2. DICIONÁRIO DE TRADUÇÃO (i18n) ---
 TRANSLATIONS = {
     'pt': {
-        'protocol': 'Banco da Família v11.2',
+        'protocol': 'Banco da Família v11.3',
         'user': 'Usuário',
         'password': 'Senha',
         'auth_btn': 'AUTENTICAR',
@@ -83,11 +83,11 @@ TRANSLATIONS = {
         'chore_done_msg': 'Tarefa entregue! Aguarde validação.',
         'chore_paid_msg': 'Pagamento por tarefa realizada',
         'chore_filter_kid': 'Filtrar por Criança:',
-        'chore_status_sched': '📅 Agendadas (A Fazer)',
+        'chore_status_sched': '📅 Agendadas (A Fazer / Em Análise)',
         'chore_status_hist': '📜 Histórico (Concluídas)'
     },
     'en': {
-        'protocol': 'Family Bank v11.2',
+        'protocol': 'Family Bank v11.3',
         'user': 'User',
         'password': 'Password',
         'auth_btn': 'AUTHENTICATE',
@@ -159,11 +159,11 @@ TRANSLATIONS = {
         'chore_done_msg': 'Chore submitted! Wait for validation.',
         'chore_paid_msg': 'Payment for completed chore',
         'chore_filter_kid': 'Filter by Child:',
-        'chore_status_sched': '📅 Scheduled (To Do)',
+        'chore_status_sched': '📅 Scheduled (To Do / Review)',
         'chore_status_hist': '📜 History (Done)'
     },
     'es': {
-        'protocol': 'Banco de la Familia v11.2',
+        'protocol': 'Banco de la Familia v11.3',
         'user': 'Usuario',
         'password': 'Contraseña',
         'auth_btn': 'AUTENTICAR',
@@ -235,7 +235,7 @@ TRANSLATIONS = {
         'chore_done_msg': '¡Tarea entregada! Espera validación.',
         'chore_paid_msg': 'Pago por tarea completada',
         'chore_filter_kid': 'Filtrar por Niño:',
-        'chore_status_sched': '📅 Agendadas (Por Hacer)',
+        'chore_status_sched': '📅 Agendadas (Por Hacer / En Revisión)',
         'chore_status_hist': '📜 Historial (Hecho)'
     }
 }
@@ -244,7 +244,7 @@ def t(key):
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
-# --- CSS REFINADO & RESPONSIVO (V11.2) ---
+# --- CSS REFINADO & RESPONSIVO (V11.3) ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -553,11 +553,11 @@ else:
                 st.markdown(f"<div class='row-item'><span style='font-weight:600;'>{row['name'].title()}</span><span style='color:#00E5FF; font-family:monospace; font-weight:700;'>R$ {row['balance']:,.2f}</span></div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
         
-        # --- GESTÃO DE TAREFAS (ADMIN - v11.2) ---
+        # --- GESTÃO DE TAREFAS (ADMIN - v11.3) ---
         with st.expander(t('chore_mgmt')):
             ct1, ct2, ct3 = st.tabs([t('chore_new_title'), t('chore_pending'), t('chore_list_admin')])
             
-            # 1. ATRIBUIR TAREFA (Com Seletor e Data)
+            # 1. ATRIBUIR TAREFA
             with ct1:
                 kids_df = run_query("SELECT id, name FROM users WHERE role='user'")
                 if kids_df is not None and not kids_df.empty:
@@ -565,7 +565,6 @@ else:
                         c_desc = st.text_input(t('chore_desc'))
                         c_val = st.number_input(t('chore_val'), min_value=0.5, step=0.5)
                         
-                        # Novidades v11.2: Assignee e Deadline
                         c_assignee = st.selectbox(t('chore_assignee'), kids_df['name'].tolist())
                         col_d, col_t = st.columns(2)
                         d_date = col_d.date_input(t('chore_deadline_d'))
@@ -579,7 +578,6 @@ else:
                                 run_query("INSERT INTO chores (description, reward, status, assigned_to, created_at, deadline) VALUES (:d, :r, 'open', :uid, :ts, :dl)",
                                           params={'d': c_desc, 'r': c_val, 'uid': int(kid_id), 'ts': datetime.now(), 'dl': deadline_dt}, commit=True)
                                 
-                                # Notificar a criança
                                 run_query("INSERT INTO notifications (user_id, message, timestamp) VALUES (:uid, :msg, :ts)",
                                           params={'uid': int(kid_id), 'msg': f"📋 Nova Tarefa: {c_desc} (R$ {c_val})", 'ts': datetime.now()}, commit=True)
                                 
@@ -588,7 +586,7 @@ else:
                 else:
                     st.warning("Cadastre crianças primeiro.")
             
-            # 2. APROVAR PENDENTES (Mantido, mas agora mostra quem fez)
+            # 2. APROVAR PENDENTES
             with ct2:
                 pending_chores = run_query("SELECT c.id, c.description, c.reward, u.name as kid_name, u.id as kid_id FROM chores c JOIN users u ON c.assigned_to = u.id WHERE c.status = 'pending'")
                 if pending_chores is not None and not pending_chores.empty:
@@ -612,20 +610,18 @@ else:
                             st.rerun()
                             
                         if ac2.button(t('chore_reject'), key=f"rej_{pc['id']}", use_container_width=True):
-                            # Volta para 'open' e mantém atribuído à mesma criança (devolve a tarefa)
                             run_query("UPDATE chores SET status='open' WHERE id=:cid", params={'cid': pc['id']}, commit=True)
                             st.rerun()
                 else:
                     st.info("Nenhuma tarefa aguardando aprovação.")
             
-            # 3. MONITORAMENTO (Lista de Tarefas Agendadas e Concluídas)
+            # 3. MONITORAMENTO (Lista de Tarefas - Visão Tabular)
             with ct3:
                 kids_df = run_query("SELECT id, name FROM users WHERE role='user'")
                 if kids_df is not None and not kids_df.empty:
                     filter_kid = st.selectbox(t('chore_filter_kid'), ["Todos"] + kids_df['name'].tolist())
                     
-                    # Construir Query Base
-                    base_sql = "SELECT c.description, c.reward, c.status, c.deadline, u.name as kid_name FROM chores c JOIN users u ON c.assigned_to = u.id "
+                    base_sql = "SELECT u.name as kid_name, c.description, c.reward, c.status, c.deadline FROM chores c JOIN users u ON c.assigned_to = u.id "
                     params_q = {}
                     
                     if filter_kid != "Todos":
@@ -637,23 +633,33 @@ else:
                     all_chores_view = run_query(base_sql, params=params_q)
                     
                     if all_chores_view is not None and not all_chores_view.empty:
-                        # Separar em Agendadas e Histórico
-                        sched = all_chores_view[all_chores_view['status'].isin(['open', 'pending'])]
-                        hist = all_chores_view[all_chores_view['status'] == 'paid']
+                        # Formatação para Tabela
+                        all_chores_view['reward'] = all_chores_view['reward'].apply(lambda x: f"R$ {x:.2f}")
+                        all_chores_view['deadline'] = pd.to_datetime(all_chores_view['deadline']).dt.strftime('%d/%m %H:%M')
+                        
+                        status_map = {'open': 'Aberto', 'pending': 'Em Análise', 'paid': 'Concluído'}
+                        all_chores_view['status'] = all_chores_view['status'].map(status_map)
+
+                        all_chores_view = all_chores_view.rename(columns={
+                            'kid_name': 'Criança',
+                            'description': 'Tarefa',
+                            'reward': 'Valor',
+                            'status': 'Estado',
+                            'deadline': 'Prazo'
+                        })
+
+                        sched = all_chores_view[all_chores_view['Estado'].isin(['Aberto', 'Em Análise'])]
+                        hist = all_chores_view[all_chores_view['Estado'] == 'Concluído']
                         
                         st.caption(t('chore_status_sched'))
                         if not sched.empty:
-                            for _, r in sched.iterrows():
-                                dl_str = pd.to_datetime(r['deadline']).strftime('%d/%m %H:%M') if pd.notnull(r['deadline']) else "-"
-                                st_icon = "⏳" if r['status'] == 'pending' else "📅"
-                                st.markdown(f"<div style='font-size:0.8rem; border-left: 2px solid #00E5FF; padding-left:8px; margin-bottom:8px;'><b>{r['kid_name'].title()}</b>: {r['description']} (R$ {r['reward']})<br><span style='color:#6B7280;'>{st_icon} {dl_str}</span></div>", unsafe_allow_html=True)
+                            st.dataframe(sched[['Criança', 'Tarefa', 'Valor', 'Prazo', 'Estado']], use_container_width=True, hide_index=True)
                         else:
                             st.info("---")
 
                         st.caption(t('chore_status_hist'))
                         if not hist.empty:
-                            for _, r in hist.iterrows():
-                                st.markdown(f"<div style='font-size:0.8rem; opacity:0.6;'>✅ <b>{r['kid_name'].title()}</b>: {r['description']} (R$ {r['reward']})</div>", unsafe_allow_html=True)
+                            st.dataframe(hist[['Criança', 'Tarefa', 'Valor', 'Prazo', 'Estado']], use_container_width=True, hide_index=True)
                         else:
                             st.info("---")
                     else:
@@ -853,4 +859,4 @@ else:
             st.caption(t('fx_cap'))
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v11.2 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v11.3 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
