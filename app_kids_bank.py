@@ -7,7 +7,7 @@ import time
 # --- 1. CONFIGURAÇÃO (Theme: Minimalist Midnight) ---
 st.set_page_config(page_title="RipariBank", page_icon="💎", layout="centered")
 
-# CSS REFORÇADO PARA FIXAÇÃO ABSOLUTA E ALINHAMENTO HORIZONTAL
+# CSS REFORÇADO PARA FIXAÇÃO TOTAL E ALINHAMENTO HORIZONTAL NO HEADER
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
@@ -19,7 +19,7 @@ st.markdown("""
 
     .stApp { background-color: #0B0E14; color: #BBBBBB; }
 
-    /* BLINDAGEM CONTRA QUEBRA DE POSITION: FIXED */
+    /* --- BLINDAGEM DE CONTENTORES --- */
     [data-testid="stAppViewContainer"], 
     [data-testid="stAppViewBlockContainer"],
     [data-testid="stVerticalBlock"] {
@@ -30,7 +30,7 @@ st.markdown("""
     
     #MainMenu, footer, header { visibility: hidden !important; }
 
-    /* BARRA DE NAVEGAÇÃO FIXA */
+    /* BARRA DE NAVEGAÇÃO FIXA (FUNDO) */
     .nav-bar {
         position: fixed;
         top: 0;
@@ -39,14 +39,14 @@ st.markdown("""
         height: 55px;
         background-color: #0B0E14;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        z-index: 999999;
+        z-index: 999998;
         display: flex;
         align-items: center;
         padding: 0 1.2rem;
         box-shadow: 0 2px 10px rgba(0,0,0,0.5);
     }
 
-    /* LOGO À ESQUERDA */
+    /* LOGO À ESQUERDA - FIXO */
     .nav-logo {
         position: fixed;
         top: 16px; 
@@ -59,29 +59,28 @@ st.markdown("""
         pointer-events: none;
     }
 
-    /* --- POSICIONAMENTO DOS BOTÕES LADO A LADO --- */
+    /* --- POSICIONAMENTO DOS BOTÕES (LADO A LADO NA MESMA ALTURA) --- */
     
-    /* BOTÃO SAIR (Extrema Direita) */
-    div.element-container:has(button[key="logout_header"]) {
+    /* Contentor do Botão REFRESH */
+    div[data-testid="stVerticalBlock"] > div:has(button[key="refresh_header"]) {
         position: fixed !important;
-        top: 13px !important;
+        top: 13px !important; /* Altura exata para alinhar com o logo */
+        right: 5rem !important; /* Espaço para ficar à esquerda do Sair */
+        z-index: 1000001 !important;
+        width: auto !important;
+    }
+
+    /* Contentor do Botão SAIR */
+    div[data-testid="stVerticalBlock"] > div:has(button[key="logout_header"]) {
+        position: fixed !important;
+        top: 13px !important; /* Mesma altura que o Refresh */
         right: 1rem !important;
         z-index: 1000001 !important;
         width: auto !important;
     }
 
-    /* BOTÃO REFRESH (Ao lado do Sair) */
-    div.element-container:has(button[key="refresh_header"]) {
-        position: fixed !important;
-        top: 13px !important;
-        right: 4.8rem !important; /* Espaçamento calculado para o lado */
-        z-index: 1000001 !important;
-        width: auto !important;
-    }
-
-    /* Estilo dos botões do Header */
-    div.element-container:has(button[key="logout_header"]) button,
-    div.element-container:has(button[key="refresh_header"]) button {
+    /* Estilo comum para os botões do header */
+    button[key="refresh_header"], button[key="logout_header"] {
         height: 28px !important;
         padding: 0 10px !important;
         font-size: 0.7rem !important;
@@ -91,22 +90,21 @@ st.markdown("""
         border-radius: 4px !important;
         text-transform: uppercase;
         font-weight: 600;
-        display: inline-flex !important;
     }
 
-    div.element-container:has(button[key="logout_header"]) button:hover,
-    div.element-container:has(button[key="refresh_header"]) button:hover {
+    button[key="refresh_header"]:hover, button[key="logout_header"]:hover {
         color: white !important;
         border-color: #00C853 !important;
     }
 
-    /* CONTEÚDO PRINCIPAL */
+    /* AJUSTE DO CONTEÚDO PRINCIPAL */
     .block-container {
         padding-top: 5rem !important; 
         padding-bottom: 2rem !important;
         max-width: 500px;
     }
 
+    /* CARD SALDO SLIM */
     .slim-card {
         background: rgba(255, 255, 255, 0.02);
         border: 1px solid rgba(255, 255, 255, 0.08);
@@ -122,6 +120,14 @@ st.markdown("""
         font-weight: 600;
         color: #00C853;
         letter-spacing: -1px;
+    }
+
+    /* TABS E INPUTS */
+    .stTabs [aria-selected="true"] { color: white; border-bottom: 2px solid #00C853; }
+    .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
+        background-color: #161920 !important;
+        color: white !important;
+        border: 1px solid #2A2D35 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -169,11 +175,11 @@ if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 # --- 4. LOGIN ---
 if not st.session_state.logged_in:
     st.markdown("<div class='nav-bar'><p class='nav-logo'>💎 RipariBank</p></div>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align:center; margin-top:3rem;'><p style='color:#666; font-size:0.8rem;'>Acesso Seguro</p></div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center; margin-top:3rem;'><p style='color:#666; font-size:0.8rem;'>Utilize as suas credenciais para aceder</p></div>", unsafe_allow_html=True)
     with st.form("login"):
-        u = st.text_input("Usuário").lower().strip()
-        p = st.text_input("Senha", type="password").strip()
-        if st.form_submit_button("ENTRAR", type="primary"):
+        u = st.text_input("Utilizador").lower().strip()
+        p = st.text_input("Palavra-passe", type="password").strip()
+        if st.form_submit_button("ACEDER", type="primary"):
             df = run_query("SELECT * FROM users WHERE lower(name)=:u AND password=:p", params={'u': u, 'p': p})
             if df is not None and not df.empty:
                 st.session_state.logged_in = True
@@ -188,18 +194,13 @@ else:
     # NAVBAR FIXA
     st.markdown("<div class='nav-bar'><p class='nav-logo'>💎 RipariBank</p></div>", unsafe_allow_html=True)
     
-    # BOTÕES DO HEADER
-    if st.button("🔄", key="refresh_header"):
-        st.rerun()
-        
-    if st.button("SAIR", key="logout_header"):
-        st.session_state.logged_in = False
-        st.rerun()
+    # BOTÕES DO HEADER (Renderizados aqui, mas posicionados pelo CSS no topo)
+    st.button("🔄", key="refresh_header")
+    st.button("SAIR", key="logout_header")
 
-    # Saudação
-    st.markdown(f"<p style='color:#666; font-size: 0.8rem;'>Olá, <b>{st.session_state.user_name.title()}</b></p>", unsafe_allow_html=True)
+    # Identificação e Saldo
+    st.markdown(f"<p style='color:#666; font-size: 0.8rem; margin-top: 0;'>Olá, <b>{st.session_state.user_name.title()}</b></p>", unsafe_allow_html=True)
 
-    # Saldo
     res_bal = run_query("SELECT SUM(amount) as total FROM transactions WHERE user_id=:uid", params={'uid': st.session_state.user_id})
     saldo = res_bal.iloc[0]['total'] if res_bal is not None and not res_bal.empty and pd.notnull(res_bal.iloc[0]['total']) else 0.0
     
@@ -210,13 +211,13 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-    # Conteúdo
+    # Conteúdo Principal
     t1, t2 = st.tabs(["EXTRATO", "RESUMO"])
     with t1:
         df = run_query("SELECT timestamp, description, type, amount FROM transactions WHERE user_id=:uid ORDER BY id DESC LIMIT 10", params={'uid': st.session_state.user_id})
         if df is not None and not df.empty:
             st.dataframe(df, use_container_width=True, hide_index=True)
-        else: st.caption("Sem movimentos.")
+        else: st.caption("Sem movimentos registados.")
     
     with t2:
         if df is not None and not df.empty:
@@ -225,14 +226,14 @@ else:
     # ADMIN PANEL
     if st.session_state.role == 'admin':
         st.markdown("---")
-        with st.expander("💸 LANÇAMENTO RÁPIDO"):
+        with st.expander("💸 NOVO LANÇAMENTO"):
             users = run_query("SELECT id, name FROM users WHERE role='user'")
             if users is not None and not users.empty:
                 with st.form("tr_fast"):
                     tgt = st.selectbox("Membro:", users['name'].tolist())
                     v = st.number_input("Valor", min_value=0.0, step=1.0)
-                    o = st.radio("Tipo:", ["Crédito", "Débito"], horizontal=True)
-                    d = st.text_input("Nota")
+                    o = st.radio("Operação:", ["Crédito", "Débito"], horizontal=True)
+                    d = st.text_input("Descrição")
                     if st.form_submit_button("LANÇAR", type="primary"):
                         if v > 0 and d:
                             uid_tgt = users[users['name'] == tgt]['id'].values[0]
@@ -243,7 +244,7 @@ else:
                             time.sleep(0.5); st.rerun()
 
         with st.expander("⚙️ GESTÃO DE ACESSOS"):
-            tab_add, tab_ed = st.tabs(["Novo", "Gerir"])
+            tab_add, tab_ed = st.tabs(["Novo Membro", "Gerir"])
             with tab_add:
                 with st.form("new_mem"):
                     nn = st.text_input("Nome").lower().strip()
@@ -257,18 +258,18 @@ else:
             with tab_ed:
                 all_u = run_query("SELECT id, name FROM users ORDER BY name")
                 if all_u is not None and not all_u.empty:
-                    sel_u = st.selectbox("Escolher:", all_u['name'].tolist())
+                    sel_u = st.selectbox("Escolher Utilizador:", all_u['name'].tolist())
                     u_id = all_u[all_u['name'] == sel_u]['id'].values[0]
                     with st.form("p_edit"):
-                        new_p = st.text_input("Nova Senha").strip()
+                        new_p = st.text_input("Redefinir Senha").strip()
                         if st.form_submit_button("SALVAR"):
                             run_query("UPDATE users SET password=:p WHERE id=:id", params={'p': new_p, 'id': int(u_id)}, commit=True)
-                            st.toast("Ok!"); time.sleep(0.5); st.rerun()
-                    if st.button("REMOVER MEMBRO"):
+                            st.toast("Senha atualizada."); time.sleep(0.5); st.rerun()
+                    if st.button("REMOVER ACESSO"):
                         if int(u_id) != st.session_state.user_id:
                             run_query("DELETE FROM transactions WHERE user_id=:id", params={'id': int(u_id)}, commit=True)
                             run_query("DELETE FROM users WHERE id=:id", params={'id': int(u_id)}, commit=True)
                             st.rerun()
 
 # --- FOOTER ---
-st.markdown("<div style='text-align: center; color: #333; font-size: 0.6rem; margin-top: 3rem;'>RipariBank v4.8 | Secured by Supabase</div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; color: #222; font-size: 0.6rem; margin-top: 3rem;'>RipariBank v4.8 | Secured Cloud</div>", unsafe_allow_html=True)
