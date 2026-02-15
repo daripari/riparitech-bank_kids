@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 from database import run_query
 
-# Dicionário de traduções simplificado conforme solicitado (PT-BR)
+# Dicionário de traduções simplificado (PT-BR)
 TRANSLATIONS = {
     'pt': {
         'bal': 'Meu Saldo', 
@@ -24,7 +24,7 @@ TRANSLATIONS = {
         'no_transfer': 'Ninguém disponível para transferência.',
         'calc': 'Calculadora', 
         'fx': 'Câmbio', 
-        'panel': '🔎 Monitor de Tarefas', 
+        'panel': '🔎 Tarefas', 
         'new_task': '➕ Nova Tarefa', 
         'mgmt': '⚙️ Usuários', 
         'cashier': '💸 Lançamentos',
