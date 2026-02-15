@@ -7,12 +7,11 @@ import time
 # --- 1. CONFIGURAÇÃO DE TEMA ---
 st.set_page_config(page_title="RipariBank Premium", page_icon="💎", layout="centered")
 
-# CSS PREMIUM NEO-BANK UI - VERSÃO CORRIGIDA (GRID E BOTÕES)
+# CSS PREMIUM NEO-BANK UI - V7.3 DEFINITIVA
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     
-    /* Reset e Fundo */
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
         background-color: #050505;
@@ -21,11 +20,9 @@ st.markdown("""
     
     .stApp { background-color: #050505; }
     
-    /* Ocultar elementos nativos */
     #MainMenu, footer, header { visibility: hidden !important; }
     .block-container { padding-top: 1rem !important; max-width: 450px !important; }
 
-    /* Header Estilizado */
     .header-logo {
         font-size: 1.3rem;
         font-weight: 700;
@@ -36,7 +33,6 @@ st.markdown("""
         -webkit-text-fill-color: transparent;
     }
     
-    /* Cards Premium (Glassmorphism) */
     .glass-card {
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
         backdrop-filter: blur(10px);
@@ -74,24 +70,32 @@ st.markdown("""
         letter-spacing: -1px;
     }
 
-    /* --- CORREÇÃO DE BOTÕES ESTREITOS E SÍMBOLOS --- */
+    /* --- CORREÇÃO DEFINITIVA DE BOTÕES E SÍMBOLOS --- */
+    /* Alvo: O botão em si */
     .stButton>button {
         border-radius: 16px !important;
         background-color: #111111 !important;
         color: #FFFFFF !important;
         border: 1px solid #262626 !important;
-        font-size: 1.2rem !important;
+        font-size: 1.3rem !important; /* Tamanho robusto */
         font-weight: 700 !important;
-        height: 55px !important;
+        height: 60px !important;
         width: 100% !important;
-        min-width: 60px !important; /* Garante que não fiquem estreitos */
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        line-height: normal !important; /* Evita corte vertical de símbolos como + */
-        padding: 5px !important; /* Espaço interno mínimo */
+        min-width: 60px !important;
+        display: grid !important;
+        place-items: center !important;
+        padding: 0 !important;
         margin: 0 !important;
+        overflow: visible !important;
         transition: all 0.2s ease-in-out !important;
+    }
+
+    /* Alvo: O texto/markdown dentro do botão (O CULPADO DO ERRO) */
+    .stButton>button div[data-testid="stMarkdownContainer"] p {
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 1 !important;
+        font-size: inherit !important;
     }
     
     .stButton>button:hover {
@@ -100,15 +104,17 @@ st.markdown("""
         color: #10B981 !important;
     }
 
-    /* Botão Igual e Submit */
-    div[data-testid="stFormSubmitButton"] button, 
+    /* Cores Específicas para Operadores */
+    button[key*="nadd"], button[key*="nsub"], button[key*="nmul"], button[key*="ndiv"] {
+        color: #10B981 !important;
+    }
+
     button[key="nsolve"] {
         background: #10B981 !important;
         color: #000000 !important;
         border: none !important;
     }
 
-    /* Calculadora Visual */
     .calc-display {
         background-color: #000000;
         border: 2px solid #1A1A1A;
@@ -123,10 +129,8 @@ st.markdown("""
         display: flex;
         align-items: center;
         justify-content: flex-end;
-        box-shadow: inset 0 2px 20px rgba(0,0,0,0.9);
     }
 
-    /* Estilização de Tabs */
     .stTabs [data-baseweb="tab-list"] { gap: 8px; background-color: transparent; }
     .stTabs [data-baseweb="tab"] {
         background-color: #111111;
@@ -140,19 +144,17 @@ st.markdown("""
         border-bottom: 2px solid #10B981 !important;
     }
 
-    /* Inputs e Forms */
     .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
         background-color: #0A0A0A !important;
         border: 1px solid #222 !important;
         border-radius: 14px !important;
-        color: white !important;
     }
 
     hr { border: 0; border-top: 1px solid #1A1A1A; margin: 2rem 0; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 2. MOTOR DE DADOS COM CACHE ---
+# --- 2. MOTOR DE DADOS ---
 @st.cache_resource
 def get_connection():
     return st.connection("supabase", type="sql")
@@ -192,17 +194,17 @@ def get_cached_family_balances():
 def get_cached_history(uid):
     return run_query("SELECT timestamp as data, description as motivo, amount as valor FROM transactions WHERE user_id=:uid ORDER BY id DESC LIMIT 15", params={'uid': uid})
 
-# --- 3. INICIALIZAÇÃO ---
+# --- 3. ESTADO ---
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'calc_expr' not in st.session_state: st.session_state.calc_expr = ""
 
-# --- 4. INTERFACE DE LOGIN ---
+# --- 4. LOGIN ---
 if not st.session_state.logged_in:
-    st.markdown("<div style='margin-top:5rem; text-align:center;'><h1 style='font-size:3rem;'>💎</h1><h1 style='letter-spacing:-2px;'>RipariBank</h1><p style='color:#6B7280; font-weight:400;'>O seu futuro começa hoje.</p></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top:5rem; text-align:center;'><h1 style='font-size:3rem;'>💎</h1><h1 style='letter-spacing:-2px;'>RipariBank</h1><p style='color:#6B7280;'>O seu futuro começa hoje.</p></div>", unsafe_allow_html=True)
     with st.form("login_form"):
         u = st.text_input("Nome de Usuário").lower().strip()
         p = st.text_input("Senha", type="password").strip()
-        if st.form_submit_button("ACESSAR MINHA CONTA", use_container_width=True):
+        if st.form_submit_button("ACESSAR CONTA", use_container_width=True):
             df = run_query("SELECT * FROM users WHERE lower(name)=:u AND password=:p", params={'u': u, 'p': p})
             if df is not None and not df.empty:
                 st.session_state.logged_in = True
@@ -211,11 +213,10 @@ if not st.session_state.logged_in:
                 st.session_state.role = df.iloc[0]['role']
                 st.cache_data.clear()
                 st.rerun()
-            else: st.toast("Usuário ou senha incorretos.")
+            else: st.toast("Erro no login.")
 
-# --- 5. DASHBOARD PRINCIPAL ---
+# --- 5. DASHBOARD ---
 else:
-    # --- HEADER ---
     h_col1, h_col2, h_col3 = st.columns([2.5, 0.6, 0.6])
     with h_col1:
         st.markdown("<div class='header-logo'>💎 RipariBank</div>", unsafe_allow_html=True)
@@ -230,7 +231,6 @@ else:
             st.rerun()
     st.markdown("<div style='margin-top:1.5rem;'></div>", unsafe_allow_html=True)
 
-    # --- ÁREA ADMIN ---
     if st.session_state.role == 'admin':
         st.markdown("<div class='balance-label'>Saldos da Família</div>", unsafe_allow_html=True)
         df_saldos = get_cached_family_balances()
@@ -242,7 +242,7 @@ else:
                         <span style='font-size:1.2rem;'>👤</span>
                         <span style='font-weight:600;'>{row['name'].title()}</span>
                     </div>
-                    <span style='color:#10B981; font-weight:700; font-size:1.1rem;'>R$ {row['balance']:,.2f}</span>
+                    <span style='color:#10B981; font-weight:700;'>R$ {row['balance']:,.2f}</span>
                 </div>
                 """, unsafe_allow_html=True)
         
@@ -254,30 +254,25 @@ else:
                     target = st.selectbox("Para:", users_df['name'].tolist())
                     val = st.number_input("Valor (R$)", min_value=0.0, step=1.0)
                     tipo = st.radio("Operação", ["Depósito", "Retirada"], horizontal=True)
-                    desc = st.text_input("Referência / Motivo")
+                    desc = st.text_input("Motivo")
                     if st.form_submit_button("CONFIRMAR TRANSAÇÃO", use_container_width=True):
                         if val > 0 and desc:
                             u_target_id = users_df[users_df['name'] == target]['id'].values[0]
                             final_val = val if tipo == "Depósito" else -val
                             run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, :ts, :t)", 
                                       params={'uid': int(u_target_id), 'amt': final_val, 'desc': desc, 'ts': datetime.now(), 't': tipo}, commit=True)
-                            st.success("Transação concluída!")
+                            st.success("Concluído!")
                             time.sleep(1); st.rerun()
 
-    # --- ÁREA USUÁRIO (KIDS) ---
     else:
         saldo = get_cached_balance(st.session_state.user_id)
         st.markdown(f"""
         <div class="glass-card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div class="balance-label">Saldo Atual</div>
-                <div style="font-size:0.7rem; color:#4B5563; font-weight:700;">USER: {st.session_state.user_name.upper()}</div>
+                <div style="font-size:0.7rem; color:#4B5563; font-weight:700;">{st.session_state.user_name.upper()}</div>
             </div>
             <div class="balance-value">R$ {saldo:,.2f}</div>
-            <div style="display:flex; gap:10px; margin-top:10px;">
-                <div style="background:rgba(16,185,129,0.1); padding:4px 10px; border-radius:8px; font-size:0.7rem; color:#10B981;">● CONTA ATIVA</div>
-                <div style="background:rgba(255,255,255,0.05); padding:4px 10px; border-radius:8px; font-size:0.7rem; color:#9CA3AF;">💎 RIPARI PREMIER</div>
-            </div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -297,19 +292,16 @@ else:
                 st.area_chart(df_hist.set_index('data')['valor'], color="#10B981", height=220)
         
         with tabs[2]:
-            # CALCULADORA
             st.markdown(f"<div class='calc-display'>{st.session_state.calc_expr if st.session_state.calc_expr else '0'}</div>", unsafe_allow_html=True)
             
             def k_press(k): st.session_state.calc_expr += str(k)
             def k_clr(): st.session_state.calc_expr = ""
             def k_solve():
                 try: 
-                    # Avaliação segura básica
                     expr = st.session_state.calc_expr.replace('×', '*').replace('÷', '/')
                     st.session_state.calc_expr = str(eval(expr))
                 except: st.session_state.calc_expr = "Erro"
 
-            # Grid de botões com colunas Streamlit
             c1, c2, c3, c4 = st.columns(4)
             c1.button("7", key="n7", on_click=k_press, args=("7",))
             c2.button("8", key="n8", on_click=k_press, args=("8",))
@@ -324,16 +316,15 @@ else:
             c1.button("1", key="n1", on_click=k_press, args=("1",))
             c2.button("2", key="n2", on_click=k_press, args=("2",))
             c3.button("3", key="n3", on_click=k_press, args=("3",))
-            # Símbolo "Menos" Matemático (U+2212)
             c4.button("−", key="nsub", on_click=k_press, args=("-",))
 
             c1.button("0", key="n0", on_click=k_press, args=("0",))
             c2.button(".", key="ndot", on_click=k_press, args=(".",))
             c3.button("C", key="nclr", on_click=k_clr)
-            # Símbolo "Mais" Matemático Robusto
+            # O sinal de mais agora está blindado pelo CSS interno
             c4.button("+", key="nadd", on_click=k_press, args=("+",))
 
             st.button("=", key="nsolve", type="primary", use_container_width=True, on_click=k_solve)
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#262626; font-size:0.65rem; margin-top:4rem;'>RipariBank v7.2 • 2024</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#262626; font-size:0.65rem; margin-top:4rem;'>RipariBank v7.3 • 2024</div>", unsafe_allow_html=True)
