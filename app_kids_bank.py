@@ -11,7 +11,7 @@ st.set_page_config(page_title="RipariBank Obsidian", page_icon="💎", layout="c
 # --- 2. DICIONÁRIO DE TRADUÇÃO (i18n) ---
 TRANSLATIONS = {
     'pt': {
-        'protocol': 'Obsidian Refined v9.2',
+        'protocol': 'Obsidian Refined v9.4',
         'user': 'Usuário',
         'password': 'Senha',
         'auth_btn': 'AUTENTICAR',
@@ -27,7 +27,7 @@ TRANSLATIONS = {
         'exec': 'EXECUTAR',
         'tr_success': 'Transação Confirmada.',
         'user_mgmt': '⚙️ COMANDO DE USUÁRIOS',
-        'tab_list': 'Listagem',
+        'tab_list': 'Gerenciar',
         'tab_add': 'Novo Registro',
         'lvl': 'Nível',
         'create_acc': 'CADASTRAR',
@@ -46,10 +46,13 @@ TRANSLATIONS = {
         'fx_cap': 'Taxas de câmbio referenciais.',
         'logout': 'Sair',
         'refresh': 'Atualizar',
-        'welcome': 'Olá'
+        'welcome': 'Olá',
+        'actions': 'Ações',
+        'del_user': 'Excluir Usuário',
+        'change_pw': 'Trocar Senha'
     },
     'en': {
-        'protocol': 'Obsidian Refined v9.2',
+        'protocol': 'Obsidian Refined v9.4',
         'user': 'User',
         'password': 'Password',
         'auth_btn': 'AUTHENTICATE',
@@ -65,7 +68,7 @@ TRANSLATIONS = {
         'exec': 'EXECUTE',
         'tr_success': 'Transaction Confirmed.',
         'user_mgmt': '⚙️ USER COMMAND',
-        'tab_list': 'List',
+        'tab_list': 'Manage',
         'tab_add': 'New Registry',
         'lvl': 'Level',
         'create_acc': 'REGISTER',
@@ -84,10 +87,13 @@ TRANSLATIONS = {
         'fx_cap': 'Exchange rates based on market reference.',
         'logout': 'Logout',
         'refresh': 'Refresh',
-        'welcome': 'Hello'
+        'welcome': 'Hello',
+        'actions': 'Actions',
+        'del_user': 'Delete User',
+        'change_pw': 'Change Password'
     },
     'es': {
-        'protocol': 'Obsidian Refined v9.2',
+        'protocol': 'Obsidian Refined v9.4',
         'user': 'Usuario',
         'password': 'Contraseña',
         'auth_btn': 'AUTENTICAR',
@@ -103,14 +109,14 @@ TRANSLATIONS = {
         'exec': 'EJECUTAR',
         'tr_success': 'Transacción Confirmada.',
         'user_mgmt': '⚙️ COMANDO DE USUARIOS',
-        'tab_list': 'Listado',
+        'tab_list': 'Gestionar',
         'tab_add': 'Nuevo Registro',
         'lvl': 'Nivel',
         'create_acc': 'REGISTRAR',
         'bal_acc': 'Saldo en Cuenta',
         'enc_conn': '● CONEXIÓN SEGURA',
         'tab_hist': '📊 Historial',
-        'tab_evo': '📈 Evolução',
+        'tab_evo': '📈 Evolución',
         'tab_calc': '🧮 Calculadora',
         'tab_fx': '🌍 Cambio',
         'no_reg': 'Sin registros por ahora.',
@@ -122,7 +128,10 @@ TRANSLATIONS = {
         'fx_cap': 'Tasas de cambio basadas en referencias.',
         'logout': 'Salir',
         'refresh': 'Actualizar',
-        'welcome': 'Hola'
+        'welcome': 'Hola',
+        'actions': 'Acciones',
+        'del_user': 'Eliminar Usuario',
+        'change_pw': 'Cambiar Contraseña'
     }
 }
 
@@ -146,7 +155,6 @@ st.markdown("""
     #MainMenu, footer, header { visibility: hidden !important; }
     .block-container { padding-top: 1.5rem !important; max-width: 500px !important; }
 
-    /* Estilo do Logo */
     .obsidian-logo {
         font-size: 1.5rem;
         font-weight: 800;
@@ -156,10 +164,8 @@ st.markdown("""
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         text-transform: uppercase;
-        margin-bottom: 0px;
     }
     
-    /* Obsidian Cards */
     .obsidian-card {
         background: #111114;
         border: 1px solid #222226;
@@ -193,7 +199,6 @@ st.markdown("""
         letter-spacing: -2px;
     }
 
-    /* --- BOTÕES REFINADOS (GLOSSY) --- */
     .stButton>button {
         border-radius: 12px !important;
         background: #1A1A1D !important;
@@ -204,7 +209,6 @@ st.markdown("""
         height: 44px !important;
         width: 100% !important;
         transition: all 0.2s ease !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.2) !important;
     }
     
     .stButton>button:hover {
@@ -212,23 +216,25 @@ st.markdown("""
         color: #00E5FF !important;
         background: #1F1F23 !important;
         transform: translateY(-1px);
-        box-shadow: 0 6px 15px rgba(0, 229, 255, 0.15) !important;
     }
 
-    /* Botões de Ação Especiais */
     div[data-testid="stFormSubmitButton"] button {
         background: linear-gradient(135deg, #00E5FF 0%, #007BFF 100%) !important;
         color: #000000 !important;
         border: none !important;
         font-weight: 700 !important;
-        text-transform: uppercase;
-        letter-spacing: 1px;
     }
 
-    /* --- COMBOBOX DE IDIOMA (PILL STYLE) --- */
-    div[data-testid="stHeader"] { background: transparent !important; }
-    
-    /* Target selectbox container specifically */
+    /* Estilo para Botões de Exclusão */
+    button[key*="del_"] {
+        border-color: #EF4444 !important;
+        color: #EF4444 !important;
+    }
+    button[key*="del_"]:hover {
+        background: #EF4444 !important;
+        color: white !important;
+    }
+
     .stSelectbox div[data-baseweb="select"] {
         background-color: #111114 !important;
         border: 1px solid #222226 !important;
@@ -237,14 +243,7 @@ st.markdown("""
         min-height: 32px !important;
         font-size: 0.75rem !important;
     }
-    
-    .stSelectbox div[data-baseweb="select"] > div {
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-        height: 30px !important;
-    }
 
-    /* Calculadora */
     .display-calc {
         background-color: #050506;
         border: 2px solid #1F1F23;
@@ -259,25 +258,16 @@ st.markdown("""
         display: flex;
         align-items: center;
         justify-content: flex-end;
-        box-shadow: inset 0 2px 15px rgba(0,0,0,0.9);
     }
 
-    /* Tabs */
     .stTabs [data-baseweb="tab-list"] { background-color: transparent; border-bottom: 1px solid #222226; gap: 4px; }
-    .stTabs [data-baseweb="tab"] { 
-        color: #6B7280; 
-        font-weight: 600; 
-        font-size: 0.8rem;
-        padding: 10px 12px;
-    }
+    .stTabs [data-baseweb="tab"] { color: #6B7280; font-weight: 600; font-size: 0.8rem; }
     .stTabs [aria-selected="true"] { color: #00E5FF !important; border-bottom-color: #00E5FF !important; }
 
-    /* Inputs */
     .stTextInput input, .stNumberInput input {
         background-color: #0F0F12 !important;
         border: 1px solid #222226 !important;
         border-radius: 12px !important;
-        padding: 10px !important;
     }
 
     hr { border: 0; border-top: 1px solid #222226; margin: 1.5rem 0; }
@@ -321,7 +311,7 @@ def get_cached_balance(uid):
 @st.cache_data(ttl=600)
 def get_cached_family_balances():
     query = """
-        SELECT u.name, COALESCE(SUM(t.amount), 0) as balance 
+        SELECT u.id, u.name, COALESCE(SUM(t.amount), 0) as balance 
         FROM users u 
         LEFT JOIN transactions t ON u.id = t.user_id 
         WHERE u.role = 'user' 
@@ -363,10 +353,10 @@ else:
         st.markdown("<div class='obsidian-logo'>💎 RipariBank</div>", unsafe_allow_html=True)
     
     with n_col2:
-        # Seletor Pill Style
         options = {'🇧🇷 PT': 'pt', '🇺🇸 EN': 'en', '🇪🇸 ES': 'es'}
-        current_idx = list(options.values()).index(st.session_state.lang)
-        new_lang_label = st.selectbox("", options.keys(), index=current_idx, label_visibility="collapsed", key="lang_pill")
+        inv_options = {v: k for k, v in options.items()}
+        curr_lang = st.session_state.lang if st.session_state.lang in inv_options else 'pt'
+        new_lang_label = st.selectbox("", options.keys(), index=list(options.values()).index(curr_lang), label_visibility="collapsed", key="lang_pill")
         new_lang_code = options[new_lang_label]
         if new_lang_code != st.session_state.lang:
             st.session_state.lang = new_lang_code
@@ -409,6 +399,48 @@ else:
                             run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, :ts, :t)", 
                                       params={'uid': int(u_target_id), 'amt': val if db_t == 'Depósito' else -val, 'desc': desc, 'ts': datetime.now(), 't': db_t}, commit=True)
                             st.success(t('tr_success')); time.sleep(1); st.rerun()
+
+        # --- MÓDULO DE GESTÃO RESTAURADO ---
+        with st.expander(t('user_mgmt')):
+            t_l, t_a = st.tabs([t('tab_list'), t('tab_add')])
+            with t_l:
+                all_u = run_query("SELECT id, name, role, language FROM users ORDER BY name")
+                if all_u is not None and not all_u.empty:
+                    st.dataframe(all_u, use_container_width=True, hide_index=True)
+                    
+                    st.markdown("---")
+                    st.markdown(f"<div class='label-caption'>{t('actions')}</div>", unsafe_allow_html=True)
+                    sel_user_name = st.selectbox(t('user'), all_u['name'].tolist(), key="sel_mod")
+                    sel_u_data = all_u[all_u['name'] == sel_user_name].iloc[0]
+                    
+                    c_pw, c_del = st.columns(2)
+                    with c_pw:
+                        with st.popover(t('change_pw'), use_container_width=True):
+                            new_pw = st.text_input(t('password'), type="password", key="new_pw_f")
+                            if st.button(t('exec'), key="btn_pw"):
+                                run_query("UPDATE users SET password=:p WHERE id=:id", 
+                                          params={'p': new_pw, 'id': int(sel_u_data['id'])}, commit=True)
+                                st.success("OK")
+                    
+                    with c_del:
+                        if st.button(t('del_user'), key=f"del_{sel_u_data['id']}", use_container_width=True):
+                            if int(sel_u_data['id']) != st.session_state.user_id:
+                                run_query("DELETE FROM transactions WHERE user_id=:id", params={'id': int(sel_u_data['id'])}, commit=True)
+                                run_query("DELETE FROM users WHERE id=:id", params={'id': int(sel_u_data['id'])}, commit=True)
+                                st.rerun()
+                            else:
+                                st.warning("Self-delete blocked.")
+
+            with t_a:
+                with st.form("add_user_form"):
+                    nn = st.text_input(t('user')).lower().strip()
+                    np = st.text_input(t('password'))
+                    nr = st.selectbox(t('lvl'), ["user", "admin"])
+                    if st.form_submit_button(t('create_acc'), use_container_width=True):
+                        if nn and np:
+                            run_query("INSERT INTO users (name, role, password, language) VALUES (:n, :r, :p, 'pt')", 
+                                      params={'n': nn, 'r': nr, 'p': np}, commit=True)
+                            st.rerun()
 
     else:
         saldo_brl = get_cached_balance(st.session_state.user_id)
@@ -476,4 +508,4 @@ else:
             st.caption(t('fx_cap'))
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#222226; font-size:0.65rem; margin-top:3rem;'>RIPARIBANK v9.2 • 2024</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#222226; font-size:0.65rem; margin-top:3rem;'>RIPARIBANK v9.4 • 2024</div>", unsafe_allow_html=True)
