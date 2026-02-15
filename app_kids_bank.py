@@ -7,7 +7,7 @@ import time
 # --- 1. CONFIGURAÇÃO DE TEMA ---
 st.set_page_config(page_title="RipariBank Premium", page_icon="💎", layout="centered")
 
-# CSS PREMIUM NEO-BANK UI - V7.3 DEFINITIVA
+# CSS PREMIUM NEO-BANK UI - V7.4 (GESTÃO RESTAURADA)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -70,18 +70,16 @@ st.markdown("""
         letter-spacing: -1px;
     }
 
-    /* --- CORREÇÃO DEFINITIVA DE BOTÕES E SÍMBOLOS --- */
-    /* Alvo: O botão em si */
+    /* --- CORREÇÃO DE BOTÕES E SÍMBOLOS --- */
     .stButton>button {
         border-radius: 16px !important;
         background-color: #111111 !important;
         color: #FFFFFF !important;
         border: 1px solid #262626 !important;
-        font-size: 1.3rem !important; /* Tamanho robusto */
+        font-size: 1.3rem !important;
         font-weight: 700 !important;
         height: 60px !important;
         width: 100% !important;
-        min-width: 60px !important;
         display: grid !important;
         place-items: center !important;
         padding: 0 !important;
@@ -90,12 +88,11 @@ st.markdown("""
         transition: all 0.2s ease-in-out !important;
     }
 
-    /* Alvo: O texto/markdown dentro do botão (O CULPADO DO ERRO) */
+    /* Reset do Markdown interno para evitar que o "+" suma */
     .stButton>button div[data-testid="stMarkdownContainer"] p {
         margin: 0 !important;
         padding: 0 !important;
         line-height: 1 !important;
-        font-size: inherit !important;
     }
     
     .stButton>button:hover {
@@ -104,7 +101,6 @@ st.markdown("""
         color: #10B981 !important;
     }
 
-    /* Cores Específicas para Operadores */
     button[key*="nadd"], button[key*="nsub"], button[key*="nmul"], button[key*="ndiv"] {
         color: #10B981 !important;
     }
@@ -264,6 +260,46 @@ else:
                             st.success("Concluído!")
                             time.sleep(1); st.rerun()
 
+        # --- MÓDULO RESTAURADO: GESTÃO DE MEMBROS ---
+        with st.expander("⚙️ GESTÃO DE MEMBROS"):
+            tab_list, tab_add = st.tabs(["Lista", "Adicionar"])
+            
+            with tab_list:
+                all_u = run_query("SELECT id, name, role FROM users ORDER BY name")
+                if all_u is not None and not all_u.empty:
+                    st.dataframe(all_u, use_container_width=True, hide_index=True)
+                    
+                    sel_u = st.selectbox("Ações para Usuário:", all_u['name'].tolist())
+                    u_row = all_u[all_u['name'] == sel_u].iloc[0]
+                    
+                    col_p, col_d = st.columns(2)
+                    with col_p:
+                        with st.popover("Trocar Senha", use_container_width=True):
+                            new_pw = st.text_input("Nova Senha", type="password")
+                            if st.button("Salvar Senha"):
+                                run_query("UPDATE users SET password=:p WHERE id=:id", 
+                                          params={'p': new_pw, 'id': int(u_row['id'])}, commit=True)
+                                st.toast("Senha atualizada!")
+                    
+                    with col_d:
+                        if st.button("❌ Excluir", use_container_width=True):
+                            if int(u_row['id']) != st.session_state.user_id:
+                                run_query("DELETE FROM transactions WHERE user_id=:id", params={'id': int(u_row['id'])}, commit=True)
+                                run_query("DELETE FROM users WHERE id=:id", params={'id': int(u_row['id'])}, commit=True)
+                                st.rerun()
+                            else: st.warning("Não pode se auto-excluir.")
+            
+            with tab_add:
+                with st.form("add_user_form"):
+                    nn = st.text_input("Nome").lower().strip()
+                    np = st.text_input("Senha Inicial")
+                    nr = st.selectbox("Perfil", ["user", "admin"])
+                    if st.form_submit_button("CRIAR CONTA"):
+                        if nn and np:
+                            run_query("INSERT INTO users (name, role, password) VALUES (:n, :r, :p)", 
+                                      params={'n': nn, 'r': nr, 'p': np}, commit=True)
+                            st.rerun()
+
     else:
         saldo = get_cached_balance(st.session_state.user_id)
         st.markdown(f"""
@@ -321,10 +357,9 @@ else:
             c1.button("0", key="n0", on_click=k_press, args=("0",))
             c2.button(".", key="ndot", on_click=k_press, args=(".",))
             c3.button("C", key="nclr", on_click=k_clr)
-            # O sinal de mais agora está blindado pelo CSS interno
             c4.button("+", key="nadd", on_click=k_press, args=("+",))
 
             st.button("=", key="nsolve", type="primary", use_container_width=True, on_click=k_solve)
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#262626; font-size:0.65rem; margin-top:4rem;'>RipariBank v7.3 • 2024</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#262626; font-size:0.65rem; margin-top:4rem;'>RipariBank v7.4 • 2024</div>", unsafe_allow_html=True)
