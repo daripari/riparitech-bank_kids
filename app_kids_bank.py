@@ -11,7 +11,7 @@ st.set_page_config(page_title="Banco da Família Obsidian", page_icon="💎", la
 # --- 2. DICIONÁRIO DE TRADUÇÃO (i18n) ---
 TRANSLATIONS = {
     'pt': {
-        'protocol': 'Banco da Família v10.7',
+        'protocol': 'Banco da Família v11.0',
         'user': 'Usuário',
         'password': 'Senha',
         'auth_btn': 'AUTENTICAR',
@@ -36,6 +36,7 @@ TRANSLATIONS = {
         'tab_hist': '📊 Histórico',
         'tab_calc': '🧮 Calculadora',
         'tab_fx': '🌍 Câmbio',
+        'tab_transf': '💸 Transferir',
         'no_reg': 'Sem registros no momento.',
         'calc_btn': 'CALCULAR',
         'fx_title': 'Conversão Internacional',
@@ -54,10 +55,18 @@ TRANSLATIONS = {
         'notif_clear': 'Limpar Tudo',
         'notif_new': 'Você tem novas mensagens! 🔔',
         'msg_gain': 'Você recebeu um acréscimo de',
-        'msg_loss': 'Houve uma retirada de'
+        'msg_loss': 'Houve uma retirada de',
+        'tr_dest': 'Para quem?',
+        'tr_desc_lbl': 'Para que é isso?',
+        'tr_desc_ph': 'Ex: Pagamento da Pizza',
+        'tr_btn_send': 'ENVIAR AGORA',
+        'tr_err_bal': 'Saldo Insuficiente para essa operação.',
+        'tr_msg_sent': 'Você enviou',
+        'tr_msg_recv': 'Você recebeu',
+        'tr_self_err': 'Você não pode transferir para si mesmo.'
     },
     'en': {
-        'protocol': 'Family Bank v10.7',
+        'protocol': 'Family Bank v11.0',
         'user': 'User',
         'password': 'Password',
         'auth_btn': 'AUTHENTICATE',
@@ -82,6 +91,7 @@ TRANSLATIONS = {
         'tab_hist': '📊 History',
         'tab_calc': '🧮 Calculator',
         'tab_fx': '🌍 Exchange',
+        'tab_transf': '💸 Transfer',
         'no_reg': 'No records found.',
         'calc_btn': 'CALCULATE',
         'fx_title': 'International Conversion',
@@ -100,10 +110,18 @@ TRANSLATIONS = {
         'notif_clear': 'Clear All',
         'notif_new': 'You have new messages! 🔔',
         'msg_gain': 'You received an increase of',
-        'msg_loss': 'There was a decrease of'
+        'msg_loss': 'There was a decrease of',
+        'tr_dest': 'To whom?',
+        'tr_desc_lbl': 'What is this for?',
+        'tr_desc_ph': 'Ex: Pizza payment',
+        'tr_btn_send': 'SEND NOW',
+        'tr_err_bal': 'Insufficient funds.',
+        'tr_msg_sent': 'You sent',
+        'tr_msg_recv': 'You received',
+        'tr_self_err': 'You cannot transfer to yourself.'
     },
     'es': {
-        'protocol': 'Banco de la Familia v10.7',
+        'protocol': 'Banco de la Familia v11.0',
         'user': 'Usuario',
         'password': 'Contraseña',
         'auth_btn': 'AUTENTICAR',
@@ -128,6 +146,7 @@ TRANSLATIONS = {
         'tab_hist': '📊 Historial',
         'tab_calc': '🧮 Calculadora',
         'tab_fx': '🌍 Cambio',
+        'tab_transf': '💸 Transferir',
         'no_reg': 'Sin registros por ahora.',
         'calc_btn': 'CALCULAR',
         'fx_title': 'Conversión Internacional',
@@ -146,7 +165,15 @@ TRANSLATIONS = {
         'notif_clear': 'Limpiar Todo',
         'notif_new': '¡Tienes nuevos mensajes! 🔔',
         'msg_gain': 'Recibiste un incremento de',
-        'msg_loss': 'Hubo un decrecimiento de'
+        'msg_loss': 'Hubo un decrecimiento de',
+        'tr_dest': '¿A quién?',
+        'tr_desc_lbl': '¿Para qué es esto?',
+        'tr_desc_ph': 'Ej: Pago de Pizza',
+        'tr_btn_send': 'ENVIAR AHORA',
+        'tr_err_bal': 'Fondos insuficientes.',
+        'tr_msg_sent': 'Enviaste',
+        'tr_msg_recv': 'Recibiste',
+        'tr_self_err': 'No puedes transferirte a ti mismo.'
     }
 }
 
@@ -154,7 +181,7 @@ def t(key):
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
-# --- CSS REFINADO & RESPONSIVO (V10.7 LEAN) ---
+# --- CSS REFINADO & RESPONSIVO (V10.7 LEAN + V11.0) ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -274,70 +301,27 @@ st.markdown("""
     hr { border: 0; border-top: 1px solid #222226; margin: 1.5rem 0; }
 
     /* --- OVERLAY DE ROTAÇÃO OBRIGATÓRIA --- */
-    #rotate-overlay {
-        display: none; /* Escondido por padrão */
-    }
+    #rotate-overlay { display: none; }
 
-    /* Regra para Celular + Vertical */
     @media only screen and (max-width: 900px) and (orientation: portrait) {
         #rotate-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: #080809;
-            z-index: 99999;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 20px;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: #080809; z-index: 99999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; padding: 20px;
         }
-
-        .rotate-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            animation: rotate-anim 2s infinite ease-in-out;
-        }
-
-        .rotate-text {
-            font-family: 'Inter', sans-serif;
-            color: #00E5FF;
-            font-weight: 700;
-            font-size: 1.2rem;
-            margin-bottom: 10px;
-        }
-        
-        .rotate-sub {
-            color: #6B7280;
-            font-size: 0.9rem;
-        }
-
+        .rotate-icon { font-size: 4rem; margin-bottom: 20px; animation: rotate-anim 2s infinite ease-in-out; }
+        .rotate-text { font-family: 'Inter', sans-serif; color: #00E5FF; font-weight: 700; font-size: 1.2rem; margin-bottom: 10px; }
+        .rotate-sub { color: #6B7280; font-size: 0.9rem; }
         @keyframes rotate-anim {
-            0% { transform: rotate(0deg); }
-            25% { transform: rotate(-90deg); }
-            50% { transform: rotate(-90deg); }
-            100% { transform: rotate(0deg); }
+            0% { transform: rotate(0deg); } 25% { transform: rotate(-90deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); }
         }
     }
     
-    /* Quando estiver em Landscape no celular, ajustamos a calculadora para ser confortável */
     @media only screen and (max-width: 900px) and (orientation: landscape) {
-        .block-container {
-            max-width: 800px !important;
-            padding-top: 1rem !important;
-        }
-        
-        div[data-testid="column"] {
-            min-width: 0 !important;
-        }
-        
-        .stButton>button {
-            height: 55px !important;
-            font-size: 1.1rem !important;
-        }
+        .block-container { max-width: 800px !important; padding-top: 1rem !important; }
+        div[data-testid="column"] { min-width: 0 !important; }
+        .stButton>button { height: 55px !important; font-size: 1.1rem !important; }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -541,17 +525,58 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-        # --- TABS REORGANIZADOS (SEM EVOLUÇÃO) ---
-        tabs = st.tabs([t('tab_hist'), t('tab_calc'), t('tab_fx')])
+        # --- TABS REORGANIZADOS (HISTORICO, TRANSFERIR, CALCULADORA, CAMBIO) ---
+        tabs = st.tabs([t('tab_hist'), t('tab_transf'), t('tab_calc'), t('tab_fx')])
         
         with tabs[0]:
             df_h = get_cached_history(st.session_state.user_id)
             if df_h is not None and not df_h.empty: st.dataframe(df_h, use_container_width=True, hide_index=True)
             else: st.info(t('no_reg'))
         
-        # --- TAB CALCULADORA (AGORA NO ÍNDICE 1) ---
+        # --- NOVO: ABA TRANSFERIR ---
         with tabs[1]:
-            # Overlay de Rotação
+            st.markdown(f"<div class='label-caption' style='margin-bottom:10px;'>{t('quick_tr')}</div>", unsafe_allow_html=True)
+            
+            # Buscar irmãos (outros 'user' que não eu mesmo)
+            siblings = run_query("SELECT id, name FROM users WHERE role='user' AND id != :uid", params={'uid': st.session_state.user_id})
+            
+            if siblings is not None and not siblings.empty:
+                with st.form("p2p_transfer"):
+                    target_sibling = st.selectbox(t('tr_dest'), siblings['name'].tolist())
+                    amt_send = st.number_input(t('amount'), min_value=0.0, step=1.0)
+                    desc_send = st.text_input(t('tr_desc_lbl'), placeholder=t('tr_desc_ph'))
+                    
+                    if st.form_submit_button(t('tr_btn_send'), use_container_width=True):
+                        # Validação de Saldo
+                        if amt_send > saldo_brl:
+                            st.error(t('tr_err_bal'))
+                        elif amt_send > 0 and desc_send:
+                            dest_id = siblings[siblings['name'] == target_sibling]['id'].values[0]
+                            
+                            # 1. Débito no Remetente
+                            run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, :ts, 'Transferência Enviada')", 
+                                      params={'uid': st.session_state.user_id, 'amt': -amt_send, 'desc': f"Para: {target_sibling.title()} | {desc_send}", 'ts': datetime.now()}, commit=True)
+                            
+                            # 2. Crédito no Destinatário
+                            run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, :ts, 'Transferência Recebida')", 
+                                      params={'uid': int(dest_id), 'amt': amt_send, 'desc': f"De: {st.session_state.user_name.title()} | {desc_send}", 'ts': datetime.now()}, commit=True)
+
+                            # 3. Notificação para Remetente
+                            run_query("INSERT INTO notifications (user_id, message, timestamp) VALUES (:uid, :msg, :ts)",
+                                      params={'uid': st.session_state.user_id, 'msg': f"{t('tr_msg_sent')} R$ {amt_send} -> {target_sibling.title()}", 'ts': datetime.now()}, commit=True)
+
+                            # 4. Notificação para Destinatário
+                            run_query("INSERT INTO notifications (user_id, message, timestamp) VALUES (:uid, :msg, :ts)",
+                                      params={'uid': int(dest_id), 'msg': f"{t('tr_msg_recv')} R$ {amt_send} <- {st.session_state.user_name.title()}", 'ts': datetime.now()}, commit=True)
+                            
+                            st.success(t('tr_success'))
+                            time.sleep(1.5)
+                            st.rerun()
+            else:
+                st.info("Nenhum outro usuário disponível para transferência.")
+
+        # --- TAB CALCULADORA ---
+        with tabs[2]:
             st.markdown("""
             <div id="rotate-overlay">
                 <div class="rotate-icon">📱</div>
@@ -586,8 +611,8 @@ else:
             c4.button("_+_", key="kadd", on_click=k_p, args=("+",))
             st.button(t('calc_btn'), key="nsolve", type="primary", use_container_width=True, on_click=k_s)
 
-        # --- TAB CÂMBIO (AGORA NO ÍNDICE 2) ---
-        with tabs[2]:
+        # --- TAB CÂMBIO ---
+        with tabs[3]:
             usd, eur = 5.05, 5.45
             s_u, s_e = saldo_brl / usd, saldo_brl / eur
             st.markdown(f"""
@@ -606,4 +631,4 @@ else:
             st.caption(t('fx_cap'))
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v10.7 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v11.0 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
