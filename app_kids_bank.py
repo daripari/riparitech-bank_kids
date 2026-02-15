@@ -11,7 +11,7 @@ st.set_page_config(page_title="Banco da Família Obsidian", page_icon="💎", la
 # --- 2. DICIONÁRIO DE TRADUÇÃO (i18n) ---
 TRANSLATIONS = {
     'pt': {
-        'protocol': 'Banco da Família v11.4',
+        'protocol': 'Banco da Família v11.5',
         'user': 'Usuário',
         'password': 'Senha',
         'auth_btn': 'AUTENTICAR',
@@ -72,7 +72,7 @@ TRANSLATIONS = {
         'chore_assignee': 'Responsável (Quem fará?)',
         'chore_deadline_d': 'Data Limite',
         'chore_deadline_t': 'Hora Limite',
-        'chore_create': 'AGENDAR TAREA',
+        'chore_create': 'AGENDAR TAREFA',
         'chore_pending': '⏳ Aprovações',
         'chore_list_admin': '🔎 Painel Unificado',
         'chore_approve': 'APROVAR PAGAMENTO',
@@ -88,10 +88,16 @@ TRANSLATIONS = {
         'chore_filter_kid': 'Filtrar Criança:',
         'status_open': 'Aberto',
         'status_pending': 'Em Análise',
-        'status_paid': 'Concluído'
+        'status_paid': 'Concluído',
+        'status_failed': 'Falhou (Multa)',
+        'punish_zone': '🚨 ZONA DE PUNIÇÃO (ATRASOS)',
+        'punish_days': 'dias de atraso',
+        'punish_val': 'Valor da Multa (R$)',
+        'punish_btn': 'APLICAR MULTA & ENCERRAR',
+        'punish_msg': 'Multa aplicada por não cumprimento de tarefa'
     },
     'en': {
-        'protocol': 'Family Bank v11.4',
+        'protocol': 'Family Bank v11.5',
         'user': 'User',
         'password': 'Password',
         'auth_btn': 'AUTHENTICATE',
@@ -168,10 +174,16 @@ TRANSLATIONS = {
         'chore_filter_kid': 'Filter Child:',
         'status_open': 'Open',
         'status_pending': 'Pending',
-        'status_paid': 'Done'
+        'status_paid': 'Done',
+        'status_failed': 'Failed (Fined)',
+        'punish_zone': '🚨 PUNISHMENT ZONE (OVERDUE)',
+        'punish_days': 'days overdue',
+        'punish_val': 'Fine Amount (R$)',
+        'punish_btn': 'APPLY FINE & CLOSE',
+        'punish_msg': 'Fine applied for failed chore'
     },
     'es': {
-        'protocol': 'Banco de la Familia v11.4',
+        'protocol': 'Banco de la Familia v11.5',
         'user': 'Usuario',
         'password': 'Contraseña',
         'auth_btn': 'AUTENTICAR',
@@ -248,7 +260,13 @@ TRANSLATIONS = {
         'chore_filter_kid': 'Filtrar Niño:',
         'status_open': 'Abierto',
         'status_pending': 'Pendiente',
-        'status_paid': 'Concluido'
+        'status_paid': 'Concluido',
+        'status_failed': 'Falló (Multa)',
+        'punish_zone': '🚨 ZONA DE CASTIGO (ATRASOS)',
+        'punish_days': 'días de retraso',
+        'punish_val': 'Monto Multa (R$)',
+        'punish_btn': 'APLICAR MULTA Y CERRAR',
+        'punish_msg': 'Multa aplicada por tarea fallida'
     }
 }
 
@@ -256,7 +274,7 @@ def t(key):
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
-# --- CSS REFINADO & RESPONSIVO (V11.4) ---
+# --- CSS REFINADO & RESPONSIVO (V11.5) ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -345,11 +363,11 @@ st.markdown("""
         font-weight: 700 !important;
     }
 
-    button[key*="del_"] {
+    button[key*="del_"], button[key*="punish_"] {
         border-color: #EF4444 !important;
         color: #EF4444 !important;
     }
-    button[key*="del_"]:hover {
+    button[key*="del_"]:hover, button[key*="punish_"]:hover {
         background: #EF4444 !important;
         color: white !important;
     }
@@ -366,12 +384,8 @@ st.markdown("""
     
     /* Botão de Limpeza */
     button[key="btn_clean_chores"] {
-        border-color: #EF4444 !important;
-        color: #EF4444 !important;
-    }
-    button[key="btn_clean_chores"]:hover {
-        background: #EF4444 !important;
-        color: white !important;
+        border-color: #A1A1AA !important;
+        color: #A1A1AA !important;
     }
 
     .notif-badge {
@@ -575,7 +589,7 @@ else:
                 st.markdown(f"<div class='row-item'><span style='font-weight:600;'>{row['name'].title()}</span><span style='color:#00E5FF; font-family:monospace; font-weight:700;'>R$ {row['balance']:,.2f}</span></div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
         
-        # --- GESTÃO DE TAREFAS (ADMIN - v11.4) ---
+        # --- GESTÃO DE TAREFAS (ADMIN - v11.5) ---
         with st.expander(t('chore_mgmt')):
             ct1, ct2, ct3 = st.tabs([t('chore_new_title'), t('chore_pending'), t('chore_list_admin')])
             
@@ -637,15 +651,61 @@ else:
                 else:
                     st.info("Nenhuma tarefa aguardando aprovação.")
             
-            # 3. MONITORAMENTO UNIFICADO (v11.4)
+            # 3. MONITORAMENTO UNIFICADO + PUNIÇÃO (v11.5)
             with ct3:
+                # --- ZONA DE PUNIÇÃO (Novo) ---
+                overdue_chores = run_query("""
+                    SELECT c.id, c.description, c.reward, c.deadline, u.name as kid_name, u.id as kid_id 
+                    FROM chores c JOIN users u ON c.assigned_to = u.id 
+                    WHERE c.status = 'open' AND c.deadline < NOW()
+                """)
+                
+                if overdue_chores is not None and not overdue_chores.empty:
+                    st.markdown(f"""
+                    <div style='background-color:#2A1215; border:1px solid #EF4444; border-radius:12px; padding:15px; margin-bottom:20px;'>
+                        <div style='color:#EF4444; font-weight:800; font-size:0.9rem; display:flex; align-items:center; gap:8px;'>
+                            🚨 {t('punish_zone')}
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    for _, oc in overdue_chores.iterrows():
+                        days_late = (datetime.now() - pd.to_datetime(oc['deadline'])).days
+                        with st.container():
+                            st.markdown(f"""
+                            <div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;'>
+                                <div>
+                                    <span style='font-weight:700; color:#EF4444;'>{oc['kid_name'].title()}</span>: {oc['description']}
+                                </div>
+                                <div style='font-size:0.8rem; color:#A1A1AA;'>{days_late} {t('punish_days')}</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                            pc1, pc2 = st.columns([0.6, 0.4])
+                            p_val = pc1.number_input(t('punish_val'), min_value=0.0, step=0.5, value=float(oc['reward']), key=f"pval_{oc['id']}")
+                            if pc2.button(t('punish_btn'), key=f"punish_{oc['id']}", use_container_width=True):
+                                # 1. Atualizar tarefa para FAILED
+                                run_query("UPDATE chores SET status='failed' WHERE id=:cid", params={'cid': oc['id']}, commit=True)
+                                
+                                # 2. Aplicar Multa Financeira (Débito)
+                                if p_val > 0:
+                                    run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, :ts, 'Multa por Atraso')", 
+                                              params={'uid': int(oc['kid_id']), 'amt': -p_val, 'desc': f"{t('punish_msg')}: {oc['description']}", 'ts': datetime.now()}, commit=True)
+                                    
+                                    # 3. Notificar
+                                    run_query("INSERT INTO notifications (user_id, message, timestamp) VALUES (:uid, :msg, :ts)",
+                                              params={'uid': int(oc['kid_id']), 'msg': f"🚨 MULTA APLICADA: R$ {p_val} ({oc['description']} não realizada)", 'ts': datetime.now()}, commit=True)
+                                
+                                st.warning("Punição aplicada com sucesso.")
+                                time.sleep(1.5)
+                                st.rerun()
+                    st.markdown("---")
+
+                # --- FILTROS E TABELA UNIFICADA ---
                 kids_df = run_query("SELECT id, name FROM users WHERE role='user'")
                 if kids_df is not None and not kids_df.empty:
-                    
-                    # Filtros Dinâmicos
                     f_col1, f_col2 = st.columns(2)
                     
-                    status_opts = {'open': t('status_open'), 'pending': t('status_pending'), 'paid': t('status_paid')}
+                    status_opts = {'open': t('status_open'), 'pending': t('status_pending'), 'paid': t('status_paid'), 'failed': t('status_failed')}
                     inv_status = {v: k for k, v in status_opts.items()}
                     
                     with f_col1:
@@ -655,59 +715,33 @@ else:
                     with f_col2:
                         sel_kids = st.multiselect(t('chore_filter_kid'), options=kids_df['name'].tolist(), default=kids_df['name'].tolist())
 
-                    # Query Unificada
                     if sel_status_db and sel_kids:
                         base_sql = "SELECT u.name as kid_name, c.description, c.reward, c.status, c.deadline FROM chores c JOIN users u ON c.assigned_to = u.id WHERE 1=1"
-                        
-                        # Construção Dinâmica (Segura)
-                        # Nota: Em SQL puro, usaríamos cláusulas IN (:list), mas SQLAlchemy text() com listas tem nuances.
-                        # Vamos filtrar no Pandas para máxima flexibilidade visual, já que o volume de dados é baixo.
-                        # Trazemos tudo e filtramos no Python.
-                        
                         all_chores_raw = run_query(base_sql)
                         
                         if all_chores_raw is not None and not all_chores_raw.empty:
-                            # Filtragem Python
                             filtered_df = all_chores_raw[
                                 (all_chores_raw['status'].isin(sel_status_db)) &
                                 (all_chores_raw['kid_name'].isin(sel_kids))
                             ].copy()
                             
                             if not filtered_df.empty:
-                                # Formatação
                                 filtered_df['reward'] = filtered_df['reward'].apply(lambda x: f"R$ {x:.2f}")
                                 filtered_df['deadline'] = pd.to_datetime(filtered_df['deadline']).dt.strftime('%d/%m %H:%M')
                                 filtered_df['status'] = filtered_df['status'].map(status_opts)
                                 
-                                filtered_df = filtered_df.rename(columns={
-                                    'kid_name': 'Criança',
-                                    'description': 'Tarefa',
-                                    'reward': 'Valor',
-                                    'status': 'Estado',
-                                    'deadline': 'Prazo'
-                                })
-                                
+                                filtered_df = filtered_df.rename(columns={'kid_name': 'Criança', 'description': 'Tarefa', 'reward': 'Valor', 'status': 'Estado', 'deadline': 'Prazo'})
                                 st.dataframe(filtered_df[['Criança', 'Tarefa', 'Valor', 'Prazo', 'Estado']], use_container_width=True, hide_index=True)
                             else:
                                 st.info("Nenhum registro com esses filtros.")
                         else:
                             st.info("Sem dados no sistema.")
                     else:
-                        st.warning("Selecione pelo menos um status e uma criança.")
+                        st.warning("Selecione os filtros.")
 
                     st.markdown("---")
-                    # Botão de Limpeza (Garbage Collection)
                     if st.button(t('chore_clean_btn'), key="btn_clean_chores"):
-                        # Remove Pagas com Deadline > 14 dias atrás
-                        # Caso deadline seja nulo (v11.1), usa created_at
-                        clean_sql = """
-                            DELETE FROM chores 
-                            WHERE status = 'paid' 
-                            AND (
-                                (deadline IS NOT NULL AND deadline < NOW() - INTERVAL '14 days') OR 
-                                (deadline IS NULL AND created_at < NOW() - INTERVAL '14 days')
-                            )
-                        """
+                        clean_sql = "DELETE FROM chores WHERE status IN ('paid', 'failed') AND ((deadline IS NOT NULL AND deadline < NOW() - INTERVAL '14 days') OR (deadline IS NULL AND created_at < NOW() - INTERVAL '14 days'))"
                         run_query(clean_sql, commit=True)
                         st.success(t('chore_clean_success'))
                         time.sleep(1.5)
@@ -907,4 +941,4 @@ else:
             st.caption(t('fx_cap'))
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v11.4 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v11.5 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
