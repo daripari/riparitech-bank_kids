@@ -6,38 +6,38 @@ from sqlalchemy import text
 import time
 
 # --- 1. CONFIGURAÇÃO DE TEMA ---
-st.set_page_config(page_title="RipariBank Obsidian", page_icon="💎", layout="centered")
+st.set_page_config(page_title="Banco da Família Obsidian", page_icon="💎", layout="centered")
 
 # --- 2. DICIONÁRIO DE TRADUÇÃO (i18n) ---
 TRANSLATIONS = {
     'pt': {
-        'protocol': 'Obsidian Refined v9.5',
-        'user': 'Usuário',
-        'password': 'Senha',
+        'protocol': 'Banco da Família v9.5',
+        'user': 'Utilizador',
+        'password': 'Palavra-passe',
         'auth_btn': 'AUTENTICAR',
         'login_err': 'Acesso Negado.',
-        'bal_family': 'Monitoramento de Ativos',
+        'bal_family': 'Monitorização de Ativos',
         'quick_tr': '💸 LANÇAMENTO TÁTICO',
-        'target_acc': 'Conta Destino:',
+        'target_acc': 'Conta de Destino:',
         'amount': 'Montante (R$)',
         'op': 'Operação',
         'op_dep': 'Depósito',
-        'op_ret': 'Retirada',
+        'op_ret': 'Levantamento',
         'reason': 'Motivo',
         'exec': 'EXECUTAR',
         'tr_success': 'Transação Confirmada.',
-        'user_mgmt': '⚙️ COMANDO DE USUÁRIOS',
-        'tab_list': 'Gerenciar',
-        'tab_add': 'Novo Registro',
+        'user_mgmt': '⚙️ COMANDO DE UTILIZADORES',
+        'tab_list': 'Gerir',
+        'tab_add': 'Novo Registo',
         'lvl': 'Nível',
-        'create_acc': 'CADASTRAR',
+        'create_acc': 'REGISTAR',
         'bal_acc': 'Saldo em Conta',
         'enc_conn': '● CONEXÃO SEGURA',
         'tab_hist': '📊 Histórico',
         'tab_evo': '📈 Evolução',
         'tab_calc': '🧮 Calculadora',
         'tab_fx': '🌍 Câmbio',
-        'no_reg': 'Sem registros no momento.',
+        'no_reg': 'Sem registos de momento.',
         'calc_btn': 'CALCULAR',
         'fx_title': 'Conversão Internacional',
         'fx_usd': 'Dólar Americano',
@@ -48,11 +48,11 @@ TRANSLATIONS = {
         'refresh': 'Atualizar',
         'welcome': 'Olá',
         'actions': 'Ações',
-        'del_user': 'Excluir Usuário',
-        'change_pw': 'Trocar Senha'
+        'del_user': 'Eliminar Utilizador',
+        'change_pw': 'Alterar Palavra-passe'
     },
     'en': {
-        'protocol': 'Obsidian Refined v9.5',
+        'protocol': 'Family Bank v9.5',
         'user': 'User',
         'password': 'Password',
         'auth_btn': 'AUTHENTICATE',
@@ -93,7 +93,7 @@ TRANSLATIONS = {
         'change_pw': 'Change Password'
     },
     'es': {
-        'protocol': 'Obsidian Refined v9.5',
+        'protocol': 'Banco de la Familia v9.5',
         'user': 'Usuario',
         'password': 'Contraseña',
         'auth_btn': 'AUTENTICAR',
@@ -139,7 +139,7 @@ def t(key):
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
-# --- CSS REFINADO (BUG FIX PARA TELA PRETA) ---
+# --- CSS REFINADO ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -152,7 +152,6 @@ st.markdown("""
     
     .stApp { background-color: #080809; }
     
-    /* Esconde elementos mas garante que a tela não quebre */
     #MainMenu, footer { visibility: hidden !important; }
     header { background-color: transparent !important; }
 
@@ -228,7 +227,6 @@ st.markdown("""
         font-weight: 700 !important;
     }
 
-    /* Estilo para Botões de Exclusão */
     button[key*="del_"] {
         border-color: #EF4444 !important;
         color: #EF4444 !important;
@@ -283,7 +281,7 @@ st.markdown("""
 def get_connection():
     try:
         return st.connection("supabase", type="sql")
-    except Exception as e:
+    except Exception:
         return None
 
 conn = get_connection()
@@ -310,7 +308,6 @@ def init_db():
     try: run_query("ALTER TABLE users ADD COLUMN IF NOT EXISTS language TEXT DEFAULT 'pt';", commit=True)
     except: pass
 
-# Inicializa apenas se a conexão existir
 if conn:
     init_db()
 
@@ -341,12 +338,11 @@ if 'lang' not in st.session_state: st.session_state.lang = 'pt'
 
 # --- 5. LOGIN ---
 if not st.session_state.logged_in:
-    # Verificação de conexão para avisar o usuário
     if not conn:
-        st.error("Erro: Banco de dados não configurado.")
+        st.error("Erro: Base de dados não configurada.")
         st.stop()
         
-    st.markdown(f"<div style='margin-top:5rem; text-align:center;'><h1 class='obsidian-logo'>💎 RipariBank</h1><p style='color:#4B5563; font-weight:600; font-size:0.8rem;'>{t('protocol')}</p></div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='margin-top:5rem; text-align:center;'><h1 class='obsidian-logo'>💎 Banco da Família</h1><p style='color:#4B5563; font-weight:600; font-size:0.8rem;'>{t('protocol')}</p></div>", unsafe_allow_html=True)
     
     with st.form("login_form"):
         u = st.text_input(t('user')).lower().strip()
@@ -369,7 +365,7 @@ else:
     # --- NAVBAR REFINADA ---
     n_col1, n_col2, n_col3, n_col4 = st.columns([1.6, 0.7, 0.35, 0.35])
     with n_col1:
-        st.markdown("<div class='obsidian-logo'>💎 RipariBank</div>", unsafe_allow_html=True)
+        st.markdown("<div class='obsidian-logo'>💎 Banco da Família</div>", unsafe_allow_html=True)
     
     with n_col2:
         options = {'🇧🇷 PT': 'pt', '🇺🇸 EN': 'en', '🇪🇸 ES': 'es'}
@@ -417,14 +413,13 @@ else:
                     if st.form_submit_button(t('exec'), use_container_width=True):
                         if val > 0 and desc:
                             u_target_id = users_df[users_df['name'] == target]['id'].values[0]
-                            db_t = 'Depósito' if tipo == t('op_dep') else 'Retirada'
+                            db_t = 'Depósito' if tipo == t('op_dep') else 'Levantamento'
                             run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, :ts, :t)", 
                                       params={'uid': int(u_target_id), 'amt': val if db_t == 'Depósito' else -val, 'desc': desc, 'ts': datetime.now(), 't': db_t}, commit=True)
                             st.success(t('tr_success'))
                             time.sleep(1)
                             st.rerun()
 
-        # --- MÓDULO DE GESTÃO RESTAURADO ---
         with st.expander(t('user_mgmt')):
             t_l, t_a = st.tabs([t('tab_list'), t('tab_add')])
             with t_l:
@@ -532,4 +527,4 @@ else:
             st.caption(t('fx_cap'))
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#222226; font-size:0.65rem; margin-top:3rem;'>RIPARIBANK v9.5 • 2024</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#222226; font-size:0.65rem; margin-top:3rem;'>Banco da Família v9.5 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
