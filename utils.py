@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 from database import run_query
 
-# Dicionário de traduções simplificado (PT-BR)
+# Dicionário de traduções expandido para suporte multi-idioma (PT-BR, EN, ES)
 TRANSLATIONS = {
     'pt': {
         'bal': 'Meu Saldo', 
@@ -40,12 +40,89 @@ TRANSLATIONS = {
         'manual_entry': 'Lançamento Manual (Depósito/Retirada)', 
         'deposit': 'Depósito', 
         'withdraw': 'Retirada', 
-        'execute': 'EXECUTAR LANÇAMENTO'
+        'execute': 'EXECUTAR LANÇAMENTO',
+        'lang_sel': 'Idioma'
+    },
+    'en': {
+        'bal': 'My Balance', 
+        'family_bal': '💰 Asset Monitoring (Balances)',
+        'missions': 'Missions', 
+        'tools': 'Tools', 
+        'admin': 'Command', 
+        'logout': 'Logout',
+        'home': 'History', 
+        'transfer': 'Transfer', 
+        'last_mov': 'Recent Transactions',
+        'active_missions': 'Your Active Missions', 
+        'send_money': 'Send Money', 
+        'to_whom': 'Recipient',
+        'how_much': 'Amount ($)', 
+        'reason': 'Reason', 
+        'send_now': 'SEND NOW 💸', 
+        'no_transfer': 'No one available for transfer.',
+        'calc': 'Calculator', 
+        'fx': 'Exchange', 
+        'panel': '🔎 Tasks', 
+        'new_task': '➕ New Task', 
+        'mgmt': '⚙️ Users', 
+        'cashier': '💸 Entries',
+        'late_tasks': 'Overdue Tasks', 
+        'apply_fine': 'Apply Fine', 
+        'approve': 'Approve', 
+        'reject': 'Reject',
+        'desc': 'What needs to be done?', 
+        'value': 'Reward ($)', 
+        'date': 'Due Date', 
+        'time': 'Due Time', 
+        'schedule': 'SCHEDULE MISSION',
+        'manual_entry': 'Manual Entry (Deposit/Withdraw)', 
+        'deposit': 'Deposit', 
+        'withdraw': 'Withdraw', 
+        'execute': 'EXECUTE ENTRY',
+        'lang_sel': 'Language'
+    },
+    'es': {
+        'bal': 'Mi Saldo', 
+        'family_bal': '💰 Monitoreo de Activos (Saldos)',
+        'missions': 'Misiones', 
+        'tools': 'Herramientas', 
+        'admin': 'Comando', 
+        'logout': 'Salir',
+        'home': 'Historial', 
+        'transfer': 'Transferir', 
+        'last_mov': 'Últimos Movimientos',
+        'active_missions': 'Tus Misiones Activas', 
+        'send_money': 'Enviar Dinero', 
+        'to_whom': 'Destinatario',
+        'how_much': 'Monto ($)', 
+        'reason': 'Motivo', 
+        'send_now': 'ENVIAR AHORA 💸', 
+        'no_transfer': 'Nadie disponible para transferencia.',
+        'calc': 'Calculadora', 
+        'fx': 'Cambio', 
+        'panel': '🔎 Tareas', 
+        'new_task': '➕ Nueva Tarea', 
+        'mgmt': '⚙️ Usuarios', 
+        'cashier': '💸 Lanzamientos',
+        'late_tasks': 'Tareas Atrasadas', 
+        'apply_fine': 'Aplicar Multa', 
+        'approve': 'Aprobar', 
+        'reject': 'Rechazar',
+        'desc': '¿Qué hay que hacer?', 
+        'value': 'Recompensa ($)', 
+        'date': 'Fecha Límite', 
+        'time': 'Hora Límite', 
+        'schedule': 'AGENDAR MISIÓN',
+        'manual_entry': 'Lanzamiento Manual (Depósito/Retiro)', 
+        'deposit': 'Depósito', 
+        'withdraw': 'Retiro', 
+        'execute': 'EJECUTAR LANZAMIENTO',
+        'lang_sel': 'Idioma'
     }
 }
 
 def t(key):
-    """Função de tradução baseada no estado da sessão (PT-BR)"""
+    """Função de tradução baseada no idioma selecionado na sessão"""
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
