@@ -7,40 +7,46 @@ import time
 # --- 1. CONFIGURAÇÃO (Theme: Minimalist Midnight) ---
 st.set_page_config(page_title="RipariBank", page_icon="💎", layout="centered")
 
-# CSS ULTRA COMPACTO E MINIMALISTA
+# CSS ULTRA COMPACTO E MINIMALISTA COM HEADER FIXO
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
     
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
-        font-size: 14px; /* Fonte base menor */
+        font-size: 14px;
     }
 
     .stApp { background-color: #0B0E14; color: #BBBBBB; }
 
-    /* REMOÇÃO TOTAL DE ESPAÇOS - NÍVEL CRÍTICO */
+    /* AJUSTE DO CONTAINER PARA HEADER FIXO */
     .block-container {
-        padding-top: 0.5rem !important;
+        padding-top: 3.5rem !important; /* Espaço para o header fixo não cobrir o conteúdo */
         padding-bottom: 1rem !important;
         padding-left: 0.8rem !important;
         padding-right: 0.8rem !important;
-        max-width: 500px; /* Mantém compacto no PC */
+        max-width: 500px;
     }
     
     #MainMenu, footer, header { visibility: hidden; }
 
     /* Títulos Menores */
-    h1 { font-size: 1.3rem !important; font-weight: 600; color: white; margin-bottom: 0.2rem !important; margin-top: 0px !important; }
+    h1 { font-size: 1.3rem !important; font-weight: 600; color: white; margin-bottom: 0px !important; margin-top: 0px !important; }
     h2 { font-size: 1.1rem !important; font-weight: 600; color: white; }
     h3 { font-size: 0.9rem !important; font-weight: 600; color: #888; }
 
-    /* HEADER LOGO PERSISTENTE */
+    /* HEADER LOGO FIXO NO TOPO */
     .app-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: #0B0E14; /* Fundo sólido para não transparecer conteúdo ao rolar */
         text-align: center;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        margin-bottom: 0.8rem;
+        padding: 0.6rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        z-index: 1000;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
 
     /* CARD SALDO SLIM */
@@ -94,10 +100,8 @@ st.markdown("""
     .stTabs [data-baseweb="tab"] { font-size: 0.8rem; padding: 4px 8px; color: #666; }
     .stTabs [aria-selected="true"] { color: white; border-bottom: 2px solid #00C853; }
     
-    /* Ajuste de Margens Streamlit */
     .element-container { margin-bottom: 0.4rem !important; }
     div[data-testid="stExpander"] { border: none; background: #11141A; border-radius: 8px; }
-    .streamlit-expanderHeader { padding: 0.5rem !important; font-size: 0.85rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -141,9 +145,11 @@ init_db()
 # --- 3. STATE ---
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 
-# --- 4. LOGIN (SLIM) ---
+# --- 4. LOGIN ---
 if not st.session_state.logged_in:
-    st.markdown("<div class='app-header' style='border-bottom:none; margin-top:2rem;'><h1>💎 RipariBank</h1><p style='color:#666; font-size:0.8rem;'>Minimal Cloud Access</p></div>", unsafe_allow_html=True)
+    # Header fixo também no login para consistência
+    st.markdown("<div class='app-header'><h1>💎 RipariBank</h1></div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center; margin-top:2rem;'><p style='color:#666; font-size:0.8rem;'>Acesso Seguro à Nuvem</p></div>", unsafe_allow_html=True)
     with st.form("login"):
         u = st.text_input("Usuário").lower().strip()
         p = st.text_input("Senha", type="password").strip()
@@ -157,12 +163,12 @@ if not st.session_state.logged_in:
                 st.rerun()
             else: st.toast("Erro no acesso.")
 
-# --- 5. DASHBOARD MINIMALISTA ---
+# --- 5. DASHBOARD ---
 else:
-    # Logo Header Persistente
+    # Header Logo Fixo
     st.markdown("<div class='app-header'><h1>💎 RipariBank</h1></div>", unsafe_allow_html=True)
 
-    # Header de Informações da Conta
+    # Info Usuário e Sair
     header_col, btn_col = st.columns([4, 1])
     header_col.markdown(f"<span style='color:#888;'>Conta:</span> **{st.session_state.user_name}**", unsafe_allow_html=True)
     if btn_col.button("SAIR"): 
@@ -192,10 +198,9 @@ else:
         if df is not None and not df.empty:
             st.bar_chart(df.groupby("type")["amount"].sum().abs(), height=150)
 
-    # ADMIN (Minimalista)
+    # ADMIN
     if st.session_state.role == 'admin':
         st.markdown("---")
-        # Módulo de Lançamento
         with st.expander("💸 LANÇAMENTO"):
             users = run_query("SELECT id, name FROM users WHERE role='user'")
             if users is not None and not users.empty:
@@ -212,12 +217,9 @@ else:
                                       params={'u': int(uid_tgt), 'a': final, 'd': d, 'ts': datetime.now(), 't': o}, commit=True)
                             st.toast("Sucesso")
                             time.sleep(0.5); st.rerun()
-            else: st.warning("Sem usuários do tipo 'user'.")
 
-        # Módulo de Gestão de Usuários
         with st.expander("⚙️ GESTÃO DE USUÁRIOS"):
             tab_new, tab_manage = st.tabs(["Novo", "Gerenciar"])
-            
             with tab_new:
                 with st.form("nu"):
                     nn = st.text_input("Nome").lower().strip()
@@ -227,36 +229,25 @@ else:
                         if nn and np:
                             check = run_query("SELECT * FROM users WHERE name=:n", params={'n': nn})
                             if check is not None and check.empty:
-                                run_query("INSERT INTO users (name, role, password) VALUES (:n, :r, :p)", 
-                                          params={'n': nn, 'r': nr, 'p': np}, commit=True)
-                                st.toast("Criado com sucesso")
-                                time.sleep(0.5); st.rerun()
-                            else: st.error("Usuário já existe.")
+                                run_query("INSERT INTO users (name, role, password) VALUES (:n, :r, :p)", params={'n': nn, 'r': nr, 'p': np}, commit=True)
+                                st.toast("Criado"); time.sleep(0.5); st.rerun()
             
             with tab_manage:
                 all_u = run_query("SELECT id, name FROM users ORDER BY name")
                 if all_u is not None and not all_u.empty:
                     sel_u = st.selectbox("Selecionar Usuário", all_u['name'].tolist())
                     u_id = all_u[all_u['name'] == sel_u]['id'].values[0]
-                    
                     with st.form("edit_pass"):
                         new_p = st.text_input("Alterar Senha").strip()
                         if st.form_submit_button("Salvar Senha"):
                             if new_p:
-                                run_query("UPDATE users SET password=:p WHERE id=:id", 
-                                          params={'p': new_p, 'id': int(u_id)}, commit=True)
-                                st.toast("Senha atualizada")
-                                time.sleep(0.5); st.rerun()
-
-                    st.markdown("---")
-                    confirm_del = st.checkbox("Liberar exclusão para " + sel_u)
-                    if st.button("EXCLUIR USUÁRIO", type="primary", disabled=not confirm_del):
+                                run_query("UPDATE users SET password=:p WHERE id=:id", params={'p': new_p, 'id': int(u_id)}, commit=True)
+                                st.toast("Atualizado"); time.sleep(0.5); st.rerun()
+                    if st.button("EXCLUIR USUÁRIO"):
                         if int(u_id) != st.session_state.user_id:
                             run_query("DELETE FROM transactions WHERE user_id=:id", params={'id': int(u_id)}, commit=True)
                             run_query("DELETE FROM users WHERE id=:id", params={'id': int(u_id)}, commit=True)
-                            st.toast("Usuário excluído")
-                            time.sleep(0.5); st.rerun()
-                        else: st.error("Não é possível excluir a si mesmo.")
+                            st.rerun()
 
 # --- FOOTER ---
-st.markdown("<div style='text-align: center; color: #444; font-size: 0.7rem; margin-top: 2rem;'>RipariBank Minimal v4.1</div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; color: #444; font-size: 0.7rem; margin-top: 2rem;'>RipariBank Minimal v4.2</div>", unsafe_allow_html=True)
