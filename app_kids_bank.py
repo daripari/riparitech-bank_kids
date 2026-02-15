@@ -11,7 +11,7 @@ st.set_page_config(page_title="Banco da Família Obsidian", page_icon="💎", la
 # --- 2. DICIONÁRIO DE TRADUÇÃO (i18n) ---
 TRANSLATIONS = {
     'pt': {
-        'protocol': 'Banco da Família v11.3',
+        'protocol': 'Banco da Família v11.4',
         'user': 'Usuário',
         'password': 'Senha',
         'auth_btn': 'AUTENTICAR',
@@ -72,9 +72,9 @@ TRANSLATIONS = {
         'chore_assignee': 'Responsável (Quem fará?)',
         'chore_deadline_d': 'Data Limite',
         'chore_deadline_t': 'Hora Limite',
-        'chore_create': 'AGENDAR TAREFA',
+        'chore_create': 'AGENDAR TAREA',
         'chore_pending': '⏳ Aprovações',
-        'chore_list_admin': '🔎 Monitoramento',
+        'chore_list_admin': '🔎 Painel Unificado',
         'chore_approve': 'APROVAR PAGAMENTO',
         'chore_reject': 'Recusar',
         'chore_list_avail': 'Minhas Missões',
@@ -82,12 +82,16 @@ TRANSLATIONS = {
         'chore_doing': 'Em Análise pelo Admin...',
         'chore_done_msg': 'Tarefa entregue! Aguarde validação.',
         'chore_paid_msg': 'Pagamento por tarefa realizada',
-        'chore_filter_kid': 'Filtrar por Criança:',
-        'chore_status_sched': '📅 Agendadas (A Fazer / Em Análise)',
-        'chore_status_hist': '📜 Histórico (Concluídas)'
+        'chore_clean_btn': '🗑️ Limpar Concluídas (>14 dias)',
+        'chore_clean_success': 'Limpeza realizada com sucesso!',
+        'chore_filter_status': 'Filtrar Status:',
+        'chore_filter_kid': 'Filtrar Criança:',
+        'status_open': 'Aberto',
+        'status_pending': 'Em Análise',
+        'status_paid': 'Concluído'
     },
     'en': {
-        'protocol': 'Family Bank v11.3',
+        'protocol': 'Family Bank v11.4',
         'user': 'User',
         'password': 'Password',
         'auth_btn': 'AUTHENTICATE',
@@ -150,7 +154,7 @@ TRANSLATIONS = {
         'chore_deadline_t': 'Deadline Time',
         'chore_create': 'SCHEDULE CHORE',
         'chore_pending': '⏳ Approvals',
-        'chore_list_admin': '🔎 Monitoring',
+        'chore_list_admin': '🔎 Unified Panel',
         'chore_approve': 'APPROVE PAYMENT',
         'chore_reject': 'Reject',
         'chore_list_avail': 'My Missions',
@@ -158,12 +162,16 @@ TRANSLATIONS = {
         'chore_doing': 'Under Review...',
         'chore_done_msg': 'Chore submitted! Wait for validation.',
         'chore_paid_msg': 'Payment for completed chore',
-        'chore_filter_kid': 'Filter by Child:',
-        'chore_status_sched': '📅 Scheduled (To Do / Review)',
-        'chore_status_hist': '📜 History (Done)'
+        'chore_clean_btn': '🗑️ Clean Completed (>14 days)',
+        'chore_clean_success': 'Cleanup successful!',
+        'chore_filter_status': 'Filter Status:',
+        'chore_filter_kid': 'Filter Child:',
+        'status_open': 'Open',
+        'status_pending': 'Pending',
+        'status_paid': 'Done'
     },
     'es': {
-        'protocol': 'Banco de la Familia v11.3',
+        'protocol': 'Banco de la Familia v11.4',
         'user': 'Usuario',
         'password': 'Contraseña',
         'auth_btn': 'AUTENTICAR',
@@ -226,7 +234,7 @@ TRANSLATIONS = {
         'chore_deadline_t': 'Hora Límite',
         'chore_create': 'AGENDAR TAREA',
         'chore_pending': '⏳ Aprobaciones',
-        'chore_list_admin': '🔎 Monitoreo',
+        'chore_list_admin': '🔎 Panel Unificado',
         'chore_approve': 'APROBAR PAGO',
         'chore_reject': 'Rechazar',
         'chore_list_avail': 'Mis Misiones',
@@ -234,9 +242,13 @@ TRANSLATIONS = {
         'chore_doing': 'En Revisión...',
         'chore_done_msg': '¡Tarea entregada! Espera validación.',
         'chore_paid_msg': 'Pago por tarea completada',
-        'chore_filter_kid': 'Filtrar por Niño:',
-        'chore_status_sched': '📅 Agendadas (Por Hacer / En Revisión)',
-        'chore_status_hist': '📜 Historial (Hecho)'
+        'chore_clean_btn': '🗑️ Limpiar Viejas (>14 días)',
+        'chore_clean_success': 'Limpieza realizada con éxito!',
+        'chore_filter_status': 'Filtrar Estado:',
+        'chore_filter_kid': 'Filtrar Niño:',
+        'status_open': 'Abierto',
+        'status_pending': 'Pendiente',
+        'status_paid': 'Concluido'
     }
 }
 
@@ -244,7 +256,7 @@ def t(key):
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
-# --- CSS REFINADO & RESPONSIVO (V11.3) ---
+# --- CSS REFINADO & RESPONSIVO (V11.4) ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -349,6 +361,16 @@ st.markdown("""
     }
     button[key*="done_"]:hover {
         background: #10B981 !important;
+        color: white !important;
+    }
+    
+    /* Botão de Limpeza */
+    button[key="btn_clean_chores"] {
+        border-color: #EF4444 !important;
+        color: #EF4444 !important;
+    }
+    button[key="btn_clean_chores"]:hover {
+        background: #EF4444 !important;
         color: white !important;
     }
 
@@ -553,7 +575,7 @@ else:
                 st.markdown(f"<div class='row-item'><span style='font-weight:600;'>{row['name'].title()}</span><span style='color:#00E5FF; font-family:monospace; font-weight:700;'>R$ {row['balance']:,.2f}</span></div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
         
-        # --- GESTÃO DE TAREFAS (ADMIN - v11.3) ---
+        # --- GESTÃO DE TAREFAS (ADMIN - v11.4) ---
         with st.expander(t('chore_mgmt')):
             ct1, ct2, ct3 = st.tabs([t('chore_new_title'), t('chore_pending'), t('chore_list_admin')])
             
@@ -615,55 +637,81 @@ else:
                 else:
                     st.info("Nenhuma tarefa aguardando aprovação.")
             
-            # 3. MONITORAMENTO (Lista de Tarefas - Visão Tabular)
+            # 3. MONITORAMENTO UNIFICADO (v11.4)
             with ct3:
                 kids_df = run_query("SELECT id, name FROM users WHERE role='user'")
                 if kids_df is not None and not kids_df.empty:
-                    filter_kid = st.selectbox(t('chore_filter_kid'), ["Todos"] + kids_df['name'].tolist())
                     
-                    base_sql = "SELECT u.name as kid_name, c.description, c.reward, c.status, c.deadline FROM chores c JOIN users u ON c.assigned_to = u.id "
-                    params_q = {}
+                    # Filtros Dinâmicos
+                    f_col1, f_col2 = st.columns(2)
                     
-                    if filter_kid != "Todos":
-                        base_sql += " WHERE u.name = :kname"
-                        params_q['kname'] = filter_kid
+                    status_opts = {'open': t('status_open'), 'pending': t('status_pending'), 'paid': t('status_paid')}
+                    inv_status = {v: k for k, v in status_opts.items()}
                     
-                    base_sql += " ORDER BY c.deadline ASC"
+                    with f_col1:
+                        sel_status_label = st.multiselect(t('chore_filter_status'), options=list(status_opts.values()), default=list(status_opts.values()))
+                        sel_status_db = [inv_status[l] for l in sel_status_label]
                     
-                    all_chores_view = run_query(base_sql, params=params_q)
-                    
-                    if all_chores_view is not None and not all_chores_view.empty:
-                        # Formatação para Tabela
-                        all_chores_view['reward'] = all_chores_view['reward'].apply(lambda x: f"R$ {x:.2f}")
-                        all_chores_view['deadline'] = pd.to_datetime(all_chores_view['deadline']).dt.strftime('%d/%m %H:%M')
+                    with f_col2:
+                        sel_kids = st.multiselect(t('chore_filter_kid'), options=kids_df['name'].tolist(), default=kids_df['name'].tolist())
+
+                    # Query Unificada
+                    if sel_status_db and sel_kids:
+                        base_sql = "SELECT u.name as kid_name, c.description, c.reward, c.status, c.deadline FROM chores c JOIN users u ON c.assigned_to = u.id WHERE 1=1"
                         
-                        status_map = {'open': 'Aberto', 'pending': 'Em Análise', 'paid': 'Concluído'}
-                        all_chores_view['status'] = all_chores_view['status'].map(status_map)
-
-                        all_chores_view = all_chores_view.rename(columns={
-                            'kid_name': 'Criança',
-                            'description': 'Tarefa',
-                            'reward': 'Valor',
-                            'status': 'Estado',
-                            'deadline': 'Prazo'
-                        })
-
-                        sched = all_chores_view[all_chores_view['Estado'].isin(['Aberto', 'Em Análise'])]
-                        hist = all_chores_view[all_chores_view['Estado'] == 'Concluído']
+                        # Construção Dinâmica (Segura)
+                        # Nota: Em SQL puro, usaríamos cláusulas IN (:list), mas SQLAlchemy text() com listas tem nuances.
+                        # Vamos filtrar no Pandas para máxima flexibilidade visual, já que o volume de dados é baixo.
+                        # Trazemos tudo e filtramos no Python.
                         
-                        st.caption(t('chore_status_sched'))
-                        if not sched.empty:
-                            st.dataframe(sched[['Criança', 'Tarefa', 'Valor', 'Prazo', 'Estado']], use_container_width=True, hide_index=True)
+                        all_chores_raw = run_query(base_sql)
+                        
+                        if all_chores_raw is not None and not all_chores_raw.empty:
+                            # Filtragem Python
+                            filtered_df = all_chores_raw[
+                                (all_chores_raw['status'].isin(sel_status_db)) &
+                                (all_chores_raw['kid_name'].isin(sel_kids))
+                            ].copy()
+                            
+                            if not filtered_df.empty:
+                                # Formatação
+                                filtered_df['reward'] = filtered_df['reward'].apply(lambda x: f"R$ {x:.2f}")
+                                filtered_df['deadline'] = pd.to_datetime(filtered_df['deadline']).dt.strftime('%d/%m %H:%M')
+                                filtered_df['status'] = filtered_df['status'].map(status_opts)
+                                
+                                filtered_df = filtered_df.rename(columns={
+                                    'kid_name': 'Criança',
+                                    'description': 'Tarefa',
+                                    'reward': 'Valor',
+                                    'status': 'Estado',
+                                    'deadline': 'Prazo'
+                                })
+                                
+                                st.dataframe(filtered_df[['Criança', 'Tarefa', 'Valor', 'Prazo', 'Estado']], use_container_width=True, hide_index=True)
+                            else:
+                                st.info("Nenhum registro com esses filtros.")
                         else:
-                            st.info("---")
-
-                        st.caption(t('chore_status_hist'))
-                        if not hist.empty:
-                            st.dataframe(hist[['Criança', 'Tarefa', 'Valor', 'Prazo', 'Estado']], use_container_width=True, hide_index=True)
-                        else:
-                            st.info("---")
+                            st.info("Sem dados no sistema.")
                     else:
-                        st.info("Sem dados.")
+                        st.warning("Selecione pelo menos um status e uma criança.")
+
+                    st.markdown("---")
+                    # Botão de Limpeza (Garbage Collection)
+                    if st.button(t('chore_clean_btn'), key="btn_clean_chores"):
+                        # Remove Pagas com Deadline > 14 dias atrás
+                        # Caso deadline seja nulo (v11.1), usa created_at
+                        clean_sql = """
+                            DELETE FROM chores 
+                            WHERE status = 'paid' 
+                            AND (
+                                (deadline IS NOT NULL AND deadline < NOW() - INTERVAL '14 days') OR 
+                                (deadline IS NULL AND created_at < NOW() - INTERVAL '14 days')
+                            )
+                        """
+                        run_query(clean_sql, commit=True)
+                        st.success(t('chore_clean_success'))
+                        time.sleep(1.5)
+                        st.rerun()
 
 
         with st.expander(t('quick_tr')):
@@ -859,4 +907,4 @@ else:
             st.caption(t('fx_cap'))
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v11.3 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v11.4 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
