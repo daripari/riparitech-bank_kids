@@ -7,7 +7,7 @@ import time
 # --- 1. CONFIGURAÇÃO (Theme: Minimalist Midnight) ---
 st.set_page_config(page_title="RipariBank", page_icon="💎", layout="centered")
 
-# CSS REFORÇADO PARA BARRA FIXA (BOTÕES LADO A LADO)
+# CSS REFORÇADO PARA FIXAÇÃO ABSOLUTA E ALINHAMENTO HORIZONTAL
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
@@ -19,14 +19,18 @@ st.markdown("""
 
     .stApp { background-color: #0B0E14; color: #BBBBBB; }
 
-    /* --- FIXAÇÃO ABSOLUTA DA BARRA --- */
-    [data-testid="stAppViewContainer"] {
+    /* BLINDAGEM CONTRA QUEBRA DE POSITION: FIXED */
+    [data-testid="stAppViewContainer"], 
+    [data-testid="stAppViewBlockContainer"],
+    [data-testid="stVerticalBlock"] {
+        transform: none !important;
+        perspective: none !important;
         overflow: visible !important;
     }
     
     #MainMenu, footer, header { visibility: hidden !important; }
 
-    /* ESTRUTURA DA NAVBAR FIXA */
+    /* BARRA DE NAVEGAÇÃO FIXA */
     .nav-bar {
         position: fixed;
         top: 0;
@@ -55,10 +59,10 @@ st.markdown("""
         pointer-events: none;
     }
 
-    /* --- POSICIONAMENTO DOS BOTÕES (LADO A LADO) --- */
+    /* --- POSICIONAMENTO DOS BOTÕES LADO A LADO --- */
     
-    /* BOTÃO SAIR (Mais à direita) */
-    div[data-testid="stButton"]:has(button[key="logout_header"]) {
+    /* BOTÃO SAIR (Extrema Direita) */
+    div.element-container:has(button[key="logout_header"]) {
         position: fixed !important;
         top: 13px !important;
         right: 1rem !important;
@@ -66,18 +70,18 @@ st.markdown("""
         width: auto !important;
     }
 
-    /* BOTÃO REFRESH (À esquerda do Sair) */
-    div[data-testid="stButton"]:has(button[key="refresh_header"]) {
+    /* BOTÃO REFRESH (Ao lado do Sair) */
+    div.element-container:has(button[key="refresh_header"]) {
         position: fixed !important;
         top: 13px !important;
-        right: 4.5rem !important; /* Espaço exato para ficar ao lado */
+        right: 4.8rem !important; /* Espaçamento calculado para o lado */
         z-index: 1000001 !important;
         width: auto !important;
     }
 
-    /* Estilo comum para botões do header */
-    div[data-testid="stButton"]:has(button[key="logout_header"]) button,
-    div[data-testid="stButton"]:has(button[key="refresh_header"]) button {
+    /* Estilo dos botões do Header */
+    div.element-container:has(button[key="logout_header"]) button,
+    div.element-container:has(button[key="refresh_header"]) button {
         height: 28px !important;
         padding: 0 10px !important;
         font-size: 0.7rem !important;
@@ -87,25 +91,22 @@ st.markdown("""
         border-radius: 4px !important;
         text-transform: uppercase;
         font-weight: 600;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+        display: inline-flex !important;
     }
 
-    div[data-testid="stButton"]:has(button[key="logout_header"]) button:hover,
-    div[data-testid="stButton"]:has(button[key="refresh_header"]) button:hover {
+    div.element-container:has(button[key="logout_header"]) button:hover,
+    div.element-container:has(button[key="refresh_header"]) button:hover {
         color: white !important;
         border-color: #00C853 !important;
     }
 
-    /* AJUSTE DO CONTEÚDO */
+    /* CONTEÚDO PRINCIPAL */
     .block-container {
         padding-top: 5rem !important; 
         padding-bottom: 2rem !important;
         max-width: 500px;
     }
 
-    /* CARD SALDO MINIMALISTA */
     .slim-card {
         background: rgba(255, 255, 255, 0.02);
         border: 1px solid rgba(255, 255, 255, 0.08);
@@ -121,14 +122,6 @@ st.markdown("""
         font-weight: 600;
         color: #00C853;
         letter-spacing: -1px;
-    }
-
-    /* TABS E INPUTS */
-    .stTabs [aria-selected="true"] { color: white; border-bottom: 2px solid #00C853; }
-    .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
-        background-color: #161920 !important;
-        color: white !important;
-        border: 1px solid #2A2D35 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -176,11 +169,11 @@ if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 # --- 4. LOGIN ---
 if not st.session_state.logged_in:
     st.markdown("<div class='nav-bar'><p class='nav-logo'>💎 RipariBank</p></div>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align:center; margin-top:3rem;'><p style='color:#666; font-size:0.8rem;'>Protocolo de Segurança</p></div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center; margin-top:3rem;'><p style='color:#666; font-size:0.8rem;'>Acesso Seguro</p></div>", unsafe_allow_html=True)
     with st.form("login"):
-        u = st.text_input("Utilizador").lower().strip()
-        p = st.text_input("Palavra-passe", type="password").strip()
-        if st.form_submit_button("ACEDER", type="primary"):
+        u = st.text_input("Usuário").lower().strip()
+        p = st.text_input("Senha", type="password").strip()
+        if st.form_submit_button("ENTRAR", type="primary"):
             df = run_query("SELECT * FROM users WHERE lower(name)=:u AND password=:p", params={'u': u, 'p': p})
             if df is not None and not df.empty:
                 st.session_state.logged_in = True
@@ -192,10 +185,10 @@ if not st.session_state.logged_in:
 
 # --- 5. DASHBOARD ---
 else:
-    # NAVBAR FIXA (LOGO E FUNDO)
+    # NAVBAR FIXA
     st.markdown("<div class='nav-bar'><p class='nav-logo'>💎 RipariBank</p></div>", unsafe_allow_html=True)
     
-    # BOTÕES DO HEADER (SAIR E REFRESH)
+    # BOTÕES DO HEADER
     if st.button("🔄", key="refresh_header"):
         st.rerun()
         
@@ -203,9 +196,10 @@ else:
         st.session_state.logged_in = False
         st.rerun()
 
-    # Saudação e Saldo
-    st.markdown(f"<p style='color:#666; font-size: 0.8rem;'>Bem-vindo, <b>{st.session_state.user_name.title()}</b></p>", unsafe_allow_html=True)
+    # Saudação
+    st.markdown(f"<p style='color:#666; font-size: 0.8rem;'>Olá, <b>{st.session_state.user_name.title()}</b></p>", unsafe_allow_html=True)
 
+    # Saldo
     res_bal = run_query("SELECT SUM(amount) as total FROM transactions WHERE user_id=:uid", params={'uid': st.session_state.user_id})
     saldo = res_bal.iloc[0]['total'] if res_bal is not None and not res_bal.empty and pd.notnull(res_bal.iloc[0]['total']) else 0.0
     
@@ -216,7 +210,7 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-    # Tabs de Conteúdo
+    # Conteúdo
     t1, t2 = st.tabs(["EXTRATO", "RESUMO"])
     with t1:
         df = run_query("SELECT timestamp, description, type, amount FROM transactions WHERE user_id=:uid ORDER BY id DESC LIMIT 10", params={'uid': st.session_state.user_id})
@@ -236,7 +230,7 @@ else:
             if users is not None and not users.empty:
                 with st.form("tr_fast"):
                     tgt = st.selectbox("Membro:", users['name'].tolist())
-                    v = st.number_input("Quantia", min_value=0.0, step=1.0)
+                    v = st.number_input("Valor", min_value=0.0, step=1.0)
                     o = st.radio("Tipo:", ["Crédito", "Débito"], horizontal=True)
                     d = st.text_input("Nota")
                     if st.form_submit_button("LANÇAR", type="primary"):
@@ -266,7 +260,7 @@ else:
                     sel_u = st.selectbox("Escolher:", all_u['name'].tolist())
                     u_id = all_u[all_u['name'] == sel_u]['id'].values[0]
                     with st.form("p_edit"):
-                        new_p = st.text_input("Redefinir Senha").strip()
+                        new_p = st.text_input("Nova Senha").strip()
                         if st.form_submit_button("SALVAR"):
                             run_query("UPDATE users SET password=:p WHERE id=:id", params={'p': new_p, 'id': int(u_id)}, commit=True)
                             st.toast("Ok!"); time.sleep(0.5); st.rerun()
@@ -277,4 +271,4 @@ else:
                             st.rerun()
 
 # --- FOOTER ---
-st.markdown("<div style='text-align: center; color: #222; font-size: 0.6rem; margin-top: 3rem;'>RipariBank v4.7 | Secured Cloud</div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; color: #333; font-size: 0.6rem; margin-top: 3rem;'>RipariBank v4.8 | Secured by Supabase</div>", unsafe_allow_html=True)
