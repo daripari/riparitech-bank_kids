@@ -4,125 +4,98 @@ from datetime import datetime
 from sqlalchemy import text
 import time
 
-# --- 1. CONFIGURAÇÃO (Theme: Minimalist Midnight) ---
+# --- 1. CONFIGURAÇÃO DE TEMA ---
 st.set_page_config(page_title="RipariBank", page_icon="💎", layout="centered")
 
-# --- CSS DEFINITIVO (BLOQUEIO TOTAL DE SCROLL NO HEADER) ---
+# CSS NEO-BANK MINIMALIST
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
     
+    /* Configuração Geral */
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
-        font-size: 14px;
-    }
-
-    .stApp { background-color: #0B0E14; color: #BBBBBB; }
-
-    /* REMOVE QUALQUER INTERFERÊNCIA DE SCROLL NO HEADER */
-    [data-testid="stAppViewContainer"], 
-    [data-testid="stAppViewBlockContainer"],
-    [data-testid="stVerticalBlock"] {
-        transform: none !important;
-        perspective: none !important;
+        background-color: #050505;
+        color: #FFFFFF;
     }
     
+    .stApp { background-color: #050505; }
+    
+    /* Remover elementos padrão do Streamlit */
     #MainMenu, footer, header { visibility: hidden !important; }
+    .block-container { padding-top: 1rem !important; max-width: 450px !important; }
 
-    /* 1. BARRA DE FUNDO (FIXA) */
-    .nav-background {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 55px;
-        background-color: #0B0E14;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        z-index: 999990;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    /* Estilo do Header Nativo */
+    .header-logo {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #FFFFFF;
+        letter-spacing: -0.5px;
     }
-
-    /* 2. LOGO (FIXO À ESQUERDA) */
-    .nav-logo {
-        position: fixed;
-        top: 15px; 
-        left: 1.2rem;
-        font-size: 1.1rem !important;
-        font-weight: 600;
-        color: white;
-        z-index: 1000000;
-        margin: 0;
+    
+    /* Cards de Vidro */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
     }
-
-    /* 3. BOTÃO REFRESH (FIXO À DIREITA - POSIÇÃO 1) */
-    div[data-testid="stElementContainer"]:has(button[key="refresh_header"]) {
-        position: fixed !important;
-        top: 12px !important; /* Altura exata */
-        right: 5.5rem !important; /* Distância do canto */
-        z-index: 1000001 !important;
-        width: auto !important;
-    }
-
-    /* 4. BOTÃO SAIR (FIXO À DIREITA - POSIÇÃO 2) */
-    div[data-testid="stElementContainer"]:has(button[key="logout_header"]) {
-        position: fixed !important;
-        top: 12px !important; /* Mesma altura do Refresh */
-        right: 1rem !important;
-        z-index: 1000001 !important;
-        width: auto !important;
-    }
-
-    /* ESTILO DOS BOTÕES DO HEADER */
-    button[key="refresh_header"], button[key="logout_header"] {
-        height: 30px !important;
-        min-height: 30px !important;
-        padding: 0 10px !important;
-        font-size: 0.7rem !important;
-        background: #1A1C24 !important;
-        color: #888 !important;
-        border: 1px solid #333 !important;
-        border-radius: 4px !important;
+    
+    .balance-label {
+        color: #888888;
+        font-size: 0.8rem;
         text-transform: uppercase;
-        font-weight: 600;
+        letter-spacing: 1px;
+    }
+    
+    .balance-value {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #10B981; /* Verde Esmeralda */
+        margin: 0.5rem 0;
     }
 
-    button[key="refresh_header"]:hover, button[key="logout_header"]:hover {
+    /* Botões Customizados */
+    .stButton>button {
+        border-radius: 12px !important;
+        background-color: #111111 !important;
+        color: #FFFFFF !important;
+        border: 1px solid #222222 !important;
+        font-size: 0.8rem !important;
+        height: 38px !important;
+        transition: 0.3s;
+    }
+    
+    .stButton>button:hover {
+        border-color: #10B981 !important;
+        color: #10B981 !important;
+    }
+
+    /* Input e Selectbox */
+    .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
+        background-color: #111111 !important;
+        border: 1px solid #222222 !important;
+        border-radius: 12px !important;
         color: white !important;
-        border-color: #00C853 !important;
     }
 
-    /* AJUSTE DO CONTEÚDO PRINCIPAL */
-    .block-container {
-        padding-top: 5rem !important; 
-        padding-bottom: 2rem !important;
-        max-width: 500px;
+    /* Tabelas (Extrato) */
+    .stDataFrame {
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        border-radius: 12px !important;
     }
-
-    /* CARD SALDO */
-    .slim-card {
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 10px;
-        padding: 0.8rem 1.2rem;
-        margin-bottom: 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .balance-val {
-        font-size: 1.4rem;
-        font-weight: 600;
-        color: #00C853;
-        letter-spacing: -1px;
-    }
+    
+    /* Divider */
+    hr { border: 0; border-top: 1px solid #222; margin: 2rem 0; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 2. ENGINE (SUPABASE) ---
+# --- 2. MOTOR DE DADOS ---
 try:
     conn = st.connection("supabase", type="sql")
 except Exception:
-    st.error("Erro Crítico de Conexão.")
+    st.error("Conexão perdida com a nuvem.")
     st.stop()
 
 def run_query(query_str, params=None, commit=False):
@@ -142,30 +115,23 @@ def init_db():
     run_query('''CREATE TABLE IF NOT EXISTS transactions (id SERIAL PRIMARY KEY, user_id INTEGER, amount REAL, description TEXT, timestamp TIMESTAMP, type TEXT);''', commit=True)
     
     res = run_query("SELECT count(*) as cnt FROM users")
-    if res is not None and not res.empty:
-        if res.iloc[0]['cnt'] == 0:
-            initial_users = [
-                {'n': 'daniel', 'r': 'admin', 'p': '1234'},
-                {'n': 'ligia', 'r': 'admin', 'p': '1234'},
-                {'n': 'murilo', 'r': 'user', 'p': 'kids1'},
-                {'n': 'cecilia', 'r': 'user', 'p': 'kids2'}
-            ]
-            for u in initial_users:
-                run_query("INSERT INTO users (name, role, password) VALUES (:n, :r, :p)", params=u, commit=True)
+    if res is not None and not res.empty and res.iloc[0]['cnt'] == 0:
+        for u in [{'n':'daniel','r':'admin','p':'1234'}, {'n':'ligia','r':'admin','p':'1234'}, 
+                  {'n':'murilo','r':'user','p':'kids1'}, {'n':'cecilia','r':'user','p':'kids2'}]:
+            run_query("INSERT INTO users (name, role, password) VALUES (:n, :r, :p)", params=u, commit=True)
 
 init_db()
 
-# --- 3. STATE ---
+# --- 3. LOGICA DE ESTADO ---
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 
-# --- 4. LOGIN ---
+# --- 4. INTERFACE DE LOGIN ---
 if not st.session_state.logged_in:
-    st.markdown("<div class='nav-background'></div><p class='nav-logo'>💎 RipariBank</p>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align:center; margin-top:2rem;'><p style='color:#666; font-size:0.8rem;'>Acesso Seguro à Nuvem</p></div>", unsafe_allow_html=True)
-    with st.form("login"):
+    st.markdown("<div style='margin-top:4rem; text-align:center;'><h1 style='font-size:2.5rem;'>💎</h1><h1>RipariBank</h1><p style='color:#666;'>Minimal Banking for Kids</p></div>", unsafe_allow_html=True)
+    with st.form("login_form"):
         u = st.text_input("Utilizador").lower().strip()
         p = st.text_input("Palavra-passe", type="password").strip()
-        if st.form_submit_button("ACEDER", type="primary"):
+        if st.form_submit_button("ENTRAR"):
             df = run_query("SELECT * FROM users WHERE lower(name)=:u AND password=:p", params={'u': u, 'p': p})
             if df is not None and not df.empty:
                 st.session_state.logged_in = True
@@ -173,88 +139,86 @@ if not st.session_state.logged_in:
                 st.session_state.user_name = df.iloc[0]['name']
                 st.session_state.role = df.iloc[0]['role']
                 st.rerun()
-            else: st.toast("Acesso negado.")
+            else: st.toast("Credenciais inválidas.")
 
-# --- 5. DASHBOARD ---
+# --- 5. DASHBOARD PRINCIPAL ---
 else:
-    # ELEMENTOS DA NAVBAR (FUNDOS E LOGO)
-    st.markdown("<div class='nav-background'></div><p class='nav-logo'>💎 RipariBank</p>", unsafe_allow_html=True)
+    # --- HEADER (NOVA SOLUÇÃO DEFINITIVA DE ALINHAMENTO) ---
+    # Usamos colunas nativas para garantir que fiquem sempre lado a lado
+    h_col1, h_col2, h_col3 = st.columns([2, 0.5, 0.5])
     
-    # BOTÕES DO HEADER (FORÇADOS PELO CSS PARA O TOPO FIXO LADO A LADO)
-    st.button("🔄", key="refresh_header")
-    st.button("SAIR", key="logout_header")
+    with h_col1:
+        st.markdown("<div class='header-logo'>💎 RipariBank</div>", unsafe_allow_html=True)
+    
+    with h_col2:
+        if st.button("🔄", key="ref"): st.rerun()
+    
+    with h_col3:
+        if st.button("🚪", key="out"):
+            st.session_state.logged_in = False
+            st.rerun()
+            
+    st.markdown("<div style='margin-top:1rem;'></div>", unsafe_allow_html=True)
 
-    # Identificação
-    st.markdown(f"<p style='color:#666; font-size: 0.8rem;'>Olá, <b>{st.session_state.user_name.title()}</b></p>", unsafe_allow_html=True)
-
-    # Saldo
+    # --- CARD DE SALDO ---
     res_bal = run_query("SELECT SUM(amount) as total FROM transactions WHERE user_id=:uid", params={'uid': st.session_state.user_id})
     saldo = res_bal.iloc[0]['total'] if res_bal is not None and not res_bal.empty and pd.notnull(res_bal.iloc[0]['total']) else 0.0
     
     st.markdown(f"""
-    <div class="slim-card">
-        <span style="color:#888; font-size:0.8rem;">SALDO DISPONÍVEL</span>
-        <span class="balance-val">R$ {saldo:,.2f}</span>
+    <div class="glass-card">
+        <div class="balance-label">Saldo Disponível</div>
+        <div class="balance-value">€ {saldo:,.2f}</div>
+        <div style="color:#666; font-size:0.8rem;">Olá, {st.session_state.user_name.title()}</div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Conteúdo
-    t1, t2 = st.tabs(["EXTRATO", "RESUMO"])
-    with t1:
-        df = run_query("SELECT timestamp, description, type, amount FROM transactions WHERE user_id=:uid ORDER BY id DESC LIMIT 12", params={'uid': st.session_state.user_id})
-        if df is not None and not df.empty:
-            st.dataframe(df, use_container_width=True, hide_index=True)
-        else: st.caption("Sem movimentos.")
+    # --- CONTEÚDO ---
+    tab1, tab2 = st.tabs(["HISTÓRICO", "ANÁLISE"])
     
-    with t2:
-        if df is not None and not df.empty:
-            st.bar_chart(df.groupby("type")["amount"].sum().abs(), height=150)
+    with tab1:
+        df_hist = run_query("SELECT timestamp as Data, description as Motivo, amount as Valor FROM transactions WHERE user_id=:uid ORDER BY id DESC LIMIT 10", params={'uid': st.session_state.user_id})
+        if df_hist is not None and not df_hist.empty:
+            st.dataframe(df_hist, use_container_width=True, hide_index=True)
+        else:
+            st.info("Ainda não tens movimentos.")
 
-    # ADMIN PANEL
+    with tab2:
+        if df_hist is not None and not df_hist.empty:
+            st.area_chart(df_hist.set_index('Data')['Valor'], height=200)
+
+    # --- ÁREA ADMIN ---
     if st.session_state.role == 'admin':
-        st.markdown("---")
-        with st.expander("💸 LANÇAMENTO RÁPIDO"):
-            users = run_query("SELECT id, name FROM users WHERE role='user'")
-            if users is not None and not users.empty:
-                with st.form("tr_fast"):
-                    tgt = st.selectbox("Membro:", users['name'].tolist())
-                    v = st.number_input("Valor", min_value=0.0, step=1.0)
-                    o = st.radio("Operação:", ["Crédito", "Débito"], horizontal=True)
-                    d = st.text_input("Nota")
-                    if st.form_submit_button("LANÇAR", type="primary"):
-                        if v > 0 and d:
-                            uid_tgt = users[users['name'] == tgt]['id'].values[0]
-                            final = v if o == "Crédito" else -v
-                            run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:u, :a, :d, :ts, :t)", 
-                                      params={'u': int(uid_tgt), 'a': final, 'd': d, 'ts': datetime.now(), 't': o}, commit=True)
-                            st.toast("Sucesso!"); time.sleep(0.5); st.rerun()
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown("### Gestão Familiar")
+        
+        with st.expander("💸 NOVO LANÇAMENTO"):
+            users_df = run_query("SELECT id, name FROM users WHERE role='user'")
+            if users_df is not None and not users_df.empty:
+                with st.form("new_trans"):
+                    target = st.selectbox("Para quem?", users_df['name'].tolist())
+                    val = st.number_input("Quanto?", min_value=0.0, step=0.5)
+                    tipo = st.radio("Tipo", ["Depósito", "Retirada"], horizontal=True)
+                    desc = st.text_input("Qual o motivo?")
+                    if st.form_submit_button("EFETUAR TRANSFERÊNCIA"):
+                        if val > 0 and desc:
+                            u_target_id = users_df[users_df['name'] == target]['id'].values[0]
+                            final_val = val if tipo == "Depósito" else -val
+                            run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, :ts, :t)", 
+                                      params={'uid': int(u_target_id), 'amt': final_val, 'desc': desc, 'ts': datetime.now(), 't': tipo}, commit=True)
+                            st.success("Enviado com sucesso!")
+                            time.sleep(1); st.rerun()
 
-        with st.expander("⚙️ GESTÃO"):
-            tab_add, tab_ed = st.tabs(["Novo", "Gerir"])
-            with tab_add:
-                with st.form("new_mem"):
-                    nn = st.text_input("Nome").lower().strip()
-                    np = st.text_input("Senha").strip()
-                    nr = st.selectbox("Perfil", ["user", "admin"])
-                    if st.form_submit_button("CRIAR"):
-                        run_query("INSERT INTO users (name, role, password) VALUES (:n, :r, :p)", params={'n': nn, 'r': nr, 'p': np}, commit=True)
-                        st.rerun()
+        with st.expander("👤 GERIR MEMBROS"):
+            all_users = run_query("SELECT id, name, role FROM users ORDER BY name")
+            st.dataframe(all_users, use_container_width=True, hide_index=True)
             
-            with tab_ed:
-                all_u = run_query("SELECT id, name FROM users ORDER BY name")
-                if all_u is not None and not all_u.empty:
-                    sel_u = st.selectbox("Escolher:", all_u['name'].tolist())
-                    u_id = all_u[all_u['name'] == sel_u]['id'].values[0]
-                    with st.form("p_edit"):
-                        new_p = st.text_input("Nova Senha").strip()
-                        if st.form_submit_button("SALVAR"):
-                            run_query("UPDATE users SET password=:p WHERE id=:id", params={'p': new_p, 'id': int(u_id)}, commit=True)
-                            st.toast("OK"); st.rerun()
-                    if st.button("REMOVER MEMBRO"):
-                        if int(u_id) != st.session_state.user_id:
-                            run_query("DELETE FROM transactions WHERE user_id=:id", params={'id': int(u_id)}, commit=True)
-                            run_query("DELETE FROM users WHERE id=:id", params={'id': int(u_id)}, commit=True)
-                            st.rerun()
+            with st.form("add_user"):
+                new_n = st.text_input("Novo Nome").lower().strip()
+                new_p = st.text_input("Senha Inicial")
+                new_r = st.selectbox("Perfil", ["user", "admin"])
+                if st.form_submit_button("CRIAR CONTA"):
+                    run_query("INSERT INTO users (name, role, password) VALUES (:n, :r, :p)", params={'n':new_n, 'r':new_r, 'p':new_p}, commit=True)
+                    st.rerun()
 
 # --- FOOTER ---
-st.markdown("<div style='text-align: center; color: #222; font-size: 0.6rem; margin-top: 3rem;'>RipariBank v5.0 | Secure Minimalist Hub</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#333; font-size:0.7rem; margin-top:4rem;'>RipariBank v6.0 | Minimalist Design</div>", unsafe_allow_html=True)
