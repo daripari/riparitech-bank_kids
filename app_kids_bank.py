@@ -11,7 +11,7 @@ st.set_page_config(page_title="RipariBank Obsidian", page_icon="💎", layout="c
 # --- 2. DICIONÁRIO DE TRADUÇÃO (i18n) ---
 TRANSLATIONS = {
     'pt': {
-        'protocol': 'Modern Obsidian v9.0',
+        'protocol': 'Obsidian Refined v9.2',
         'user': 'Usuário',
         'password': 'Senha',
         'auth_btn': 'AUTENTICAR',
@@ -49,7 +49,7 @@ TRANSLATIONS = {
         'welcome': 'Olá'
     },
     'en': {
-        'protocol': 'Modern Obsidian v9.0',
+        'protocol': 'Obsidian Refined v9.2',
         'user': 'User',
         'password': 'Password',
         'auth_btn': 'AUTHENTICATE',
@@ -87,7 +87,7 @@ TRANSLATIONS = {
         'welcome': 'Hello'
     },
     'es': {
-        'protocol': 'Modern Obsidian v9.0',
+        'protocol': 'Obsidian Refined v9.2',
         'user': 'Usuario',
         'password': 'Contraseña',
         'auth_btn': 'AUTENTICAR',
@@ -110,7 +110,7 @@ TRANSLATIONS = {
         'bal_acc': 'Saldo en Cuenta',
         'enc_conn': '● CONEXIÓN SEGURA',
         'tab_hist': '📊 Historial',
-        'tab_evo': '📈 Evolución',
+        'tab_evo': '📈 Evolução',
         'tab_calc': '🧮 Calculadora',
         'tab_fx': '🌍 Cambio',
         'no_reg': 'Sin registros por ahora.',
@@ -130,101 +130,125 @@ def t(key):
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
-# --- CSS MODERN OBSIDIAN UI ---
+# --- CSS REFINADO ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
     
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
-        background-color: #0A0A0B;
-        color: #F0F0F0;
+        background-color: #080809;
+        color: #E0E0E0;
     }
     
-    .stApp { background-color: #0A0A0B; }
+    .stApp { background-color: #080809; }
     
     #MainMenu, footer, header { visibility: hidden !important; }
-    .block-container { padding-top: 2rem !important; max-width: 480px !important; }
+    .block-container { padding-top: 1.5rem !important; max-width: 500px !important; }
 
-    /* Header e Logo */
+    /* Estilo do Logo */
     .obsidian-logo {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
         font-weight: 800;
-        letter-spacing: -1px;
+        letter-spacing: -1.5px;
         color: #00E5FF;
         background: linear-gradient(135deg, #00E5FF 0%, #007BFF 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         text-transform: uppercase;
-        margin-bottom: 5px;
+        margin-bottom: 0px;
     }
     
-    /* Obsidian Cards com profundidade */
+    /* Obsidian Cards */
     .obsidian-card {
-        background: linear-gradient(165deg, #1A1A1D 0%, #111113 100%);
-        border: 1px solid #2D2D32;
-        border-radius: 16px;
+        background: #111114;
+        border: 1px solid #222226;
+        border-radius: 20px;
         padding: 1.5rem;
         margin-bottom: 1.2rem;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.6);
     }
 
     .row-item {
-        border-bottom: 1px solid #222225;
-        padding: 12px 0;
+        border-bottom: 1px solid #1A1A1E;
+        padding: 14px 0;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
     
     .label-caption {
-        color: #8E8E93;
-        font-size: 0.75rem;
-        font-weight: 600;
+        color: #6B7280;
+        font-size: 0.7rem;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
     }
     
     .value-main {
-        font-size: 2.4rem;
+        font-size: 2.5rem;
         font-weight: 800;
         color: #FFFFFF;
         font-family: 'JetBrains Mono', monospace;
         letter-spacing: -2px;
     }
 
-    /* Botões Otimizados */
+    /* --- BOTÕES REFINADOS (GLOSSY) --- */
     .stButton>button {
-        border-radius: 10px !important;
-        background-color: #1A1A1D !important;
-        color: #FFFFFF !important;
-        border: 1px solid #333338 !important;
-        font-size: 1rem !important;
+        border-radius: 12px !important;
+        background: #1A1A1D !important;
+        color: #E0E0E0 !important;
+        border: 1px solid #2D2D32 !important;
+        font-size: 0.9rem !important;
         font-weight: 600 !important;
-        height: 52px !important;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 44px !important;
+        width: 100% !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2) !important;
     }
     
     .stButton>button:hover {
-        background: linear-gradient(135deg, #00E5FF 0%, #007BFF 100%) !important;
-        border-color: transparent !important;
-        color: #000000 !important;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 229, 255, 0.3);
+        border-color: #00E5FF !important;
+        color: #00E5FF !important;
+        background: #1F1F23 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 15px rgba(0, 229, 255, 0.15) !important;
     }
 
-    /* Botão Primário e Formulários */
+    /* Botões de Ação Especiais */
     div[data-testid="stFormSubmitButton"] button {
         background: linear-gradient(135deg, #00E5FF 0%, #007BFF 100%) !important;
         color: #000000 !important;
         border: none !important;
+        font-weight: 700 !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
 
-    /* Calculadora Estilo Teclado */
+    /* --- COMBOBOX DE IDIOMA (PILL STYLE) --- */
+    div[data-testid="stHeader"] { background: transparent !important; }
+    
+    /* Target selectbox container specifically */
+    .stSelectbox div[data-baseweb="select"] {
+        background-color: #111114 !important;
+        border: 1px solid #222226 !important;
+        border-radius: 20px !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        font-size: 0.75rem !important;
+    }
+    
+    .stSelectbox div[data-baseweb="select"] > div {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        height: 30px !important;
+    }
+
+    /* Calculadora */
     .display-calc {
-        background-color: #050505;
-        border: 2px solid #2D2D32;
-        border-radius: 12px;
+        background-color: #050506;
+        border: 2px solid #1F1F23;
+        border-radius: 16px;
         padding: 20px;
         text-align: right;
         font-size: 2.2rem;
@@ -235,23 +259,28 @@ st.markdown("""
         display: flex;
         align-items: center;
         justify-content: flex-end;
-        box-shadow: inset 0 2px 10px rgba(0,0,0,0.8);
+        box-shadow: inset 0 2px 15px rgba(0,0,0,0.9);
     }
 
-    /* Estilo de Abas Obsidian */
-    .stTabs [data-baseweb="tab-list"] { background-color: transparent; border-bottom: 2px solid #2D2D32; gap: 10px; }
-    .stTabs [data-baseweb="tab"] { color: #8E8E93; font-weight: 700; background: transparent; }
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] { background-color: transparent; border-bottom: 1px solid #222226; gap: 4px; }
+    .stTabs [data-baseweb="tab"] { 
+        color: #6B7280; 
+        font-weight: 600; 
+        font-size: 0.8rem;
+        padding: 10px 12px;
+    }
     .stTabs [aria-selected="true"] { color: #00E5FF !important; border-bottom-color: #00E5FF !important; }
 
-    /* Inputs Modernos */
-    .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
-        background-color: #0F0F11 !important;
-        border: 1px solid #333338 !important;
-        border-radius: 10px !important;
-        color: #FFFFFF !important;
+    /* Inputs */
+    .stTextInput input, .stNumberInput input {
+        background-color: #0F0F12 !important;
+        border: 1px solid #222226 !important;
+        border-radius: 12px !important;
+        padding: 10px !important;
     }
 
-    hr { border: 0; border-top: 1px solid #2D2D32; margin: 2rem 0; }
+    hr { border: 0; border-top: 1px solid #222226; margin: 1.5rem 0; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -311,7 +340,7 @@ if 'lang' not in st.session_state: st.session_state.lang = 'pt'
 
 # --- 5. LOGIN ---
 if not st.session_state.logged_in:
-    st.markdown(f"<div style='margin-top:5rem; text-align:center;'><h1 class='obsidian-logo'>💎 RipariBank</h1><p style='color:#636366; font-weight:600;'>{t('protocol')}</p></div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='margin-top:5rem; text-align:center;'><h1 class='obsidian-logo'>💎 RipariBank</h1><p style='color:#4B5563; font-weight:600; font-size:0.8rem;'>{t('protocol')}</p></div>", unsafe_allow_html=True)
     with st.form("login_form"):
         u = st.text_input(t('user')).lower().strip()
         p = st.text_input(t('password'), type="password").strip()
@@ -323,31 +352,31 @@ if not st.session_state.logged_in:
                 st.session_state.user_name = df.iloc[0]['name']
                 st.session_state.role = df.iloc[0]['role']
                 st.session_state.lang = df.iloc[0]['language'] if 'language' in df.columns else 'pt'
-                st.cache_data.clear()
-                st.rerun()
+                st.cache_data.clear(); st.rerun()
             else: st.toast(t('login_err'))
 
 # --- 6. DASHBOARD ---
 else:
-    # --- NAVBAR ---
-    h_col1, h_col2, h_col3, h_col4 = st.columns([1.8, 0.6, 0.3, 0.3])
-    with h_col1:
+    # --- NAVBAR REFINADA ---
+    n_col1, n_col2, n_col3, n_col4 = st.columns([1.6, 0.7, 0.35, 0.35])
+    with n_col1:
         st.markdown("<div class='obsidian-logo'>💎 RipariBank</div>", unsafe_allow_html=True)
     
-    with h_col2:
+    with n_col2:
+        # Seletor Pill Style
         options = {'🇧🇷 PT': 'pt', '🇺🇸 EN': 'en', '🇪🇸 ES': 'es'}
         current_idx = list(options.values()).index(st.session_state.lang)
-        new_lang_label = st.selectbox("", options.keys(), index=current_idx, label_visibility="collapsed")
+        new_lang_label = st.selectbox("", options.keys(), index=current_idx, label_visibility="collapsed", key="lang_pill")
         new_lang_code = options[new_lang_label]
         if new_lang_code != st.session_state.lang:
             st.session_state.lang = new_lang_code
             run_query("UPDATE users SET language=:l WHERE id=:id", params={'l': new_lang_code, 'id': st.session_state.user_id}, commit=True)
             st.rerun()
 
-    with h_col3:
+    with n_col3:
         if st.button("🔄", key="ref", help=t('refresh')):
             st.cache_data.clear(); st.rerun()
-    with h_col4:
+    with n_col4:
         if st.button("🚪", key="out", help=t('logout')):
             st.session_state.logged_in = False; st.cache_data.clear(); st.rerun()
 
@@ -359,7 +388,7 @@ else:
             for _, row in df_saldos.iterrows():
                 st.markdown(f"""
                 <div class='row-item'>
-                    <span style='font-weight:600; font-size:1.1rem;'>{row['name'].title()}</span>
+                    <span style='font-weight:600; font-size:1.05rem;'>{row['name'].title()}</span>
                     <span style='color:#00E5FF; font-family:monospace; font-weight:700;'>R$ {row['balance']:,.2f}</span>
                 </div>
                 """, unsafe_allow_html=True)
@@ -381,27 +410,13 @@ else:
                                       params={'uid': int(u_target_id), 'amt': val if db_t == 'Depósito' else -val, 'desc': desc, 'ts': datetime.now(), 't': db_t}, commit=True)
                             st.success(t('tr_success')); time.sleep(1); st.rerun()
 
-        with st.expander(t('user_mgmt')):
-            t_l, t_a = st.tabs([t('tab_list'), t('tab_add')])
-            with t_l:
-                all_u = run_query("SELECT id, name, role, language FROM users ORDER BY name")
-                st.dataframe(all_u, use_container_width=True, hide_index=True)
-            with t_a:
-                with st.form("add_user_form"):
-                    nn = st.text_input(t('user')).lower().strip()
-                    np = st.text_input(t('password'))
-                    nr = st.selectbox(t('lvl'), ["user", "admin"])
-                    if st.form_submit_button(t('create_acc')):
-                        run_query("INSERT INTO users (name, role, password, language) VALUES (:n, :r, :p, 'pt')", params={'n': nn, 'r': nr, 'p': np}, commit=True)
-                        st.rerun()
-
     else:
         saldo_brl = get_cached_balance(st.session_state.user_id)
         st.markdown(f"""
         <div class="obsidian-card">
             <div class="label-caption">{t('bal_acc')} | {st.session_state.user_name.upper()}</div>
             <div class="value-main">R$ {saldo_brl:,.2f}</div>
-            <div style="margin-top:10px; font-size:0.65rem; color:#00E5FF; font-weight:700;">{t('enc_conn')}</div>
+            <div style="margin-top:10px; font-size:0.6rem; color:#00E5FF; font-weight:700;">{t('enc_conn')}</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -449,11 +464,11 @@ else:
             <div class='obsidian-card'>
                 <div class='label-caption'>{t('fx_title')}</div>
                 <div class="row-item">
-                    <div style="display:flex; align-items:center; gap:12px;"><span style="font-size:1.6rem;">🇺🇸</span><div><div style="font-weight:600;">{t('fx_usd')}</div><div style="font-size:0.6rem; color:#636366;">{t('fx_ref')} {usd:,.2f}</div></div></div>
+                    <div style="display:flex; align-items:center; gap:12px;"><span style="font-size:1.4rem;">🇺🇸</span><div><div style="font-size:0.9rem; font-weight:600;">{t('fx_usd')}</div><div style="font-size:0.6rem; color:#6B7280;">{t('fx_ref')} {usd:,.2f}</div></div></div>
                     <div style="font-family:'JetBrains Mono'; font-weight:700; color:#00E5FF;">$ {s_u:,.2f}</div>
                 </div>
                 <div class="row-item" style="border:none;">
-                    <div style="display:flex; align-items:center; gap:12px;"><span style="font-size:1.6rem;">🇪🇺</span><div><div style="font-weight:600;">{t('fx_eur')}</div><div style="font-size:0.6rem; color:#636366;">{t('fx_ref')} {eur:,.2f}</div></div></div>
+                    <div style="display:flex; align-items:center; gap:12px;"><span style="font-size:1.4rem;">🇪🇺</span><div><div style="font-size:0.9rem; font-weight:600;">{t('fx_eur')}</div><div style="font-size:0.6rem; color:#6B7280;">{t('fx_ref')} {eur:,.2f}</div></div></div>
                     <div style="font-family:'JetBrains Mono'; font-weight:700; color:#00E5FF;">€ {s_e:,.2f}</div>
                 </div>
             </div>
@@ -461,4 +476,4 @@ else:
             st.caption(t('fx_cap'))
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#2D2D32; font-size:0.65rem; margin-top:4rem;'>RIPARIBANK OBSIDIAN v9.0 • 2024</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#222226; font-size:0.65rem; margin-top:3rem;'>RIPARIBANK v9.2 • 2024</div>", unsafe_allow_html=True)
