@@ -7,7 +7,7 @@ import time
 # --- 1. CONFIGURAÇÃO DE TEMA ---
 st.set_page_config(page_title="RipariBank Premium", page_icon="💎", layout="centered")
 
-# CSS PREMIUM NEO-BANK UI
+# CSS PREMIUM NEO-BANK UI - VERSÃO CORRIGIDA PARA BOTÕES
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -79,30 +79,30 @@ st.markdown("""
         letter-spacing: -1px;
     }
 
-    /* Botões Customizados */
+    /* --- CORREÇÃO DEFINITIVA DOS BOTÕES --- */
     .stButton>button {
         border-radius: 14px !important;
         background-color: #111111 !important;
         color: #FFFFFF !important;
         border: 1px solid #262626 !important;
-        font-size: 0.95rem !important;
-        font-weight: 600 !important;
-        height: 48px !important;
+        font-size: 1.1rem !important; /* Aumentado para visibilidade */
+        font-weight: 700 !important;
+        height: 50px !important;
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        line-height: 1 !important;
+        padding: 0 !important; /* Remove padding que "esmagava" o texto */
         transition: all 0.2s ease-in-out !important;
     }
     
     .stButton>button:hover {
         border-color: #10B981 !important;
         background-color: #161616 !important;
-        transform: translateY(-1px);
-        box-shadow: 0 5px 15px rgba(16, 185, 129, 0.2);
-    }
-    
-    .stButton>button:active {
-        transform: translateY(0px);
     }
 
-    /* Botão Primário (Igual) */
+    /* Botão Primário (Login/Lançar) */
     div[data-testid="stFormSubmitButton"] button {
         background: #10B981 !important;
         color: #000000 !important;
@@ -128,10 +128,7 @@ st.markdown("""
     }
 
     /* Estilização de Tabs */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background-color: transparent;
-    }
+    .stTabs [data-baseweb="tab-list"] { gap: 8px; background-color: transparent; }
     .stTabs [data-baseweb="tab"] {
         background-color: #111111;
         border-radius: 10px 10px 0 0;
@@ -150,7 +147,6 @@ st.markdown("""
         border: 1px solid #222 !important;
         border-radius: 14px !important;
         color: white !important;
-        padding: 10px !important;
     }
 
     hr { border: 0; border-top: 1px solid #1A1A1A; margin: 2rem 0; }
@@ -195,6 +191,7 @@ def get_cached_family_balances():
 
 @st.cache_data(ttl=600)
 def get_cached_history(uid):
+    # Uso de minúsculas 'data', 'motivo', 'valor' para evitar KeyError
     return run_query("SELECT timestamp as data, description as motivo, amount as valor FROM transactions WHERE user_id=:uid ORDER BY id DESC LIMIT 15", params={'uid': uid})
 
 # --- 3. INICIALIZAÇÃO ---
@@ -225,11 +222,11 @@ else:
     with h_col1:
         st.markdown("<div class='header-logo'>💎 RipariBank</div>", unsafe_allow_html=True)
     with h_col2:
-        if st.button("🔄", key="ref", help="Atualizar dados"):
+        if st.button("🔄", key="ref"):
             st.cache_data.clear()
             st.rerun()
     with h_col3:
-        if st.button("🚪", key="out", help="Sair"):
+        if st.button("🚪", key="out"):
             st.session_state.logged_in = False
             st.cache_data.clear()
             st.rerun()
@@ -266,7 +263,7 @@ else:
                             final_val = val if tipo == "Depósito" else -val
                             run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, :ts, :t)", 
                                       params={'uid': int(u_target_id), 'amt': final_val, 'desc': desc, 'ts': datetime.now(), 't': tipo}, commit=True)
-                            st.success("Transação concluída com sucesso!")
+                            st.success("Transação concluída!")
                             time.sleep(1); st.rerun()
 
     # --- ÁREA USUÁRIO (KIDS) ---
@@ -291,23 +288,20 @@ else:
         with tabs[0]:
             df_hist = get_cached_history(st.session_state.user_id)
             if df_hist is not None and not df_hist.empty:
-                # Estilização do DataFrame via Pandas para cores
                 def color_amount(val):
                     color = '#10B981' if val >= 0 else '#EF4444'
                     return f'color: {color}; font-weight: bold'
-                
-                st.markdown("<p style='font-size:0.8rem; color:#6B7280; margin-bottom:10px;'>Últimas 15 movimentações</p>", unsafe_allow_html=True)
                 st.dataframe(df_hist.style.map(color_amount, subset=['valor']), use_container_width=True, hide_index=True)
-            else: st.info("Sua jornada financeira começa com o primeiro depósito!")
+            else: st.info("Sem movimentos.")
         
         with tabs[1]:
             if df_hist is not None and not df_hist.empty:
                 st.area_chart(df_hist.set_index('data')['valor'], color="#10B981", height=220)
         
         with tabs[2]:
+            # CALCULADORA
             st.markdown(f"<div class='calc-display'>{st.session_state.calc_expr if st.session_state.calc_expr else '0'}</div>", unsafe_allow_html=True)
             
-            # Lógica front-end da calculadora
             def k_press(k): st.session_state.calc_expr += str(k)
             def k_clr(): st.session_state.calc_expr = ""
             def k_solve():
@@ -315,7 +309,6 @@ else:
                 except: st.session_state.calc_expr = "Erro"
 
             c1, c2, c3, c4 = st.columns(4)
-            # Layout Profissional de Cores
             c1.button("7", key="n7", on_click=k_press, args=("7",))
             c2.button("8", key="n8", on_click=k_press, args=("8",))
             c3.button("9", key="n9", on_click=k_press, args=("9",))
@@ -329,14 +322,16 @@ else:
             c1.button("1", key="n1", on_click=k_press, args=("1",))
             c2.button("2", key="n2", on_click=k_press, args=("2",))
             c3.button("3", key="n3", on_click=k_press, args=("3",))
-            c4.button("-", key="nsub", on_click=k_press, args=("-",))
+            # Símbolo "Menos" Matemático (U+2212) para maior visibilidade
+            c4.button("−", key="nsub", on_click=k_press, args=("-",))
 
             c1.button("0", key="n0", on_click=k_press, args=("0",))
             c2.button(".", key="ndot", on_click=k_press, args=(".",))
             c3.button("C", key="nclr", on_click=k_clr)
+            # Símbolo "Mais"
             c4.button("+", key="nadd", on_click=k_press, args=("+",))
 
             st.button("=", key="nsolve", type="primary", use_container_width=True, on_click=k_solve)
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#262626; font-size:0.65rem; margin-top:4rem;'>RipariBank v7.0 • Secure Ledger Technology • 2024</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#262626; font-size:0.65rem; margin-top:4rem;'>RipariBank v7.1 • 2024</div>", unsafe_allow_html=True)
