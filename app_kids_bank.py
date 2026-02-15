@@ -7,7 +7,7 @@ import time
 # --- 1. CONFIGURAÇÃO DE TEMA ---
 st.set_page_config(page_title="RipariBank", page_icon="💎", layout="centered")
 
-# CSS NEO-BANK MINIMALIST
+# CSS NEO-BANK MINIMALIST ULTRA-FAST
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
@@ -30,6 +30,7 @@ st.markdown("""
         letter-spacing: -0.5px;
     }
     
+    /* Cards */
     .glass-card {
         background: rgba(255, 255, 255, 0.03);
         border: 1px solid rgba(255, 255, 255, 0.1);
@@ -63,18 +64,18 @@ st.markdown("""
         margin: 0.5rem 0;
     }
 
-    /* Estilização Global dos Botões */
+    /* Botões - Ajuste de visibilidade total */
     .stButton>button {
         border-radius: 12px !important;
         background-color: #111111 !important;
         color: #FFFFFF !important;
         border: 1px solid #222222 !important;
-        font-size: 1rem !important; /* Aumentado de 0.8 para 1.0 */
-        height: 42px !important;    /* Ajustado para acomodar melhor os símbolos */
+        font-size: 1.2rem !important; /* Aumentado para visibilidade */
+        font-weight: 700 !important;
+        height: 48px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        transition: 0.2s;
         line-height: 1 !important;
     }
     
@@ -83,40 +84,34 @@ st.markdown("""
         color: #10B981 !important;
     }
 
-    .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
-        background-color: #111111 !important;
-        border: 1px solid #222222 !important;
-        border-radius: 12px !important;
-        color: white !important;
-    }
-
     /* Estilo Específico da Calculadora */
     .calc-display {
         background-color: #000;
         border: 1px solid #333;
-        border-radius: 10px;
-        padding: 10px;
+        border-radius: 12px;
+        padding: 15px;
         text-align: right;
-        font-size: 1.5rem;
+        font-size: 2rem;
         font-family: 'Inter', sans-serif;
         color: #10B981;
-        margin-bottom: 10px;
-        min-height: 55px;
+        margin-bottom: 15px;
+        min-height: 70px;
         display: flex;
         align-items: center;
         justify-content: flex-end;
+        box-shadow: inset 0 2px 10px rgba(0,0,0,0.8);
     }
 
     hr { border: 0; border-top: 1px solid #222; margin: 2rem 0; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 2. MOTOR DE DADOS ---
-try:
-    conn = st.connection("supabase", type="sql")
-except Exception:
-    st.error("Conexão perdida com a nuvem.")
-    st.stop()
+# --- 2. MOTOR DE DADOS COM CACHE (PERFORMANCE) ---
+@st.cache_resource
+def get_connection():
+    return st.connection("supabase", type="sql")
+
+conn = get_connection()
 
 def run_query(query_str, params=None, commit=False):
     try:
@@ -124,25 +119,35 @@ def run_query(query_str, params=None, commit=False):
             with conn.session as s:
                 s.execute(text(query_str), params if params else {})
                 s.commit()
+            st.cache_data.clear() # Limpa o cache após gravação
             return True
         else:
             return conn.query(query_str, params=params if params else {}, ttl=0)
-    except Exception:
+    except:
         return None
 
-def init_db():
-    run_query('''CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name TEXT NOT NULL, role TEXT, password TEXT);''', commit=True)
-    run_query('''CREATE TABLE IF NOT EXISTS transactions (id SERIAL PRIMARY KEY, user_id INTEGER, amount REAL, description TEXT, timestamp TIMESTAMP, type TEXT);''', commit=True)
-    
-    res = run_query("SELECT count(*) as cnt FROM users")
-    if res is not None and not res.empty and res.iloc[0]['cnt'] == 0:
-        for u in [{'n':'daniel','r':'admin','p':'1234'}, {'n':'ligia','r':'admin','p':'1234'}, 
-                  {'n':'murilo','r':'user','p':'kids1'}, {'n':'cecilia','r':'user','p':'kids2'}]:
-            run_query("INSERT INTO users (name, role, password) VALUES (:n, :r, :p)", params=u, commit=True)
+# Funções de Dados com Cache para evitar delay na Calculadora
+@st.cache_data(ttl=600)
+def get_cached_balance(uid):
+    res = run_query("SELECT SUM(amount) as total FROM transactions WHERE user_id=:uid", params={'uid': uid})
+    return res.iloc[0]['total'] if res is not None and not res.empty and pd.notnull(res.iloc[0]['total']) else 0.0
 
-init_db()
+@st.cache_data(ttl=600)
+def get_cached_family_balances():
+    query = """
+        SELECT u.name, COALESCE(SUM(t.amount), 0) as balance 
+        FROM users u 
+        LEFT JOIN transactions t ON u.id = t.user_id 
+        WHERE u.role = 'user' 
+        GROUP BY u.name, u.id ORDER BY u.name
+    """
+    return run_query(query)
 
-# --- 3. LOGICA DE ESTADO ---
+@st.cache_data(ttl=600)
+def get_cached_history(uid):
+    return run_query("SELECT timestamp as data, description as motivo, amount as valor FROM transactions WHERE user_id=:uid ORDER BY id DESC LIMIT 10", params={'uid': uid})
+
+# --- 3. INICIALIZAÇÃO ---
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'calc_expr' not in st.session_state: st.session_state.calc_expr = ""
 
@@ -159,6 +164,7 @@ if not st.session_state.logged_in:
                 st.session_state.user_id = int(df.iloc[0]['id'])
                 st.session_state.user_name = df.iloc[0]['name']
                 st.session_state.role = df.iloc[0]['role']
+                st.cache_data.clear()
                 st.rerun()
             else: st.toast("Credenciais inválidas.")
 
@@ -169,40 +175,25 @@ else:
     with h_col1:
         st.markdown("<div class='header-logo'>💎 RipariBank</div>", unsafe_allow_html=True)
     with h_col2:
-        if st.button("🔄", key="ref"): st.rerun()
+        if st.button("🔄", key="ref"):
+            st.cache_data.clear()
+            st.rerun()
     with h_col3:
         if st.button("🚪", key="out"):
             st.session_state.logged_in = False
+            st.cache_data.clear()
             st.rerun()
     st.markdown("<div style='margin-top:1rem;'></div>", unsafe_allow_html=True)
 
-    # --- VISUALIZAÇÃO DE SALDOS ---
+    # --- VISUALIZAÇÃO DE SALDOS (USANDO CACHE) ---
     if st.session_state.role == 'admin':
         st.markdown("<div class='balance-label'>Saldos da Família</div>", unsafe_allow_html=True)
-        saldos_query = """
-            SELECT u.name, COALESCE(SUM(t.amount), 0) as balance 
-            FROM users u 
-            LEFT JOIN transactions t ON u.id = t.user_id 
-            WHERE u.role = 'user' 
-            GROUP BY u.name, u.id
-            ORDER BY u.name
-        """
-        df_saldos = run_query(saldos_query)
-        
+        df_saldos = get_cached_family_balances()
         if df_saldos is not None and not df_saldos.empty:
             for _, row in df_saldos.iterrows():
-                st.markdown(f"""
-                <div class='admin-user-card'>
-                    <span style='font-weight:600;'>{row['name'].title()}</span>
-                    <span style='color:#10B981; font-weight:700;'>R$ {row['balance']:,.2f}</span>
-                </div>
-                """, unsafe_allow_html=True)
-        else:
-            st.info("Nenhum utilizador registado.")
+                st.markdown(f"<div class='admin-user-card'><b>{row['name'].title()}</b><span style='color:#10B981;'>R$ {row['balance']:,.2f}</span></div>", unsafe_allow_html=True)
     else:
-        res_bal = run_query("SELECT SUM(amount) as total FROM transactions WHERE user_id=:uid", params={'uid': st.session_state.user_id})
-        saldo = res_bal.iloc[0]['total'] if res_bal is not None and not res_bal.empty and pd.notnull(res_bal.iloc[0]['total']) else 0.0
-        
+        saldo = get_cached_balance(st.session_state.user_id)
         st.markdown(f"""
         <div class="glass-card">
             <div class="balance-label">Meu Saldo</div>
@@ -211,69 +202,58 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-    # --- SEÇÃO DE CONTEÚDO (TABS) ---
+    # --- TABS (INTERAÇÃO LOCAL) ---
     if st.session_state.role == 'user':
         tab1, tab2, tab3 = st.tabs(["HISTÓRICO", "ANÁLISE", "CALCULADORA"])
         
         with tab1:
-            df_hist = run_query("SELECT timestamp as data, description as motivo, amount as valor FROM transactions WHERE user_id=:uid ORDER BY id DESC LIMIT 10", params={'uid': st.session_state.user_id})
+            df_hist = get_cached_history(st.session_state.user_id)
             if df_hist is not None and not df_hist.empty:
                 st.dataframe(df_hist, use_container_width=True, hide_index=True)
-            else:
-                st.info("Ainda não tens movimentos.")
+            else: st.info("Sem movimentos.")
         
         with tab2:
             if df_hist is not None and not df_hist.empty:
                 st.area_chart(df_hist.set_index('data')['valor'], height=200)
         
         with tab3:
-            # Layout da Calculadora
+            # CALCULADORA PURE FRONT (SEM ACESSO AO DB NO RERUN)
             st.markdown(f"<div class='calc-display'>{st.session_state.calc_expr if st.session_state.calc_expr else '0'}</div>", unsafe_allow_html=True)
             
-            def add_to_calc(val):
-                st.session_state.calc_expr += str(val)
-
-            def clear_calc():
-                st.session_state.calc_expr = ""
-
+            def press_key(key): st.session_state.calc_expr += str(key)
+            def clear_calc(): st.session_state.calc_expr = ""
             def solve_calc():
                 try:
-                    # Substitui X por * para avaliação
-                    expr = st.session_state.calc_expr.replace('x', '*')
+                    expr = st.session_state.calc_expr.replace('×', '*').replace('÷', '/')
                     st.session_state.calc_expr = str(eval(expr))
-                except:
-                    st.session_state.calc_expr = "Erro"
+                except: st.session_state.calc_expr = "Erro"
 
-            # Grid de botões
             c1, c2, c3, c4 = st.columns(4)
-            if c1.button("7", key="c7"): add_to_calc(7)
-            if c2.button("8", key="c8"): add_to_calc(8)
-            if c3.button("9", key="c9"): add_to_calc(9)
-            if c4.button("/", key="cdiv"): add_to_calc("/")
+            c1.button("7", key="k7", on_click=press_key, args=("7",))
+            c2.button("8", key="k8", on_click=press_key, args=("8",))
+            c3.button("9", key="k9", on_click=press_key, args=("9",))
+            c4.button("÷", key="kdiv", on_click=press_key, args=("/",))
 
-            if c1.button("4", key="c4"): add_to_calc(4)
-            if c2.button("5", key="c5"): add_to_calc(5)
-            if c3.button("6", key="c6"): add_to_calc(6)
-            if c4.button("x", key="cmul"): add_to_calc("x")
+            c1.button("4", key="k4", on_click=press_key, args=("4",))
+            c2.button("5", key="k5", on_click=press_key, args=("5",))
+            c3.button("6", key="k6", on_click=press_key, args=("6",))
+            c4.button("×", key="kmul", on_click=press_key, args=("*",))
 
-            if c1.button("1", key="c1"): add_to_calc(1)
-            if c2.button("2", key="c2"): add_to_calc(2)
-            if c3.button("3", key="c3"): add_to_calc(3)
-            # Labels com espaços para garantir renderização correta
-            if c4.button(" - ", key="csub"): add_to_calc("-")
+            c1.button("1", key="k1", on_click=press_key, args=("1",))
+            c2.button("2", key="k2", on_click=press_key, args=("2",))
+            c3.button("3", key="k3", on_click=press_key, args=("3",))
+            c4.button("-", key="ksub", on_click=press_key, args=("-",)) # Símbolo simples para garantir visibilidade
 
-            if c1.button("0", key="c0"): add_to_calc(0)
-            if c2.button(".", key="cdot"): add_to_calc(".")
-            if c3.button("C", key="cclr"): clear_calc()
-            if c4.button(" + ", key="cadd"): add_to_calc("+")
+            c1.button("0", key="k0", on_click=press_key, args=("0",))
+            c2.button(".", key="kdot", on_click=press_key, args=(".",))
+            c3.button("C", key="kclr", on_click=clear_calc)
+            c4.button("+", key="kadd", on_click=press_key, args=("+",)) # Símbolo simples
 
-            if st.button("=", key="csolve", type="primary", use_container_width=True): solve_calc()
+            st.button("=", key="ksolve", type="primary", use_container_width=True, on_click=solve_calc)
     
     else:
-        # Área do Administrador
+        # ÁREA ADMIN
         st.markdown("---")
-        st.markdown("### Painel de Controlo")
-        
         with st.expander("💸 NOVO LANÇAMENTO", expanded=True):
             users_df = run_query("SELECT id, name FROM users WHERE role='user'")
             if users_df is not None and not users_df.empty:
@@ -282,26 +262,14 @@ else:
                     val = st.number_input("Quanto?", min_value=0.0, step=0.5)
                     tipo = st.radio("Tipo", ["Depósito", "Retirada"], horizontal=True)
                     desc = st.text_input("Qual o motivo?")
-                    if st.form_submit_button("EFETUAR TRANSFERÊNCIA"):
+                    if st.form_submit_button("LANÇAR"):
                         if val > 0 and desc:
                             u_target_id = users_df[users_df['name'] == target]['id'].values[0]
                             final_val = val if tipo == "Depósito" else -val
                             run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, :ts, :t)", 
                                       params={'uid': int(u_target_id), 'amt': final_val, 'desc': desc, 'ts': datetime.now(), 't': tipo}, commit=True)
-                            st.success("Lançamento efetuado!")
+                            st.success("Sucesso!")
                             time.sleep(1); st.rerun()
 
-        with st.expander("👤 GERIR MEMBROS"):
-            all_users = run_query("SELECT id, name, role FROM users ORDER BY name")
-            st.dataframe(all_users, use_container_width=True, hide_index=True)
-            
-            with st.form("add_user"):
-                new_n = st.text_input("Novo Nome").lower().strip()
-                new_p = st.text_input("Senha Inicial")
-                new_r = st.selectbox("Perfil", ["user", "admin"])
-                if st.form_submit_button("CRIAR CONTA"):
-                    run_query("INSERT INTO users (name, role, password) VALUES (:n, :r, :p)", params={'n':new_n, 'r':new_r, 'p':new_p}, commit=True)
-                    st.rerun()
-
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#333; font-size:0.7rem; margin-top:4rem;'>RipariBank v6.3 | Secured Minimalist Hub</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#333; font-size:0.7rem; margin-top:4rem;'>RipariBank v6.5 | Otimizado para Velocidade</div>", unsafe_allow_html=True)
