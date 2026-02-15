@@ -154,7 +154,7 @@ else:
 
     # --- VISUALIZAÇÃO DE SALDOS ---
     if st.session_state.role == 'admin':
-        # Admin vê o resumo de todos os usuários
+        # Admin vê o resumo de todos os utilizadores
         st.markdown("<div class='balance-label'>Saldos da Família</div>", unsafe_allow_html=True)
         saldos_query = """
             SELECT u.name, COALESCE(SUM(t.amount), 0) as balance 
@@ -171,20 +171,20 @@ else:
                 st.markdown(f"""
                 <div class='admin-user-card'>
                     <span style='font-weight:600;'>{row['name'].title()}</span>
-                    <span style='color:#10B981; font-weight:700;'>€ {row['balance']:,.2f}</span>
+                    <span style='color:#10B981; font-weight:700;'>R$ {row['balance']:,.2f}</span>
                 </div>
                 """, unsafe_allow_html=True)
         else:
-            st.info("Nenhum usuário cadastrado.")
+            st.info("Nenhum utilizador registado.")
     else:
-        # Usuário normal vê apenas o seu saldo
+        # Utilizador normal vê apenas o seu saldo
         res_bal = run_query("SELECT SUM(amount) as total FROM transactions WHERE user_id=:uid", params={'uid': st.session_state.user_id})
         saldo = res_bal.iloc[0]['total'] if res_bal is not None and not res_bal.empty and pd.notnull(res_bal.iloc[0]['total']) else 0.0
         
         st.markdown(f"""
         <div class="glass-card">
             <div class="balance-label">Meu Saldo</div>
-            <div class="balance-value">€ {saldo:,.2f}</div>
+            <div class="balance-value">R$ {saldo:,.2f}</div>
             <div style="color:#666; font-size:0.8rem;">Olá, {st.session_state.user_name.title()}</div>
         </div>
         """, unsafe_allow_html=True)
@@ -193,7 +193,7 @@ else:
     if st.session_state.role == 'user':
         tab1, tab2 = st.tabs(["HISTÓRICO", "ANÁLISE"])
         with tab1:
-            # SQL aliases alterados para minúsculas para evitar KeyError
+            # SQL aliases em minúsculas para evitar KeyError
             df_hist = run_query("SELECT timestamp as data, description as motivo, amount as valor FROM transactions WHERE user_id=:uid ORDER BY id DESC LIMIT 10", params={'uid': st.session_state.user_id})
             if df_hist is not None and not df_hist.empty:
                 st.dataframe(df_hist, use_container_width=True, hide_index=True)
@@ -201,13 +201,12 @@ else:
                 st.info("Ainda não tens movimentos.")
         with tab2:
             if df_hist is not None and not df_hist.empty:
-                # Acessando via minúsculas 'data' e 'valor'
                 st.area_chart(df_hist.set_index('data')['valor'], height=200)
     
     else:
         # Área do Administrador
         st.markdown("---")
-        st.markdown("### Painel de Controle")
+        st.markdown("### Painel de Controlo")
         
         with st.expander("💸 NOVO LANÇAMENTO", expanded=True):
             users_df = run_query("SELECT id, name FROM users WHERE role='user'")
