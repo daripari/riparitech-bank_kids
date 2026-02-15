@@ -11,7 +11,7 @@ st.set_page_config(page_title="RipariBank Obsidian", page_icon="💎", layout="c
 # --- 2. DICIONÁRIO DE TRADUÇÃO (i18n) ---
 TRANSLATIONS = {
     'pt': {
-        'protocol': 'Obsidian Refined v9.4',
+        'protocol': 'Obsidian Refined v9.5',
         'user': 'Usuário',
         'password': 'Senha',
         'auth_btn': 'AUTENTICAR',
@@ -52,7 +52,7 @@ TRANSLATIONS = {
         'change_pw': 'Trocar Senha'
     },
     'en': {
-        'protocol': 'Obsidian Refined v9.4',
+        'protocol': 'Obsidian Refined v9.5',
         'user': 'User',
         'password': 'Password',
         'auth_btn': 'AUTHENTICATE',
@@ -93,7 +93,7 @@ TRANSLATIONS = {
         'change_pw': 'Change Password'
     },
     'es': {
-        'protocol': 'Obsidian Refined v9.4',
+        'protocol': 'Obsidian Refined v9.5',
         'user': 'Usuario',
         'password': 'Contraseña',
         'auth_btn': 'AUTENTICAR',
@@ -139,7 +139,7 @@ def t(key):
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
-# --- CSS REFINADO ---
+# --- CSS REFINADO (BUG FIX PARA TELA PRETA) ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -152,7 +152,10 @@ st.markdown("""
     
     .stApp { background-color: #080809; }
     
-    #MainMenu, footer, header { visibility: hidden !important; }
+    /* Esconde elementos mas garante que a tela não quebre */
+    #MainMenu, footer { visibility: hidden !important; }
+    header { background-color: transparent !important; }
+
     .block-container { padding-top: 1.5rem !important; max-width: 500px !important; }
 
     .obsidian-logo {
@@ -258,6 +261,7 @@ st.markdown("""
         display: flex;
         align-items: center;
         justify-content: flex-end;
+        box-shadow: inset 0 2px 15px rgba(0,0,0,0.9);
     }
 
     .stTabs [data-baseweb="tab-list"] { background-color: transparent; border-bottom: 1px solid #222226; gap: 4px; }
@@ -274,15 +278,19 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. MOTOR DE DADOS ---
+# --- 3. MOTOR DE DADOS SEGURO ---
 @st.cache_resource
 def get_connection():
-    return st.connection("supabase", type="sql")
+    try:
+        return st.connection("supabase", type="sql")
+    except Exception as e:
+        return None
 
 conn = get_connection()
 
 def run_query(query_str, params=None, commit=False):
-    if not conn: return None
+    if not conn: 
+        return None
     try:
         if commit:
             with conn.session as s:
@@ -296,12 +304,15 @@ def run_query(query_str, params=None, commit=False):
         return None
 
 def init_db():
+    if not conn: return
     run_query('''CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name TEXT NOT NULL, role TEXT, password TEXT, language TEXT DEFAULT 'pt');''', commit=True)
     run_query('''CREATE TABLE IF NOT EXISTS transactions (id SERIAL PRIMARY KEY, user_id INTEGER, amount REAL, description TEXT, timestamp TIMESTAMP, type TEXT);''', commit=True)
     try: run_query("ALTER TABLE users ADD COLUMN IF NOT EXISTS language TEXT DEFAULT 'pt';", commit=True)
     except: pass
 
-init_db()
+# Inicializa apenas se a conexão existir
+if conn:
+    init_db()
 
 @st.cache_data(ttl=600)
 def get_cached_balance(uid):
@@ -330,7 +341,13 @@ if 'lang' not in st.session_state: st.session_state.lang = 'pt'
 
 # --- 5. LOGIN ---
 if not st.session_state.logged_in:
+    # Verificação de conexão para avisar o usuário
+    if not conn:
+        st.error("Erro: Banco de dados não configurado.")
+        st.stop()
+        
     st.markdown(f"<div style='margin-top:5rem; text-align:center;'><h1 class='obsidian-logo'>💎 RipariBank</h1><p style='color:#4B5563; font-weight:600; font-size:0.8rem;'>{t('protocol')}</p></div>", unsafe_allow_html=True)
+    
     with st.form("login_form"):
         u = st.text_input(t('user')).lower().strip()
         p = st.text_input(t('password'), type="password").strip()
@@ -342,8 +359,10 @@ if not st.session_state.logged_in:
                 st.session_state.user_name = df.iloc[0]['name']
                 st.session_state.role = df.iloc[0]['role']
                 st.session_state.lang = df.iloc[0]['language'] if 'language' in df.columns else 'pt'
-                st.cache_data.clear(); st.rerun()
-            else: st.toast(t('login_err'))
+                st.cache_data.clear()
+                st.rerun()
+            else: 
+                st.toast(t('login_err'))
 
 # --- 6. DASHBOARD ---
 else:
@@ -365,10 +384,13 @@ else:
 
     with n_col3:
         if st.button("🔄", key="ref", help=t('refresh')):
-            st.cache_data.clear(); st.rerun()
+            st.cache_data.clear()
+            st.rerun()
     with n_col4:
         if st.button("🚪", key="out", help=t('logout')):
-            st.session_state.logged_in = False; st.cache_data.clear(); st.rerun()
+            st.session_state.logged_in = False
+            st.cache_data.clear()
+            st.rerun()
 
     if st.session_state.role == 'admin':
         st.markdown("<div class='obsidian-card'>", unsafe_allow_html=True)
@@ -398,7 +420,9 @@ else:
                             db_t = 'Depósito' if tipo == t('op_dep') else 'Retirada'
                             run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, :ts, :t)", 
                                       params={'uid': int(u_target_id), 'amt': val if db_t == 'Depósito' else -val, 'desc': desc, 'ts': datetime.now(), 't': db_t}, commit=True)
-                            st.success(t('tr_success')); time.sleep(1); st.rerun()
+                            st.success(t('tr_success'))
+                            time.sleep(1)
+                            st.rerun()
 
         # --- MÓDULO DE GESTÃO RESTAURADO ---
         with st.expander(t('user_mgmt')):
@@ -508,4 +532,4 @@ else:
             st.caption(t('fx_cap'))
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#222226; font-size:0.65rem; margin-top:3rem;'>RIPARIBANK v9.4 • 2024</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#222226; font-size:0.65rem; margin-top:3rem;'>RIPARIBANK v9.5 • 2024</div>", unsafe_allow_html=True)
