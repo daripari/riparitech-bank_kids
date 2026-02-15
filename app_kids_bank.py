@@ -7,7 +7,7 @@ import time
 # --- 1. CONFIGURAÇÃO (Theme: Minimalist Midnight) ---
 st.set_page_config(page_title="RipariBank", page_icon="💎", layout="centered")
 
-# CSS ULTRA COMPACTO COM HEADER E BOTÃO FIXOS
+# CSS ULTRA COMPACTO COM HEADER E BOTÃO FIXOS ALINHADOS
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
@@ -21,7 +21,7 @@ st.markdown("""
 
     /* AJUSTE DO CONTAINER PARA HEADER FIXO */
     .block-container {
-        padding-top: 4rem !important; 
+        padding-top: 4.5rem !important; 
         padding-bottom: 1rem !important;
         padding-left: 0.8rem !important;
         padding-right: 0.8rem !important;
@@ -31,10 +31,10 @@ st.markdown("""
     #MainMenu, footer, header { visibility: hidden; }
 
     /* Títulos Menores */
-    h1 { font-size: 1.2rem !important; font-weight: 600; color: white; margin: 0 !important; }
+    h1 { font-size: 1.1rem !important; font-weight: 600; color: white; margin: 0 !important; }
     h2 { font-size: 1.1rem !important; font-weight: 600; color: white; }
 
-    /* HEADER FIXO */
+    /* HEADER FIXO COM FLEXBOX */
     .app-header {
         position: fixed;
         top: 0;
@@ -42,32 +42,36 @@ st.markdown("""
         width: 100%;
         background-color: #0B0E14;
         display: flex;
-        justify-content: center;
+        justify-content: space-between; /* Logo esquerda, Botão direita */
         align-items: center;
-        padding: 0.7rem 0;
+        padding: 0.8rem 1.2rem;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         z-index: 999;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     }
 
     /* ESTILIZAÇÃO DO BOTÃO SAIR NO HEADER */
+    /* Alinhamos o container do botão do Streamlit para não quebrar o layout */
+    .logout-container {
+        display: flex;
+        align-items: center;
+    }
+    
     .stButton.logout-btn > button {
-        position: fixed;
-        top: 0.55rem;
-        right: 0.8rem;
         width: auto !important;
         height: 28px !important;
-        padding: 0 10px !important;
-        font-size: 0.7rem !important;
+        padding: 0 12px !important;
+        font-size: 0.75rem !important;
         background: #1A1C24 !important;
         color: #888 !important;
         border: 1px solid #333 !important;
-        z-index: 1000;
         border-radius: 4px;
+        transition: all 0.2s;
     }
     .stButton.logout-btn > button:hover {
         color: white !important;
         border-color: #555 !important;
+        background: #252833 !important;
     }
 
     /* CARD SALDO SLIM */
@@ -76,7 +80,7 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 10px;
         padding: 0.8rem 1.2rem;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -162,7 +166,8 @@ if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 
 # --- 4. LOGIN ---
 if not st.session_state.logged_in:
-    st.markdown("<div class='app-header'><h1>💎 RipariBank</h1></div>", unsafe_allow_html=True)
+    # Header fixo simples no login
+    st.markdown("<div class='app-header'><h1>💎 RipariBank</h1><div></div></div>", unsafe_allow_html=True)
     st.markdown("<div style='text-align:center; margin-top:2rem;'><p style='color:#666; font-size:0.8rem;'>Acesso Seguro à Nuvem</p></div>", unsafe_allow_html=True)
     with st.form("login"):
         u = st.text_input("Usuário").lower().strip()
@@ -179,18 +184,27 @@ if not st.session_state.logged_in:
 
 # --- 5. DASHBOARD ---
 else:
-    # Header Logo Fixo
-    st.markdown("<div class='app-header'><h1>💎 RipariBank</h1></div>", unsafe_allow_html=True)
+    # Header Logo Fixo à esquerda e Sair à direita
+    # Usamos o container do Streamlit dentro da div para manter a funcionalidade do botão
+    st.markdown("<div class='app-header'><h1>💎 RipariBank</h1><div id='logout-anchor'></div></div>", unsafe_allow_html=True)
     
-    # Botão Sair Injetado no Header via CSS
-    st.markdown('<div class="logout-btn">', unsafe_allow_html=True)
-    if st.button("SAIR", key="logout_header"):
-        st.session_state.logged_in = False
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Injetando o botão na "âncora" visual do header
+    with st.container():
+        # A classe CSS logout-btn cuida do posicionamento fixo sobre o header
+        cols = st.columns([1], gap="small")
+        with cols[0]:
+            st.markdown('<div class="logout-container">', unsafe_allow_html=True)
+            if st.button("SAIR", key="logout_header", help="Encerrar sessão", type="secondary"):
+                st.session_state.logged_in = False
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+        # Aplicamos a classe de estilo para o botão via identificador único do Streamlit
+        st.markdown('<style>div[data-testid="stButton"]:has(button[key="logout_header"]) { position: fixed; top: 0.65rem; right: 1.2rem; z-index: 1001; }</style>', unsafe_allow_html=True)
+        # Fallback de classe para garantir
+        st.markdown('<div class="logout-btn"></div>', unsafe_allow_html=True)
 
     # Identificação do Usuário
-    st.markdown(f"<p style='color:#666; margin-bottom:10px;'>Olá, <b>{st.session_state.user_name.title()}</b></p>", unsafe_allow_html=True)
+    st.markdown(f"<p style='color:#666; margin-bottom:10px; font-size: 0.8rem;'>Olá, <b>{st.session_state.user_name.title()}</b></p>", unsafe_allow_html=True)
 
     # Saldo Slim
     res_bal = run_query("SELECT SUM(amount) as total FROM transactions WHERE user_id=:uid", params={'uid': st.session_state.user_id})
@@ -213,6 +227,7 @@ else:
     
     with t2:
         if df is not None and not df.empty:
+            # Gráfico minimalista
             st.bar_chart(df.groupby("type")["amount"].sum().abs(), height=150)
 
     # ADMIN
@@ -267,4 +282,4 @@ else:
                             st.rerun()
 
 # --- FOOTER ---
-st.markdown("<div style='text-align: center; color: #444; font-size: 0.7rem; margin-top: 2rem;'>RipariBank Minimal v4.3</div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; color: #444; font-size: 0.65rem; margin-top: 2rem;'>RipariBank Minimal v4.3.1</div>", unsafe_allow_html=True)
