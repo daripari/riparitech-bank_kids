@@ -7,7 +7,7 @@ import time
 # --- 1. CONFIGURAÇÃO (Theme: Minimalist Midnight) ---
 st.set_page_config(page_title="RipariBank", page_icon="💎", layout="centered")
 
-# CSS REFORÇADO PARA BARRA FIXA (LOGO À ESQUERDA, BOTÃO À DIREITA)
+# CSS REFORÇADO PARA BARRA FIXA (LOGO À ESQUERDA, BOTÕES À DIREITA)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
@@ -20,7 +20,6 @@ st.markdown("""
     .stApp { background-color: #0B0E14; color: #BBBBBB; }
 
     /* --- FIXAÇÃO ABSOLUTA DA BARRA --- */
-    /* Removemos o comportamento de scroll dos containers pais que bloqueiam o 'fixed' */
     [data-testid="stAppViewContainer"] {
         overflow: visible !important;
     }
@@ -46,7 +45,7 @@ st.markdown("""
     /* LOGO À ESQUERDA - FIXO */
     .nav-logo {
         position: fixed;
-        top: 16px; /* Altura exata */
+        top: 16px; 
         left: 1.2rem;
         font-size: 1.1rem !important;
         font-weight: 600;
@@ -56,18 +55,31 @@ st.markdown("""
         pointer-events: none;
     }
 
-    /* BOTÃO SAIR À DIREITA - FIXO NA MESMA ALTURA */
+    /* --- ESTILIZAÇÃO DOS BOTÕES DO HEADER --- */
+    
+    /* BOTÃO SAIR À DIREITA */
     div[data-testid="stButton"]:has(button[key="logout_header"]) {
         position: fixed !important;
-        top: 13px !important; /* Ajuste milimétrico para alinhar com o texto do logo */
+        top: 13px !important;
         right: 1.2rem !important;
         z-index: 1000001 !important;
         width: auto !important;
     }
 
-    div[data-testid="stButton"]:has(button[key="logout_header"]) button {
+    /* BOTÃO REFRESH AO LADO DO SAIR */
+    div[data-testid="stButton"]:has(button[key="refresh_header"]) {
+        position: fixed !important;
+        top: 13px !important;
+        right: 5.2rem !important; /* Espaçamento para não sobrepor o sair */
+        z-index: 1000001 !important;
+        width: auto !important;
+    }
+
+    /* Estilo comum para botões do header */
+    div[data-testid="stButton"]:has(button[key="logout_header"]) button,
+    div[data-testid="stButton"]:has(button[key="refresh_header"]) button {
         height: 28px !important;
-        padding: 0 12px !important;
+        padding: 0 10px !important;
         font-size: 0.7rem !important;
         background: #1A1C24 !important;
         color: #888 !important;
@@ -77,12 +89,13 @@ st.markdown("""
         font-weight: 600;
     }
 
-    div[data-testid="stButton"]:has(button[key="logout_header"]) button:hover {
+    div[data-testid="stButton"]:has(button[key="logout_header"]) button:hover,
+    div[data-testid="stButton"]:has(button[key="refresh_header"]) button:hover {
         color: white !important;
         border-color: #00C853 !important;
     }
 
-    /* AJUSTE DO CONTEÚDO PARA NÃO FICAR POR BAIXO DA BARRA */
+    /* AJUSTE DO CONTEÚDO */
     .block-container {
         padding-top: 5rem !important; 
         padding-bottom: 2rem !important;
@@ -143,7 +156,6 @@ def init_db():
     res = run_query("SELECT count(*) as cnt FROM users")
     if res is not None and not res.empty:
         if res.iloc[0]['cnt'] == 0:
-            # NOMES SIMPLIFICADOS CONFORME SOLICITADO
             initial_users = [
                 {'n': 'daniel', 'r': 'admin', 'p': '1234'},
                 {'n': 'ligia', 'r': 'admin', 'p': '1234'},
@@ -160,9 +172,8 @@ if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 
 # --- 4. LOGIN ---
 if not st.session_state.logged_in:
-    # Header fixo no login
     st.markdown("<div class='nav-bar'><p class='nav-logo'>💎 RipariBank</p></div>", unsafe_allow_html=True)
-    st.markdown("<div style='text-align:center; margin-top:3rem;'><p style='color:#666; font-size:0.8rem;'>Cloud Protocol</p></div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center; margin-top:3rem;'><p style='color:#666; font-size:0.8rem;'>Protocolo de Segurança</p></div>", unsafe_allow_html=True)
     with st.form("login"):
         u = st.text_input("Utilizador").lower().strip()
         p = st.text_input("Palavra-passe", type="password").strip()
@@ -181,7 +192,10 @@ else:
     # NAVBAR FIXA (LOGO E FUNDO)
     st.markdown("<div class='nav-bar'><p class='nav-logo'>💎 RipariBank</p></div>", unsafe_allow_html=True)
     
-    # BOTÃO SAIR (FIXADO VIA CSS NO CANTO DIREITO À MESMA ALTURA)
+    # BOTÕES DO HEADER (SAIR E REFRESH)
+    if st.button("🔄", key="refresh_header"):
+        st.rerun()
+        
     if st.button("SAIR", key="logout_header"):
         st.session_state.logged_in = False
         st.rerun()
@@ -260,4 +274,4 @@ else:
                             st.rerun()
 
 # --- FOOTER ---
-st.markdown("<div style='text-align: center; color: #222; font-size: 0.6rem; margin-top: 3rem;'>RipariBank v4.5 | Secured Cloud</div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; color: #222; font-size: 0.6rem; margin-top: 3rem;'>RipariBank v4.6 | Secured Cloud</div>", unsafe_allow_html=True)
