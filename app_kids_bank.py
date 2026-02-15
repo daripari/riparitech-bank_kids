@@ -284,19 +284,19 @@ else:
             c1.button("7", key="n7", on_click=k_press, args=("7",))
             c2.button("8", key="n8", on_click=k_press, args=("8",))
             c3.button("9", key="n9", on_click=k_press, args=("9",))
-            c4.button("÷", key="ndiv", on_click=k_press, args=("/",))
+            c4.button(" ÷ ", key="ndiv", on_click=k_press, args=("/",))
 
             c1.button("4", key="n4", on_click=k_press, args=("4",))
             c2.button("5", key="n5", on_click=k_press, args=("5",))
             c3.button("6", key="n6", on_click=k_press, args=("6",))
-            c4.button("×", key="nmul", on_click=k_press, args=("*",))
+            c4.button(" × ", key="nmul", on_click=k_press, args=("*",))
 
             c1.button("1", key="n1", on_click=k_press, args=("1",))
             c2.button("2", key="n2", on_click=k_press, args=("2",))
             c3.button("3", key="n3", on_click=k_press, args=("3",))
-            c4.button("menos", key="nsub", on_click=k_press, args=("-",))
+            c4.button(" - ", key="nsub", on_click=k_press, args=("-",))
 
-            c1.button("0", key="n0", on_click=k_press, args=("0",))
+            c1.button(" + ", key="n0", on_click=k_press, args=("0",))
             c2.button(".", key="ndot", on_click=k_press, args=(".",))
             c3.button("C", key="nclr", on_click=k_clr)
             c4.button("mais", key="nadd", on_click=k_press, args=("+",))
