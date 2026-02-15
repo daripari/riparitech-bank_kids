@@ -7,7 +7,7 @@ import time
 # --- 1. CONFIGURAÇÃO (Theme: Minimalist Midnight) ---
 st.set_page_config(page_title="RipariBank", page_icon="💎", layout="centered")
 
-# CSS ULTRA COMPACTO E MINIMALISTA COM HEADER FIXO
+# CSS ULTRA COMPACTO COM HEADER E BOTÃO FIXOS
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
@@ -21,7 +21,7 @@ st.markdown("""
 
     /* AJUSTE DO CONTAINER PARA HEADER FIXO */
     .block-container {
-        padding-top: 3.5rem !important; /* Espaço para o header fixo não cobrir o conteúdo */
+        padding-top: 4rem !important; 
         padding-bottom: 1rem !important;
         padding-left: 0.8rem !important;
         padding-right: 0.8rem !important;
@@ -31,28 +31,49 @@ st.markdown("""
     #MainMenu, footer, header { visibility: hidden; }
 
     /* Títulos Menores */
-    h1 { font-size: 1.3rem !important; font-weight: 600; color: white; margin-bottom: 0px !important; margin-top: 0px !important; }
+    h1 { font-size: 1.2rem !important; font-weight: 600; color: white; margin: 0 !important; }
     h2 { font-size: 1.1rem !important; font-weight: 600; color: white; }
-    h3 { font-size: 0.9rem !important; font-weight: 600; color: #888; }
 
-    /* HEADER LOGO FIXO NO TOPO */
+    /* HEADER FIXO */
     .app-header {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
-        background-color: #0B0E14; /* Fundo sólido para não transparecer conteúdo ao rolar */
-        text-align: center;
-        padding: 0.6rem 0;
+        background-color: #0B0E14;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0.7rem 0;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        z-index: 1000;
+        z-index: 999;
         box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    /* ESTILIZAÇÃO DO BOTÃO SAIR NO HEADER */
+    .stButton.logout-btn > button {
+        position: fixed;
+        top: 0.55rem;
+        right: 0.8rem;
+        width: auto !important;
+        height: 28px !important;
+        padding: 0 10px !important;
+        font-size: 0.7rem !important;
+        background: #1A1C24 !important;
+        color: #888 !important;
+        border: 1px solid #333 !important;
+        z-index: 1000;
+        border-radius: 4px;
+    }
+    .stButton.logout-btn > button:hover {
+        color: white !important;
+        border-color: #555 !important;
     }
 
     /* CARD SALDO SLIM */
     .slim-card {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 10px;
         padding: 0.8rem 1.2rem;
         margin-bottom: 10px;
@@ -67,13 +88,11 @@ st.markdown("""
         letter-spacing: -1px;
     }
 
-    /* BOTÕES COMPACTOS */
+    /* BOTÕES GERAIS */
     .stButton>button {
         width: 100%;
         border-radius: 6px;
-        height: 2.2em;
         font-size: 0.85rem;
-        font-weight: 400;
         background: #1A1C24;
         color: #CCC;
         border: 1px solid #333;
@@ -82,25 +101,21 @@ st.markdown("""
         background: #00C853;
         color: white;
         border: none;
-        font-weight: 600;
     }
 
-    /* INPUTS MINIMALISTAS */
+    /* INPUTS */
     .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
         background-color: #161920 !important;
         color: white !important;
         border: 1px solid #2A2D35 !important;
         border-radius: 6px !important;
         font-size: 0.85rem !important;
-        height: 35px !important;
     }
     
-    /* Tabelas e Abas */
     .stTabs [data-baseweb="tab-list"] { gap: 5px; background: none; }
     .stTabs [data-baseweb="tab"] { font-size: 0.8rem; padding: 4px 8px; color: #666; }
     .stTabs [aria-selected="true"] { color: white; border-bottom: 2px solid #00C853; }
     
-    .element-container { margin-bottom: 0.4rem !important; }
     div[data-testid="stExpander"] { border: none; background: #11141A; border-radius: 8px; }
 </style>
 """, unsafe_allow_html=True)
@@ -147,7 +162,6 @@ if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 
 # --- 4. LOGIN ---
 if not st.session_state.logged_in:
-    # Header fixo também no login para consistência
     st.markdown("<div class='app-header'><h1>💎 RipariBank</h1></div>", unsafe_allow_html=True)
     st.markdown("<div style='text-align:center; margin-top:2rem;'><p style='color:#666; font-size:0.8rem;'>Acesso Seguro à Nuvem</p></div>", unsafe_allow_html=True)
     with st.form("login"):
@@ -167,13 +181,16 @@ if not st.session_state.logged_in:
 else:
     # Header Logo Fixo
     st.markdown("<div class='app-header'><h1>💎 RipariBank</h1></div>", unsafe_allow_html=True)
-
-    # Info Usuário e Sair
-    header_col, btn_col = st.columns([4, 1])
-    header_col.markdown(f"<span style='color:#888;'>Conta:</span> **{st.session_state.user_name}**", unsafe_allow_html=True)
-    if btn_col.button("SAIR"): 
+    
+    # Botão Sair Injetado no Header via CSS
+    st.markdown('<div class="logout-btn">', unsafe_allow_html=True)
+    if st.button("SAIR", key="logout_header"):
         st.session_state.logged_in = False
         st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Identificação do Usuário
+    st.markdown(f"<p style='color:#666; margin-bottom:10px;'>Olá, <b>{st.session_state.user_name.title()}</b></p>", unsafe_allow_html=True)
 
     # Saldo Slim
     res_bal = run_query("SELECT SUM(amount) as total FROM transactions WHERE user_id=:uid", params={'uid': st.session_state.user_id})
@@ -250,4 +267,4 @@ else:
                             st.rerun()
 
 # --- FOOTER ---
-st.markdown("<div style='text-align: center; color: #444; font-size: 0.7rem; margin-top: 2rem;'>RipariBank Minimal v4.2</div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; color: #444; font-size: 0.7rem; margin-top: 2rem;'>RipariBank Minimal v4.3</div>", unsafe_allow_html=True)
