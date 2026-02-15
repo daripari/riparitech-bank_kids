@@ -132,10 +132,10 @@ def init_db():
     if res is not None and not res.empty:
         if res.iloc[0]['cnt'] == 0:
             initial_users = [
-                {'n': 'danielripari', 'r': 'admin', 'p': '1234'},
-                {'n': 'ligiaripari', 'r': 'admin', 'p': '1234'},
-                {'n': 'muriloripari', 'r': 'user', 'p': 'kids1'},
-                {'n': 'ceciliaripari', 'r': 'user', 'p': 'kids2'}
+                {'n': 'daniel', 'r': 'admin', 'p': '1234'},
+                {'n': 'ligia', 'r': 'admin', 'p': '1234'},
+                {'n': 'murilo', 'r': 'user', 'p': 'kids1'},
+                {'n': 'cecilia', 'r': 'user', 'p': 'kids2'}
             ]
             for u in initial_users:
                 run_query("INSERT INTO users (name, role, password) VALUES (:n, :r, :p)", params=u, commit=True)
