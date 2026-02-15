@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 from datetime import datetime
@@ -7,7 +8,7 @@ import time
 # --- 1. CONFIGURAÇÃO DE TEMA ---
 st.set_page_config(page_title="RipariBank Stealth", page_icon="💎", layout="centered")
 
-# CSS STEALTH GRAPHITE UI - V8.0
+# CSS STEALTH GRAPHITE UI - V8.1
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap');
@@ -24,10 +25,6 @@ st.markdown("""
     .block-container { padding-top: 2rem !important; max-width: 450px !important; }
 
     /* Logo Estilo Stealth */
-    .stealth-header {
-        text-align: left;
-        padding-bottom: 2rem;
-    }
     .stealth-logo {
         font-size: 1.5rem;
         font-weight: 800;
@@ -46,6 +43,14 @@ st.markdown("""
         box-shadow: 0 4px 20px rgba(0,0,0,0.6);
     }
 
+    .currency-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #1A1A1C;
+    }
+    
     .admin-row {
         background-color: #121214;
         border-bottom: 1px solid #1A1A1C;
@@ -173,7 +178,7 @@ if 'calc_expr' not in st.session_state: st.session_state.calc_expr = ""
 
 # --- 4. LOGIN ---
 if not st.session_state.logged_in:
-    st.markdown("<div style='margin-top:4rem; text-align:center;'><h1 class='stealth-logo'>💎 RipariBank</h1><p style='color:#444;'>Security Protocol v8.0</p></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top:4rem; text-align:center;'><h1 class='stealth-logo'>💎 RipariBank</h1><p style='color:#444;'>Security Protocol v8.1</p></div>", unsafe_allow_html=True)
     with st.form("login_form"):
         u = st.text_input("Usuário").lower().strip()
         p = st.text_input("Senha", type="password").strip()
@@ -250,16 +255,19 @@ else:
                         st.rerun()
 
     else:
-        saldo = get_cached_balance(st.session_state.user_id)
+        # --- VISÃO DO USUÁRIO (FILHOS) ---
+        saldo_brl = get_cached_balance(st.session_state.user_id)
+        
         st.markdown(f"""
         <div class="stealth-card">
             <div class="label-minor">Saldo em Conta | {st.session_state.user_name.upper()}</div>
-            <div class="val-major">R$ {saldo:,.2f}</div>
+            <div class="val-major">R$ {saldo_brl:,.2f}</div>
             <div style="margin-top:10px; font-size:0.6rem; color:#3B82F6;">● CONEXÃO CRIPTOGRAFADA</div>
         </div>
         """, unsafe_allow_html=True)
 
-        tabs = st.tabs(["📊 Histórico", "📈 Evolução", "🧮 Calculadora"])
+        # Tabs incluindo a nova visão de câmbio
+        tabs = st.tabs(["📊 Histórico", "📈 Evolução", "🧮 Calculadora", "🌍 Câmbio"])
         
         with tabs[0]:
             df_hist = get_cached_history(st.session_state.user_id)
@@ -303,5 +311,43 @@ else:
 
             st.button("CALCULAR", key="nsolve", type="primary", use_container_width=True, on_click=k_solve)
 
+        with tabs[3]:
+            # --- MÓDULO DE CÂMBIO ---
+            # Taxas de referência (estáticas para fins didáticos)
+            usd_rate = 5.05
+            eur_rate = 5.45
+            
+            saldo_usd = saldo_brl / usd_rate
+            saldo_eur = saldo_brl / eur_rate
+            
+            st.markdown("<div class='stealth-card'>", unsafe_allow_html=True)
+            st.markdown("<div class='label-minor'>Conversão Internacional</div>", unsafe_allow_html=True)
+            
+            st.markdown(f"""
+            <div class="currency-row">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:1.5rem;">🇺🇸</span>
+                    <div>
+                        <div style="font-size:0.9rem; font-weight:600;">Dólar Americano</div>
+                        <div style="font-size:0.6rem; color:#636366;">Ref: R$ {usd_rate:,.2f}</div>
+                    </div>
+                </div>
+                <div style="font-family:'JetBrains Mono'; font-weight:700; color:#3B82F6;">$ {saldo_usd:,.2f}</div>
+            </div>
+            
+            <div class="currency-row" style="border:none;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:1.5rem;">🇪🇺</span>
+                    <div>
+                        <div style="font-size:0.9rem; font-weight:600;">Euro</div>
+                        <div style="font-size:0.6rem; color:#636366;">Ref: R$ {eur_rate:,.2f}</div>
+                    </div>
+                </div>
+                <div style="font-family:'JetBrains Mono'; font-weight:700; color:#3B82F6;">€ {saldo_eur:,.2f}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+            st.caption("Taxas de câmbio baseadas em valores de referência de mercado.")
+
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#1A1A1C; font-size:0.6rem; margin-top:4rem;'>RIPARIBANK STEALTH CORE v8.0</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#1A1A1C; font-size:0.6rem; margin-top:4rem;'>RIPARIBANK STEALTH CORE v8.1</div>", unsafe_allow_html=True)
