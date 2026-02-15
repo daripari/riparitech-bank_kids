@@ -11,7 +11,7 @@ st.set_page_config(page_title="Banco da Família Obsidian", page_icon="💎", la
 # --- 2. DICIONÁRIO DE TRADUÇÃO (i18n) ---
 TRANSLATIONS = {
     'pt': {
-        'protocol': 'Banco da Família v10.0',
+        'protocol': 'Banco da Família v10.1',
         'user': 'Usuário',
         'password': 'Senha',
         'auth_btn': 'AUTENTICAR',
@@ -58,7 +58,7 @@ TRANSLATIONS = {
         'msg_loss': 'Houve uma retirada de'
     },
     'en': {
-        'protocol': 'Family Bank v10.0',
+        'protocol': 'Family Bank v10.1',
         'user': 'User',
         'password': 'Password',
         'auth_btn': 'AUTHENTICATE',
@@ -105,7 +105,7 @@ TRANSLATIONS = {
         'msg_loss': 'There was a decrease of'
     },
     'es': {
-        'protocol': 'Banco de la Familia v10.0',
+        'protocol': 'Banco de la Familia v10.1',
         'user': 'Usuario',
         'password': 'Contraseña',
         'auth_btn': 'AUTENTICAR',
@@ -157,7 +157,7 @@ def t(key):
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
-# --- CSS REFINADO ---
+# --- CSS REFINADO & RESPONSIVO ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -184,6 +184,7 @@ st.markdown("""
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         text-transform: uppercase;
+        white-space: nowrap; /* Evita quebra de linha no logo */
     }
     
     .obsidian-card {
@@ -245,55 +246,65 @@ st.markdown("""
         font-weight: 700 !important;
     }
 
-    /* Notificação Badge */
+    button[key*="del_"] {
+        border-color: #EF4444 !important;
+        color: #EF4444 !important;
+    }
+    button[key*="del_"]:hover {
+        background: #EF4444 !important;
+        color: white !important;
+    }
+
+    /* Badge e Selectbox */
     .notif-badge {
-        background-color: #EF4444;
-        color: white;
-        border-radius: 50%;
-        padding: 2px 6px;
-        font-size: 0.6rem;
-        position: relative;
-        top: -10px;
-        right: 10px;
+        background-color: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.6rem;
     }
-
     .stSelectbox div[data-baseweb="select"] {
-        background-color: #111114 !important;
-        border: 1px solid #222226 !important;
-        border-radius: 20px !important;
-        height: 32px !important;
-        min-height: 32px !important;
-        font-size: 0.75rem !important;
+        background-color: #111114 !important; border: 1px solid #222226 !important; border-radius: 20px !important; height: 32px !important; font-size: 0.75rem !important;
     }
 
+    /* Calculadora Visor */
     .display-calc {
-        background-color: #050506;
-        border: 2px solid #1F1F23;
-        border-radius: 16px;
-        padding: 20px;
-        text-align: right;
-        font-size: 2.2rem;
-        font-family: 'JetBrains Mono', monospace;
-        color: #00E5FF;
-        margin-bottom: 15px;
-        min-height: 80px;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        box-shadow: inset 0 2px 15px rgba(0,0,0,0.9);
+        background-color: #050506; border: 2px solid #1F1F23; border-radius: 16px; padding: 20px;
+        text-align: right; font-size: 2.2rem; font-family: 'JetBrains Mono', monospace;
+        color: #00E5FF; margin-bottom: 15px; min-height: 80px;
+        display: flex; align-items: center; justify-content: flex-end;
     }
 
+    /* Tabs & Inputs */
     .stTabs [data-baseweb="tab-list"] { background-color: transparent; border-bottom: 1px solid #222226; gap: 4px; }
     .stTabs [data-baseweb="tab"] { color: #A1A1AA; font-weight: 600; font-size: 0.8rem; }
     .stTabs [aria-selected="true"] { color: #00E5FF !important; border-bottom-color: #00E5FF !important; }
-
-    .stTextInput input, .stNumberInput input {
-        background-color: #0F0F12 !important;
-        border: 1px solid #222226 !important;
-        border-radius: 12px !important;
-    }
-
+    .stTextInput input, .stNumberInput input { background-color: #0F0F12 !important; border: 1px solid #222226 !important; border-radius: 12px !important; }
     hr { border: 0; border-top: 1px solid #222226; margin: 1.5rem 0; }
+
+    /* --- MOBILE RESPONSIVE FIX --- */
+    @media (max-width: 480px) {
+        /* Garante que as colunas fiquem lado a lado na calculadora (Grid 4x4) */
+        div[data-testid="column"] {
+            min-width: 0 !important;
+            flex: 1 1 auto !important;
+        }
+
+        /* Ajuste de Botões para toque */
+        .stButton>button {
+            height: 60px !important; /* Maior área de toque */
+            font-size: 1.2rem !important; /* Números maiores */
+            padding: 0 !important;
+        }
+
+        /* Ajuste do Logo e Navbar para não quebrar */
+        .obsidian-logo {
+            font-size: 1.1rem !important;
+        }
+        
+        /* Ajuste do Visor */
+        .display-calc {
+            min-height: 60px;
+            font-size: 1.8rem;
+            padding: 10px;
+        }
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -325,7 +336,6 @@ def init_db():
     if not conn: return
     run_query('''CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name TEXT NOT NULL, role TEXT, password TEXT, language TEXT DEFAULT 'pt');''', commit=True)
     run_query('''CREATE TABLE IF NOT EXISTS transactions (id SERIAL PRIMARY KEY, user_id INTEGER, amount REAL, description TEXT, timestamp TIMESTAMP, type TEXT);''', commit=True)
-    # Tabela de Notificações
     run_query('''CREATE TABLE IF NOT EXISTS notifications (id SERIAL PRIMARY KEY, user_id INTEGER, message TEXT, is_read BOOLEAN DEFAULT FALSE, timestamp TIMESTAMP);''', commit=True)
     try: run_query("ALTER TABLE users ADD COLUMN IF NOT EXISTS language TEXT DEFAULT 'pt';", commit=True)
     except: pass
@@ -404,7 +414,6 @@ else:
             run_query("UPDATE users SET language=:l WHERE id=:id", params={'l': new_lang_code, 'id': st.session_state.user_id}, commit=True)
             st.rerun()
 
-    # Logica de Notificações no Header
     unread = get_unread_notifs(st.session_state.user_id)
     count = len(unread) if unread is not None else 0
     
@@ -420,7 +429,6 @@ else:
         if st.button("🚪", key="out"):
             st.session_state.logged_in = False; st.cache_data.clear(); st.rerun()
 
-    # Painel de Notificações
     if st.session_state.show_notifs:
         with st.container():
             st.markdown(f"<div class='obsidian-card' style='border-color:#00E5FF;'>", unsafe_allow_html=True)
@@ -436,7 +444,6 @@ else:
             st.markdown("</div>", unsafe_allow_html=True)
 
     if st.session_state.role == 'admin':
-        # --- ADMIN VIEW ---
         st.markdown("<div class='obsidian-card'>", unsafe_allow_html=True)
         st.markdown(f"<div class='label-caption'>{t('bal_family')}</div>", unsafe_allow_html=True)
         df_saldos = get_cached_family_balances()
@@ -457,16 +464,12 @@ else:
                         if val > 0 and desc:
                             u_target_id = users_df[users_df['name'] == target]['id'].values[0]
                             db_t = 'Depósito' if tipo == t('op_dep') else 'Retirada'
-                            # Inserir Transação
                             run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, :ts, :t)", 
                                       params={'uid': int(u_target_id), 'amt': val if db_t == 'Depósito' else -val, 'desc': desc, 'ts': datetime.now(), 't': db_t}, commit=True)
-                            
-                            # Inserir Notificação
                             prefix = t('msg_gain') if db_t == 'Depósito' else t('msg_loss')
                             msg = f"{prefix} R$ {val:,.2f} ({desc})"
                             run_query("INSERT INTO notifications (user_id, message, timestamp) VALUES (:uid, :msg, :ts)", 
                                       params={'uid': int(u_target_id), 'msg': msg, 'ts': datetime.now()}, commit=True)
-                            
                             st.success(t('tr_success')); time.sleep(1); st.rerun()
 
         with st.expander(t('user_mgmt')):
@@ -493,8 +496,7 @@ else:
                                 st.rerun()
 
     else:
-        # --- USER VIEW (FILHOS) ---
-        if count > 0: st.toast(t('notif_new')) # Alerta flutuante ao entrar
+        if count > 0: st.toast(t('notif_new'))
         
         saldo_brl = get_cached_balance(st.session_state.user_id)
         st.markdown(f"""
@@ -522,7 +524,10 @@ else:
             def k_s():
                 try: st.session_state.calc_expr = str(eval(st.session_state.calc_expr.replace('×', '*').replace('÷', '/')))
                 except: st.session_state.calc_expr = "Error"
-            c1, c2, c3, c4 = st.columns(4)
+            
+            # --- CALCULADORA GRID FIX ---
+            # Uso de gap="small" para complementar o CSS de mobile
+            c1, c2, c3, c4 = st.columns(4, gap="small")
             c1.button("7", key="k7", on_click=k_p, args=("7",))
             c2.button("8", key="k8", on_click=k_p, args=("8",))
             c3.button("9", key="k9", on_click=k_p, args=("9",))
@@ -560,4 +565,4 @@ else:
             st.caption(t('fx_cap'))
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v10.0 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v10.1 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
