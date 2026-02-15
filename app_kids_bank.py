@@ -7,7 +7,7 @@ import time
 # --- 1. CONFIGURAÇÃO (Theme: Minimalist Midnight) ---
 st.set_page_config(page_title="RipariBank", page_icon="💎", layout="centered")
 
-# CSS REFORÇADO PARA BARRA FIXA (LOGO À ESQUERDA, BOTÕES À DIREITA)
+# CSS REFORÇADO PARA BARRA FIXA (BOTÕES LADO A LADO)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
@@ -42,7 +42,7 @@ st.markdown("""
         box-shadow: 0 2px 10px rgba(0,0,0,0.5);
     }
 
-    /* LOGO À ESQUERDA - FIXO */
+    /* LOGO À ESQUERDA */
     .nav-logo {
         position: fixed;
         top: 16px; 
@@ -55,22 +55,22 @@ st.markdown("""
         pointer-events: none;
     }
 
-    /* --- ESTILIZAÇÃO DOS BOTÕES DO HEADER --- */
+    /* --- POSICIONAMENTO DOS BOTÕES (LADO A LADO) --- */
     
-    /* BOTÃO SAIR À DIREITA */
+    /* BOTÃO SAIR (Mais à direita) */
     div[data-testid="stButton"]:has(button[key="logout_header"]) {
         position: fixed !important;
         top: 13px !important;
-        right: 1.2rem !important;
+        right: 1rem !important;
         z-index: 1000001 !important;
         width: auto !important;
     }
 
-    /* BOTÃO REFRESH AO LADO DO SAIR */
+    /* BOTÃO REFRESH (À esquerda do Sair) */
     div[data-testid="stButton"]:has(button[key="refresh_header"]) {
         position: fixed !important;
         top: 13px !important;
-        right: 5.2rem !important; /* Espaçamento para não sobrepor o sair */
+        right: 4.5rem !important; /* Espaço exato para ficar ao lado */
         z-index: 1000001 !important;
         width: auto !important;
     }
@@ -87,6 +87,9 @@ st.markdown("""
         border-radius: 4px !important;
         text-transform: uppercase;
         font-weight: 600;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 
     div[data-testid="stButton"]:has(button[key="logout_header"]) button:hover,
@@ -274,4 +277,4 @@ else:
                             st.rerun()
 
 # --- FOOTER ---
-st.markdown("<div style='text-align: center; color: #222; font-size: 0.6rem; margin-top: 3rem;'>RipariBank v4.6 | Secured Cloud</div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; color: #222; font-size: 0.6rem; margin-top: 3rem;'>RipariBank v4.7 | Secured Cloud</div>", unsafe_allow_html=True)
