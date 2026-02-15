@@ -11,7 +11,7 @@ st.set_page_config(page_title="Banco da Família Obsidian", page_icon="💎", la
 # --- 2. DICIONÁRIO DE TRADUÇÃO (i18n) ---
 TRANSLATIONS = {
     'pt': {
-        'protocol': 'Banco da Família v10.2',
+        'protocol': 'Banco da Família v10.3',
         'user': 'Usuário',
         'password': 'Senha',
         'auth_btn': 'AUTENTICAR',
@@ -58,7 +58,7 @@ TRANSLATIONS = {
         'msg_loss': 'Houve uma retirada de'
     },
     'en': {
-        'protocol': 'Family Bank v10.2',
+        'protocol': 'Family Bank v10.3',
         'user': 'User',
         'password': 'Password',
         'auth_btn': 'AUTHENTICATE',
@@ -105,7 +105,7 @@ TRANSLATIONS = {
         'msg_loss': 'There was a decrease of'
     },
     'es': {
-        'protocol': 'Banco de la Familia v10.2',
+        'protocol': 'Banco de la Familia v10.3',
         'user': 'Usuario',
         'password': 'Contraseña',
         'auth_btn': 'AUTENTICAR',
@@ -157,7 +157,7 @@ def t(key):
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
-# --- CSS REFINADO & RESPONSIVO (V10.2) ---
+# --- CSS REFINADO & RESPONSIVO (V10.3 NANO) ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -267,6 +267,7 @@ st.markdown("""
         text-align: right; font-size: 2.2rem; font-family: 'JetBrains Mono', monospace;
         color: #00E5FF; margin-bottom: 15px; min-height: 80px;
         display: flex; align-items: center; justify-content: flex-end;
+        box-shadow: inset 0 2px 15px rgba(0,0,0,0.9);
     }
 
     .stTabs [data-baseweb="tab-list"] { background-color: transparent; border-bottom: 1px solid #222226; gap: 4px; }
@@ -275,43 +276,42 @@ st.markdown("""
     .stTextInput input, .stNumberInput input { background-color: #0F0F12 !important; border: 1px solid #222226 !important; border-radius: 12px !important; }
     hr { border: 0; border-top: 1px solid #222226; margin: 1.5rem 0; }
 
-    /* --- MOBILE RESPONSIVE FIX V10.2 --- */
+    /* --- MOBILE RESPONSIVE FIX V10.3 (NANO COMPACT) --- */
     @media (max-width: 480px) {
-        /* Reduzir margens laterais para maximizar espaço */
+        /* Margem quase zero para aproveitar cada pixel */
         .block-container {
             padding-left: 0.2rem !important;
             padding-right: 0.2rem !important;
         }
 
-        /* Forçar gap menor entre colunas */
+        /* Forçar gap zero entre colunas */
         div[data-testid="stHorizontalBlock"] {
-            gap: 0.3rem !important;
+            gap: 0px !important;
         }
 
-        /* Forçar colunas a ficarem lado a lado (Grid 4x4) */
+        /* GARANTIA MATEMÁTICA: 4 colunas = 25% cada */
         div[data-testid="column"] {
+            width: 25% !important;
+            flex: 0 0 25% !important;
             min-width: 0 !important;
-            flex: 1 1 auto !important;
-            padding: 0 !important; /* Remover padding interno da coluna */
+            padding: 0 1px !important; /* Mínimo espaçamento para não colar visualmente */
         }
 
-        /* Botões robustos e largos */
+        /* Botões "Nano": Menores e Fonte Reduzida */
         .stButton>button {
-            height: 65px !important; /* Mais altos */
-            font-size: 1.3rem !important; /* Texto legível */
+            height: 50px !important; /* Reduzido de 65px para 50px */
+            min-height: 50px !important;
+            font-size: 1.1rem !important; /* Fonte menor para não quebrar */
             padding: 0px !important;
             margin: 0px !important;
-            width: 100% !important; /* Forçar largura total */
+            width: 100% !important;
+            line-height: 1 !important;
         }
         
-        /* Garantir que o container do botão também ocupe tudo */
-        div.stButton {
-            width: 100% !important;
-        }
+        div.stButton { width: 100% !important; }
 
-        /* Ajustes menores */
-        .obsidian-logo { font-size: 1.1rem !important; }
-        .display-calc { min-height: 60px; font-size: 1.8rem; padding: 10px; }
+        .obsidian-logo { font-size: 1.0rem !important; }
+        .display-calc { min-height: 50px; font-size: 1.5rem; padding: 10px; margin-bottom: 10px; }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -534,7 +534,7 @@ else:
                 except: st.session_state.calc_expr = "Error"
             
             # --- CALCULADORA GRID FIX ---
-            # Uso de gap="small" para complementar o CSS de mobile
+            # Uso de gap="small" no Python, mas CSS (Nano) sobrescreve para 0 no mobile
             c1, c2, c3, c4 = st.columns(4, gap="small")
             c1.button("7", key="k7", on_click=k_p, args=("7",))
             c2.button("8", key="k8", on_click=k_p, args=("8",))
@@ -573,4 +573,4 @@ else:
             st.caption(t('fx_cap'))
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v10.2 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v10.3 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
