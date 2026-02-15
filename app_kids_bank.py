@@ -31,9 +31,17 @@ st.markdown("""
     #MainMenu, footer, header { visibility: hidden; }
 
     /* Títulos Menores */
-    h1 { font-size: 1.5rem !important; font-weight: 600; color: white; margin-bottom: 0.5rem !important; }
-    h2 { font-size: 1.2rem !important; font-weight: 600; color: white; }
-    h3 { font-size: 1rem !important; font-weight: 600; color: #888; }
+    h1 { font-size: 1.3rem !important; font-weight: 600; color: white; margin-bottom: 0.2rem !important; margin-top: 0px !important; }
+    h2 { font-size: 1.1rem !important; font-weight: 600; color: white; }
+    h3 { font-size: 0.9rem !important; font-weight: 600; color: #888; }
+
+    /* HEADER LOGO PERSISTENTE */
+    .app-header {
+        text-align: center;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        margin-bottom: 0.8rem;
+    }
 
     /* CARD SALDO SLIM */
     .slim-card {
@@ -135,7 +143,7 @@ if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 
 # --- 4. LOGIN (SLIM) ---
 if not st.session_state.logged_in:
-    st.markdown("<div style='text-align:center; padding-top: 2rem;'><h1>💎 RipariBank</h1><p style='color:#666; font-size:0.8rem;'>Minimal Cloud Access</p></div>", unsafe_allow_html=True)
+    st.markdown("<div class='app-header' style='border-bottom:none; margin-top:2rem;'><h1>💎 RipariBank</h1><p style='color:#666; font-size:0.8rem;'>Minimal Cloud Access</p></div>", unsafe_allow_html=True)
     with st.form("login"):
         u = st.text_input("Usuário").lower().strip()
         p = st.text_input("Senha", type="password").strip()
@@ -151,7 +159,10 @@ if not st.session_state.logged_in:
 
 # --- 5. DASHBOARD MINIMALISTA ---
 else:
-    # Header Compacto
+    # Logo Header Persistente
+    st.markdown("<div class='app-header'><h1>💎 RipariBank</h1></div>", unsafe_allow_html=True)
+
+    # Header de Informações da Conta
     header_col, btn_col = st.columns([4, 1])
     header_col.markdown(f"<span style='color:#888;'>Conta:</span> **{st.session_state.user_name}**", unsafe_allow_html=True)
     if btn_col.button("SAIR"): 
