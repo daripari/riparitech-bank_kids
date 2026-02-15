@@ -11,7 +11,7 @@ st.set_page_config(page_title="Banco da Família Obsidian", page_icon="💎", la
 # --- 2. DICIONÁRIO DE TRADUÇÃO (i18n) ---
 TRANSLATIONS = {
     'pt': {
-        'protocol': 'Banco da Família v10.1',
+        'protocol': 'Banco da Família v10.2',
         'user': 'Usuário',
         'password': 'Senha',
         'auth_btn': 'AUTENTICAR',
@@ -58,7 +58,7 @@ TRANSLATIONS = {
         'msg_loss': 'Houve uma retirada de'
     },
     'en': {
-        'protocol': 'Family Bank v10.1',
+        'protocol': 'Family Bank v10.2',
         'user': 'User',
         'password': 'Password',
         'auth_btn': 'AUTHENTICATE',
@@ -105,7 +105,7 @@ TRANSLATIONS = {
         'msg_loss': 'There was a decrease of'
     },
     'es': {
-        'protocol': 'Banco de la Familia v10.1',
+        'protocol': 'Banco de la Familia v10.2',
         'user': 'Usuario',
         'password': 'Contraseña',
         'auth_btn': 'AUTENTICAR',
@@ -157,7 +157,7 @@ def t(key):
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
-# --- CSS REFINADO & RESPONSIVO ---
+# --- CSS REFINADO & RESPONSIVO (V10.2) ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -184,7 +184,7 @@ st.markdown("""
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         text-transform: uppercase;
-        white-space: nowrap; /* Evita quebra de linha no logo */
+        white-space: nowrap;
     }
     
     .obsidian-card {
@@ -255,7 +255,6 @@ st.markdown("""
         color: white !important;
     }
 
-    /* Badge e Selectbox */
     .notif-badge {
         background-color: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.6rem;
     }
@@ -263,7 +262,6 @@ st.markdown("""
         background-color: #111114 !important; border: 1px solid #222226 !important; border-radius: 20px !important; height: 32px !important; font-size: 0.75rem !important;
     }
 
-    /* Calculadora Visor */
     .display-calc {
         background-color: #050506; border: 2px solid #1F1F23; border-radius: 16px; padding: 20px;
         text-align: right; font-size: 2.2rem; font-family: 'JetBrains Mono', monospace;
@@ -271,39 +269,49 @@ st.markdown("""
         display: flex; align-items: center; justify-content: flex-end;
     }
 
-    /* Tabs & Inputs */
     .stTabs [data-baseweb="tab-list"] { background-color: transparent; border-bottom: 1px solid #222226; gap: 4px; }
     .stTabs [data-baseweb="tab"] { color: #A1A1AA; font-weight: 600; font-size: 0.8rem; }
     .stTabs [aria-selected="true"] { color: #00E5FF !important; border-bottom-color: #00E5FF !important; }
     .stTextInput input, .stNumberInput input { background-color: #0F0F12 !important; border: 1px solid #222226 !important; border-radius: 12px !important; }
     hr { border: 0; border-top: 1px solid #222226; margin: 1.5rem 0; }
 
-    /* --- MOBILE RESPONSIVE FIX --- */
+    /* --- MOBILE RESPONSIVE FIX V10.2 --- */
     @media (max-width: 480px) {
-        /* Garante que as colunas fiquem lado a lado na calculadora (Grid 4x4) */
+        /* Reduzir margens laterais para maximizar espaço */
+        .block-container {
+            padding-left: 0.2rem !important;
+            padding-right: 0.2rem !important;
+        }
+
+        /* Forçar gap menor entre colunas */
+        div[data-testid="stHorizontalBlock"] {
+            gap: 0.3rem !important;
+        }
+
+        /* Forçar colunas a ficarem lado a lado (Grid 4x4) */
         div[data-testid="column"] {
             min-width: 0 !important;
             flex: 1 1 auto !important;
+            padding: 0 !important; /* Remover padding interno da coluna */
         }
 
-        /* Ajuste de Botões para toque */
+        /* Botões robustos e largos */
         .stButton>button {
-            height: 60px !important; /* Maior área de toque */
-            font-size: 1.2rem !important; /* Números maiores */
-            padding: 0 !important;
-        }
-
-        /* Ajuste do Logo e Navbar para não quebrar */
-        .obsidian-logo {
-            font-size: 1.1rem !important;
+            height: 65px !important; /* Mais altos */
+            font-size: 1.3rem !important; /* Texto legível */
+            padding: 0px !important;
+            margin: 0px !important;
+            width: 100% !important; /* Forçar largura total */
         }
         
-        /* Ajuste do Visor */
-        .display-calc {
-            min-height: 60px;
-            font-size: 1.8rem;
-            padding: 10px;
+        /* Garantir que o container do botão também ocupe tudo */
+        div.stButton {
+            width: 100% !important;
         }
+
+        /* Ajustes menores */
+        .obsidian-logo { font-size: 1.1rem !important; }
+        .display-calc { min-height: 60px; font-size: 1.8rem; padding: 10px; }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -565,4 +573,4 @@ else:
             st.caption(t('fx_cap'))
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v10.1 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v10.2 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
