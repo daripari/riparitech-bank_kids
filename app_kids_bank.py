@@ -12,32 +12,32 @@ st.set_page_config(page_title="Banco da Família Obsidian", page_icon="💎", la
 TRANSLATIONS = {
     'pt': {
         'protocol': 'Banco da Família v10.0',
-        'user': 'Utilizador',
-        'password': 'Palavra-passe',
+        'user': 'Usuário',
+        'password': 'Senha',
         'auth_btn': 'AUTENTICAR',
         'login_err': 'Acesso Negado.',
-        'bal_family': 'Monitorização de Ativos',
+        'bal_family': 'Monitoramento de Ativos',
         'quick_tr': '💸 LANÇAMENTO TÁTICO',
         'target_acc': 'Conta de Destino:',
         'amount': 'Montante (R$)',
         'op': 'Operação',
         'op_dep': 'Depósito',
-        'op_ret': 'Levantamento',
+        'op_ret': 'Retirada',
         'reason': 'Motivo',
         'exec': 'EXECUTAR',
         'tr_success': 'Transação Confirmada.',
-        'user_mgmt': '⚙️ COMANDO DE UTILIZADORES',
-        'tab_list': 'Gerir',
-        'tab_add': 'Novo Registo',
+        'user_mgmt': '⚙️ COMANDO DE USUÁRIOS',
+        'tab_list': 'Gerenciar',
+        'tab_add': 'Novo Registro',
         'lvl': 'Nível',
-        'create_acc': 'REGISTAR',
+        'create_acc': 'CADASTRAR',
         'bal_acc': 'Saldo em Conta',
         'enc_conn': '● CONEXÃO SEGURA',
         'tab_hist': '📊 Histórico',
         'tab_evo': '📈 Evolução',
         'tab_calc': '🧮 Calculadora',
         'tab_fx': '🌍 Câmbio',
-        'no_reg': 'Sem registos de momento.',
+        'no_reg': 'Sem registros no momento.',
         'calc_btn': 'CALCULAR',
         'fx_title': 'Conversão Internacional',
         'fx_usd': 'Dólar Americano',
@@ -48,14 +48,14 @@ TRANSLATIONS = {
         'refresh': 'Atualizar',
         'welcome': 'Olá',
         'actions': 'Ações',
-        'del_user': 'Eliminar Utilizador',
-        'change_pw': 'Alterar Palavra-passe',
+        'del_user': 'Excluir Usuário',
+        'change_pw': 'Trocar Senha',
         'notif_title': 'Notificações',
         'notif_empty': 'Sem alertas novos 🔕',
         'notif_clear': 'Limpar Tudo',
-        'notif_new': 'Tens novas mensagens! 🔔',
-        'msg_gain': 'Recebeste um incremento de',
-        'msg_loss': 'Houve um decréscimo de'
+        'notif_new': 'Você tem novas mensagens! 🔔',
+        'msg_gain': 'Você recebeu um acréscimo de',
+        'msg_loss': 'Houve uma retirada de'
     },
     'en': {
         'protocol': 'Family Bank v10.0',
@@ -456,7 +456,7 @@ else:
                     if st.form_submit_button(t('exec'), use_container_width=True):
                         if val > 0 and desc:
                             u_target_id = users_df[users_df['name'] == target]['id'].values[0]
-                            db_t = 'Depósito' if tipo == t('op_dep') else 'Levantamento'
+                            db_t = 'Depósito' if tipo == t('op_dep') else 'Retirada'
                             # Inserir Transação
                             run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, :ts, :t)", 
                                       params={'uid': int(u_target_id), 'amt': val if db_t == 'Depósito' else -val, 'desc': desc, 'ts': datetime.now(), 't': db_t}, commit=True)
