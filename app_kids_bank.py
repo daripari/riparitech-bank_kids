@@ -11,7 +11,7 @@ st.set_page_config(page_title="Banco da Família Obsidian", page_icon="💎", la
 # --- 2. DICIONÁRIO DE TRADUÇÃO (i18n) ---
 TRANSLATIONS = {
     'pt': {
-        'protocol': 'Banco da Família v10.5',
+        'protocol': 'Banco da Família v10.6',
         'user': 'Usuário',
         'password': 'Senha',
         'auth_btn': 'AUTENTICAR',
@@ -58,7 +58,7 @@ TRANSLATIONS = {
         'msg_loss': 'Houve uma retirada de'
     },
     'en': {
-        'protocol': 'Family Bank v10.5',
+        'protocol': 'Family Bank v10.6',
         'user': 'User',
         'password': 'Password',
         'auth_btn': 'AUTHENTICATE',
@@ -105,7 +105,7 @@ TRANSLATIONS = {
         'msg_loss': 'There was a decrease of'
     },
     'es': {
-        'protocol': 'Banco de la Familia v10.5',
+        'protocol': 'Banco de la Familia v10.6',
         'user': 'Usuario',
         'password': 'Contraseña',
         'auth_btn': 'AUTENTICAR',
@@ -157,7 +157,7 @@ def t(key):
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
-# --- CSS REFINADO & RESPONSIVO (V10.5 LOCKDOWN) ---
+# --- CSS REFINADO & RESPONSIVO (V10.6 LANDSCAPE FORCE) ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -276,45 +276,71 @@ st.markdown("""
     .stTextInput input, .stNumberInput input { background-color: #0F0F12 !important; border: 1px solid #222226 !important; border-radius: 12px !important; }
     hr { border: 0; border-top: 1px solid #222226; margin: 1.5rem 0; }
 
-    /* --- MOBILE GRID LOCKDOWN V10.5 --- */
-    @media (max-width: 480px) {
-        /* 1. Resetar Container */
-        .block-container {
-            padding-left: 0.5rem !important;
-            padding-right: 0.5rem !important;
+    /* --- OVERLAY DE ROTAÇÃO OBRIGATÓRIA --- */
+    #rotate-overlay {
+        display: none; /* Escondido por padrão */
+    }
+
+    /* Regra para Celular + Vertical */
+    @media only screen and (max-width: 900px) and (orientation: portrait) {
+        #rotate-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #080809;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
         }
 
-        /* 2. FORÇAR LINHA HORIZONTAL (Crucial) */
-        div[data-testid="stHorizontalBlock"] {
-            display: flex !important;
-            flex-direction: row !important; /* Impede empilhamento */
-            flex-wrap: nowrap !important;
-            gap: 2px !important; /* Mínimo gap */
+        .rotate-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: rotate-anim 2s infinite ease-in-out;
         }
 
-        /* 3. COLUNAS MATEMÁTICAS */
-        div[data-testid="column"] {
-            width: 25% !important;
-            flex: 1 1 25% !important;
-            min-width: 0 !important; /* Permite encolher abaixo do padrão */
-            padding: 0 !important;
-        }
-
-        /* 4. BOTÕES NANO */
-        .stButton>button {
-            height: 48px !important;
-            min-height: 48px !important;
-            font-size: 1rem !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            width: 100% !important;
-            border-radius: 8px !important;
+        .rotate-text {
+            font-family: 'Inter', sans-serif;
+            color: #00E5FF;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
         }
         
-        div.stButton { width: 100% !important; padding: 0 !important; }
+        .rotate-sub {
+            color: #6B7280;
+            font-size: 0.9rem;
+        }
 
-        .obsidian-logo { font-size: 1.0rem !important; }
-        .display-calc { min-height: 50px; font-size: 1.5rem; padding: 10px; margin-bottom: 10px; }
+        @keyframes rotate-anim {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(-90deg); }
+            50% { transform: rotate(-90deg); }
+            100% { transform: rotate(0deg); }
+        }
+    }
+    
+    /* Quando estiver em Landscape no celular, ajustamos a calculadora para ser confortável */
+    @media only screen and (max-width: 900px) and (orientation: landscape) {
+        .block-container {
+            max-width: 800px !important;
+            padding-top: 1rem !important;
+        }
+        
+        div[data-testid="column"] {
+            min-width: 0 !important;
+        }
+        
+        .stButton>button {
+            height: 55px !important;
+            font-size: 1.1rem !important;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -529,6 +555,15 @@ else:
             if df_h is not None and not df_h.empty: st.area_chart(df_h.set_index('data')['valor'], color="#00E5FF")
         
         with tabs[2]:
+            # --- OVERLAY INJETADO APENAS NA ABA DA CALCULADORA ---
+            st.markdown("""
+            <div id="rotate-overlay">
+                <div class="rotate-icon">📱</div>
+                <div class="rotate-text">MODO PAISAGEM REQUERIDO</div>
+                <div class="rotate-sub">Para acessar a Calculadora Tática, por favor gire seu dispositivo.</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
             st.markdown(f"<div class='display-calc'>{st.session_state.calc_expr if st.session_state.calc_expr else '0'}</div>", unsafe_allow_html=True)
             def k_p(k): st.session_state.calc_expr += str(k)
             def k_c(): st.session_state.calc_expr = ""
@@ -536,8 +571,7 @@ else:
                 try: st.session_state.calc_expr = str(eval(st.session_state.calc_expr.replace('×', '*').replace('÷', '/')))
                 except: st.session_state.calc_expr = "Error"
             
-            # --- CALCULADORA GRID FIX ---
-            # Remover gap="small" para controle total via CSS
+            # --- CALCULADORA (Grid Normal para Desktop/Landscape) ---
             c1, c2, c3, c4 = st.columns(4)
             c1.button("7", key="k7", on_click=k_p, args=("7",))
             c2.button("8", key="k8", on_click=k_p, args=("8",))
@@ -576,4 +610,4 @@ else:
             st.caption(t('fx_cap'))
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v10.5 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v10.6 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
