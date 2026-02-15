@@ -11,7 +11,7 @@ st.set_page_config(page_title="Banco da Família Obsidian", page_icon="💎", la
 # --- 2. DICIONÁRIO DE TRADUÇÃO (i18n) ---
 TRANSLATIONS = {
     'pt': {
-        'protocol': 'Banco da Família v11.0',
+        'protocol': 'Banco da Família v11.1',
         'user': 'Usuário',
         'password': 'Senha',
         'auth_btn': 'AUTENTICAR',
@@ -37,6 +37,7 @@ TRANSLATIONS = {
         'tab_calc': '🧮 Calculadora',
         'tab_fx': '🌍 Câmbio',
         'tab_transf': '💸 Transferir',
+        'tab_chores': '📝 Tarefas',
         'no_reg': 'Sem registros no momento.',
         'calc_btn': 'CALCULAR',
         'fx_title': 'Conversão Internacional',
@@ -63,10 +64,23 @@ TRANSLATIONS = {
         'tr_err_bal': 'Saldo Insuficiente para essa operação.',
         'tr_msg_sent': 'Você enviou',
         'tr_msg_recv': 'Você recebeu',
-        'tr_self_err': 'Você não pode transferir para si mesmo.'
+        'tr_self_err': 'Você não pode transferir para si mesmo.',
+        'chore_mgmt': '📋 GESTÃO DE TAREFAS',
+        'chore_new_title': 'Nova Tarefa',
+        'chore_desc': 'Descrição da Tarefa',
+        'chore_val': 'Recompensa (R$)',
+        'chore_create': 'CRIAR TAREFA',
+        'chore_pending': '⏳ Aguardando Aprovação',
+        'chore_approve': 'APROVAR PAGAMENTO',
+        'chore_reject': 'Recusar',
+        'chore_list_avail': 'Missões Disponíveis',
+        'chore_btn_do': '✅ CONCLUIR',
+        'chore_doing': 'Em Análise...',
+        'chore_done_msg': 'Tarefa marcada como feita! Aguarde a aprovação do Admin.',
+        'chore_paid_msg': 'Pagamento por tarefa realizada'
     },
     'en': {
-        'protocol': 'Family Bank v11.0',
+        'protocol': 'Family Bank v11.1',
         'user': 'User',
         'password': 'Password',
         'auth_btn': 'AUTHENTICATE',
@@ -92,6 +106,7 @@ TRANSLATIONS = {
         'tab_calc': '🧮 Calculator',
         'tab_fx': '🌍 Exchange',
         'tab_transf': '💸 Transfer',
+        'tab_chores': '📝 Chores',
         'no_reg': 'No records found.',
         'calc_btn': 'CALCULATE',
         'fx_title': 'International Conversion',
@@ -118,10 +133,23 @@ TRANSLATIONS = {
         'tr_err_bal': 'Insufficient funds.',
         'tr_msg_sent': 'You sent',
         'tr_msg_recv': 'You received',
-        'tr_self_err': 'You cannot transfer to yourself.'
+        'tr_self_err': 'You cannot transfer to yourself.',
+        'chore_mgmt': '📋 CHORE MANAGEMENT',
+        'chore_new_title': 'New Chore',
+        'chore_desc': 'Chore Description',
+        'chore_val': 'Reward (R$)',
+        'chore_create': 'CREATE CHORE',
+        'chore_pending': '⏳ Pending Approval',
+        'chore_approve': 'APPROVE PAYMENT',
+        'chore_reject': 'Reject',
+        'chore_list_avail': 'Available Missions',
+        'chore_btn_do': '✅ COMPLETE',
+        'chore_doing': 'Under Review...',
+        'chore_done_msg': 'Marked as done! Wait for Admin approval.',
+        'chore_paid_msg': 'Payment for completed chore'
     },
     'es': {
-        'protocol': 'Banco de la Familia v11.0',
+        'protocol': 'Banco de la Familia v11.1',
         'user': 'Usuario',
         'password': 'Contraseña',
         'auth_btn': 'AUTENTICAR',
@@ -147,6 +175,7 @@ TRANSLATIONS = {
         'tab_calc': '🧮 Calculadora',
         'tab_fx': '🌍 Cambio',
         'tab_transf': '💸 Transferir',
+        'tab_chores': '📝 Tareas',
         'no_reg': 'Sin registros por ahora.',
         'calc_btn': 'CALCULAR',
         'fx_title': 'Conversión Internacional',
@@ -173,7 +202,20 @@ TRANSLATIONS = {
         'tr_err_bal': 'Fondos insuficientes.',
         'tr_msg_sent': 'Enviaste',
         'tr_msg_recv': 'Recibiste',
-        'tr_self_err': 'No puedes transferirte a ti mismo.'
+        'tr_self_err': 'No puedes transferirte a ti mismo.',
+        'chore_mgmt': '📋 GESTIÓN DE TAREAS',
+        'chore_new_title': 'Nueva Tarea',
+        'chore_desc': 'Descripción',
+        'chore_val': 'Recompensa (R$)',
+        'chore_create': 'CREAR TAREA',
+        'chore_pending': '⏳ Esperando Aprobación',
+        'chore_approve': 'APROBAR PAGO',
+        'chore_reject': 'Rechazar',
+        'chore_list_avail': 'Misiones Disponibles',
+        'chore_btn_do': '✅ COMPLETAR',
+        'chore_doing': 'En Revisión...',
+        'chore_done_msg': '¡Tarea marcada! Espera aprobación del Admin.',
+        'chore_paid_msg': 'Pago por tarea completada'
     }
 }
 
@@ -181,7 +223,7 @@ def t(key):
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
-# --- CSS REFINADO & RESPONSIVO (V10.7 LEAN + V11.0) ---
+# --- CSS REFINADO & RESPONSIVO (V11.1 CHORES) ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -278,6 +320,16 @@ st.markdown("""
         background: #EF4444 !important;
         color: white !important;
     }
+    
+    /* Botão de Concluir Tarefa */
+    button[key*="done_"] {
+        border-color: #10B981 !important;
+        color: #10B981 !important;
+    }
+    button[key*="done_"]:hover {
+        background: #10B981 !important;
+        color: white !important;
+    }
 
     .notif-badge {
         background-color: #EF4444; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.6rem;
@@ -355,6 +407,8 @@ def init_db():
     run_query('''CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name TEXT NOT NULL, role TEXT, password TEXT, language TEXT DEFAULT 'pt');''', commit=True)
     run_query('''CREATE TABLE IF NOT EXISTS transactions (id SERIAL PRIMARY KEY, user_id INTEGER, amount REAL, description TEXT, timestamp TIMESTAMP, type TEXT);''', commit=True)
     run_query('''CREATE TABLE IF NOT EXISTS notifications (id SERIAL PRIMARY KEY, user_id INTEGER, message TEXT, is_read BOOLEAN DEFAULT FALSE, timestamp TIMESTAMP);''', commit=True)
+    # Tabela de Tarefas (Chores)
+    run_query('''CREATE TABLE IF NOT EXISTS chores (id SERIAL PRIMARY KEY, description TEXT, reward REAL, status TEXT DEFAULT 'open', assigned_to INTEGER, created_at TIMESTAMP);''', commit=True)
     try: run_query("ALTER TABLE users ADD COLUMN IF NOT EXISTS language TEXT DEFAULT 'pt';", commit=True)
     except: pass
 
@@ -470,6 +524,56 @@ else:
                 st.markdown(f"<div class='row-item'><span style='font-weight:600;'>{row['name'].title()}</span><span style='color:#00E5FF; font-family:monospace; font-weight:700;'>R$ {row['balance']:,.2f}</span></div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
         
+        # --- GESTÃO DE TAREFAS (ADMIN) ---
+        with st.expander(t('chore_mgmt')):
+            ct1, ct2 = st.tabs([t('chore_new_title'), t('chore_pending')])
+            
+            # Criar Nova Tarefa
+            with ct1:
+                with st.form("new_chore_admin"):
+                    c_desc = st.text_input(t('chore_desc'))
+                    c_val = st.number_input(t('chore_val'), min_value=0.5, step=0.5)
+                    if st.form_submit_button(t('chore_create'), use_container_width=True):
+                        if c_desc and c_val > 0:
+                            run_query("INSERT INTO chores (description, reward, status, created_at) VALUES (:d, :r, 'open', :ts)",
+                                      params={'d': c_desc, 'r': c_val, 'ts': datetime.now()}, commit=True)
+                            st.success("OK")
+                            st.rerun()
+            
+            # Aprovar Tarefas Pendentes
+            with ct2:
+                pending_chores = run_query("SELECT c.id, c.description, c.reward, u.name as kid_name, u.id as kid_id FROM chores c JOIN users u ON c.assigned_to = u.id WHERE c.status = 'pending'")
+                if pending_chores is not None and not pending_chores.empty:
+                    for _, pc in pending_chores.iterrows():
+                        st.markdown(f"""
+                        <div class='row-item'>
+                            <div>
+                                <div style='font-size:0.9rem; font-weight:700;'>{pc['kid_name'].title()}</div>
+                                <div style='font-size:0.8rem; color:#A1A1AA;'>{pc['description']}</div>
+                            </div>
+                            <div style='color:#00E5FF; font-weight:700;'>R$ {pc['reward']:,.2f}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        ac1, ac2 = st.columns(2)
+                        if ac1.button(t('chore_approve'), key=f"appr_{pc['id']}", use_container_width=True):
+                            # 1. Atualizar Tarefa para Paga
+                            run_query("UPDATE chores SET status='paid' WHERE id=:cid", params={'cid': pc['id']}, commit=True)
+                            
+                            # 2. Creditar Criança
+                            run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, :ts, 'Pagamento Tarefa')", 
+                                      params={'uid': int(pc['kid_id']), 'amt': pc['reward'], 'desc': f"{t('chore_paid_msg')}: {pc['description']}", 'ts': datetime.now()}, commit=True)
+                            
+                            # 3. Notificar Criança
+                            run_query("INSERT INTO notifications (user_id, message, timestamp) VALUES (:uid, :msg, :ts)",
+                                      params={'uid': int(pc['kid_id']), 'msg': f"💰 {t('chore_paid_msg')}: R$ {pc['reward']}", 'ts': datetime.now()}, commit=True)
+                            st.rerun()
+                            
+                        if ac2.button(t('chore_reject'), key=f"rej_{pc['id']}", use_container_width=True):
+                            run_query("UPDATE chores SET status='open', assigned_to=NULL WHERE id=:cid", params={'cid': pc['id']}, commit=True)
+                            st.rerun()
+                else:
+                    st.info("Nenhuma tarefa aguardando aprovação.")
+
         with st.expander(t('quick_tr')):
             users_df = run_query("SELECT id, name FROM users WHERE role='user'")
             if users_df is not None and not users_df.empty:
@@ -525,19 +629,17 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-        # --- TABS REORGANIZADOS (HISTORICO, TRANSFERIR, CALCULADORA, CAMBIO) ---
-        tabs = st.tabs([t('tab_hist'), t('tab_transf'), t('tab_calc'), t('tab_fx')])
+        # --- TABS REORGANIZADOS (HISTORICO, TRANSFERIR, TAREFAS, CALCULADORA, CAMBIO) ---
+        tabs = st.tabs([t('tab_hist'), t('tab_transf'), t('tab_chores'), t('tab_calc'), t('tab_fx')])
         
         with tabs[0]:
             df_h = get_cached_history(st.session_state.user_id)
             if df_h is not None and not df_h.empty: st.dataframe(df_h, use_container_width=True, hide_index=True)
             else: st.info(t('no_reg'))
         
-        # --- NOVO: ABA TRANSFERIR ---
+        # --- ABA TRANSFERIR ---
         with tabs[1]:
             st.markdown(f"<div class='label-caption' style='margin-bottom:10px;'>{t('quick_tr')}</div>", unsafe_allow_html=True)
-            
-            # Buscar irmãos (outros 'user' que não eu mesmo)
             siblings = run_query("SELECT id, name FROM users WHERE role='user' AND id != :uid", params={'uid': st.session_state.user_id})
             
             if siblings is not None and not siblings.empty:
@@ -547,36 +649,60 @@ else:
                     desc_send = st.text_input(t('tr_desc_lbl'), placeholder=t('tr_desc_ph'))
                     
                     if st.form_submit_button(t('tr_btn_send'), use_container_width=True):
-                        # Validação de Saldo
                         if amt_send > saldo_brl:
                             st.error(t('tr_err_bal'))
                         elif amt_send > 0 and desc_send:
                             dest_id = siblings[siblings['name'] == target_sibling]['id'].values[0]
-                            
-                            # 1. Débito no Remetente
                             run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, :ts, 'Transferência Enviada')", 
                                       params={'uid': st.session_state.user_id, 'amt': -amt_send, 'desc': f"Para: {target_sibling.title()} | {desc_send}", 'ts': datetime.now()}, commit=True)
-                            
-                            # 2. Crédito no Destinatário
                             run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, :ts, 'Transferência Recebida')", 
                                       params={'uid': int(dest_id), 'amt': amt_send, 'desc': f"De: {st.session_state.user_name.title()} | {desc_send}", 'ts': datetime.now()}, commit=True)
-
-                            # 3. Notificação para Remetente
                             run_query("INSERT INTO notifications (user_id, message, timestamp) VALUES (:uid, :msg, :ts)",
                                       params={'uid': st.session_state.user_id, 'msg': f"{t('tr_msg_sent')} R$ {amt_send} -> {target_sibling.title()}", 'ts': datetime.now()}, commit=True)
-
-                            # 4. Notificação para Destinatário
                             run_query("INSERT INTO notifications (user_id, message, timestamp) VALUES (:uid, :msg, :ts)",
                                       params={'uid': int(dest_id), 'msg': f"{t('tr_msg_recv')} R$ {amt_send} <- {st.session_state.user_name.title()}", 'ts': datetime.now()}, commit=True)
-                            
-                            st.success(t('tr_success'))
-                            time.sleep(1.5)
-                            st.rerun()
+                            st.success(t('tr_success')); time.sleep(1.5); st.rerun()
             else:
                 st.info("Nenhum outro usuário disponível para transferência.")
+        
+        # --- NOVO: ABA TAREFAS (USER) ---
+        with tabs[2]:
+            st.markdown(f"<div class='label-caption' style='margin-bottom:10px;'>{t('chore_list_avail')}</div>", unsafe_allow_html=True)
+            
+            # Tarefas Abertas
+            open_chores = run_query("SELECT * FROM chores WHERE status = 'open' ORDER BY created_at DESC")
+            if open_chores is not None and not open_chores.empty:
+                for _, chore in open_chores.iterrows():
+                    with st.container():
+                        st.markdown(f"""
+                        <div class='obsidian-card' style='padding:1rem; border-color:#2D2D32;'>
+                            <div style='display:flex; justify-content:space-between; align-items:center;'>
+                                <div>
+                                    <div style='font-size:0.9rem; font-weight:700;'>{chore['description']}</div>
+                                    <div style='font-size:0.8rem; color:#10B981;'>💰 R$ {chore['reward']:,.2f}</div>
+                                </div>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        if st.button(t('chore_btn_do'), key=f"done_{chore['id']}", use_container_width=True):
+                            run_query("UPDATE chores SET status='pending', assigned_to=:uid WHERE id=:cid",
+                                      params={'uid': st.session_state.user_id, 'cid': chore['id']}, commit=True)
+                            st.toast(t('chore_done_msg'))
+                            time.sleep(1)
+                            st.rerun()
+            else:
+                st.markdown(f"<div style='text-align:center; color:#6B7280; font-size:0.8rem; padding:20px;'>Nada para fazer agora. Vá brincar! 🎮</div>", unsafe_allow_html=True)
+            
+            # Tarefas em Análise (Minhas)
+            my_pending = run_query("SELECT * FROM chores WHERE status = 'pending' AND assigned_to = :uid", params={'uid': st.session_state.user_id})
+            if my_pending is not None and not my_pending.empty:
+                st.markdown("---")
+                st.caption(t('chore_doing'))
+                for _, mp in my_pending.iterrows():
+                    st.markdown(f"⏳ {mp['description']} (R$ {mp['reward']:,.2f})")
 
         # --- TAB CALCULADORA ---
-        with tabs[2]:
+        with tabs[3]:
             st.markdown("""
             <div id="rotate-overlay">
                 <div class="rotate-icon">📱</div>
@@ -584,14 +710,12 @@ else:
                 <div class="rotate-sub">Para acessar a Calculadora Tática, por favor gire seu dispositivo.</div>
             </div>
             """, unsafe_allow_html=True)
-            
             st.markdown(f"<div class='display-calc'>{st.session_state.calc_expr if st.session_state.calc_expr else '0'}</div>", unsafe_allow_html=True)
             def k_p(k): st.session_state.calc_expr += str(k)
             def k_c(): st.session_state.calc_expr = ""
             def k_s():
                 try: st.session_state.calc_expr = str(eval(st.session_state.calc_expr.replace('×', '*').replace('÷', '/')))
                 except: st.session_state.calc_expr = "Error"
-            
             c1, c2, c3, c4 = st.columns(4)
             c1.button("7", key="k7", on_click=k_p, args=("7",))
             c2.button("8", key="k8", on_click=k_p, args=("8",))
@@ -612,7 +736,7 @@ else:
             st.button(t('calc_btn'), key="nsolve", type="primary", use_container_width=True, on_click=k_s)
 
         # --- TAB CÂMBIO ---
-        with tabs[3]:
+        with tabs[4]:
             usd, eur = 5.05, 5.45
             s_u, s_e = saldo_brl / usd, saldo_brl / eur
             st.markdown(f"""
@@ -631,4 +755,4 @@ else:
             st.caption(t('fx_cap'))
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v11.0 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v11.1 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
