@@ -15,13 +15,13 @@ def render_kid_view():
     <div class="glass-card balance-container">
         <div class="balance-label">{t('bal')}</div>
         <div class="balance-value">R$ {user_bal:,.2f}</div>
-        <div style="margin-top:10px; font-size:0.75rem; color:#10B981;">● SSL SECURE</div>
+        <div style="margin-top:10px; font-size:0.75rem; color:#10B981;">● CONEXÃO SEGURA</div>
     </div>
     """, unsafe_allow_html=True)
     
     tabs = st.tabs([f"🏠 {t('home')}", f"📝 {t('missions')}", f"💸 {t('transfer')}", f"🧰 {t('tools')}"])
     
-    # --- TAB 1: INÍCIO ---
+    # --- TAB 1: EXTRATO ---
     with tabs[0]:
         st.markdown(f"<h4 style='margin-bottom:15px;'>{t('last_mov')}</h4>", unsafe_allow_html=True)
         hist = run_query("SELECT timestamp, description, amount, type FROM transactions WHERE user_id=:uid ORDER BY id DESC LIMIT 5", params={'uid': uid})
@@ -38,7 +38,7 @@ def render_kid_view():
                     <div style="font-family:'JetBrains Mono'; font-weight:700; color:{color};">{icon} R$ {abs(h['amount']):,.2f}</div>
                 </div>""", unsafe_allow_html=True)
         else:
-            st.info("---")
+            st.info("Nenhuma movimentação encontrada.")
 
     # --- TAB 2: MISSÕES ---
     with tabs[1]:
@@ -51,11 +51,11 @@ def render_kid_view():
                 deadline_str = ""
                 if pd.notnull(chore['deadline']):
                     dl = pd.to_datetime(chore['deadline'])
-                    deadline_str = dl.strftime("%d/%m %H:%M")
+                    deadline_str = dl.strftime("%d/%m às %H:%M")
                     if dl < datetime.now(): is_late = True
                 
                 border = "#EF4444" if is_late else "#00C6FF"
-                badge = f"<span class='badge-late'>Late!</span>" if is_late else f"<span class='badge-pending'>{deadline_str}</span>"
+                badge = f"<span class='badge-late'>ATRASADA!</span>" if is_late else f"<span class='badge-pending'>{deadline_str}</span>"
                 
                 st.markdown(f"""
                 <div class="glass-card" style="border-left: 4px solid {border}; padding: 1rem;">
@@ -68,11 +68,11 @@ def render_kid_view():
                     </div>
                 </div>""", unsafe_allow_html=True)
                 
-                if st.button("✅ FEITO", key=f"do_{chore['id']}", use_container_width=True):
+                if st.button("✅ ENTREGAR TAREFA", key=f"do_{chore['id']}", use_container_width=True):
                     run_query("UPDATE chores SET status='pending' WHERE id=:cid", params={'cid': chore['id']}, commit=True)
-                    st.toast("Enviado para análise!"); time.sleep(1); st.rerun()
+                    st.toast("Tarefa enviada para análise!"); time.sleep(1); st.rerun()
         else:
-            st.info("Nada pendente! 🎉")
+            st.info("Nenhuma missão pendente no momento.")
 
     # --- TAB 3: TRANSFERIR ---
     with tabs[2]:
@@ -86,19 +86,18 @@ def render_kid_view():
                 reason = st.text_input(t('reason'))
                 if st.button(t('send_now'), use_container_width=True, type="primary"):
                     if amt > user_bal:
-                        st.error("Saldo insuficiente!")
+                        st.error("Saldo insuficiente para transferência.")
                     elif amt > 0 and reason:
                         dest_id = siblings[siblings['name'] == target]['id'].values[0]
                         run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, :ts, 'Transferência Enviada')", params={'uid': uid, 'amt': -amt, 'desc': f"Para: {target} | {reason}", 'ts': datetime.now()}, commit=True)
                         run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, :ts, 'Transferência Recebida')", params={'uid': int(dest_id), 'amt': amt, 'desc': f"De: {st.session_state.user_name} | {reason}", 'ts': datetime.now()}, commit=True)
-                        st.success("OK!"); time.sleep(1); st.rerun()
+                        st.success("Dinheiro enviado!"); time.sleep(1); st.rerun()
                 st.markdown("</div>", unsafe_allow_html=True)
         else:
             st.info(t('no_transfer'))
 
-    # --- TAB 4: TOOLS ---
+    # --- TAB 4: FERRAMENTAS ---
     with tabs[3]:
-        st.markdown("""<div id="rotate-overlay"><div class="rotate-icon">📱</div><div class="rotate-text">GIRE A TELA</div></div>""", unsafe_allow_html=True)
         c_calc, c_fx = st.tabs([f"🧮 {t('calc')}", f"🌍 {t('fx')}"])
         
         with c_calc:
@@ -107,7 +106,7 @@ def render_kid_view():
             def kc(): st.session_state.calc_expr = ""
             def ks():
                 try: st.session_state.calc_expr = str(eval(st.session_state.calc_expr.replace('×', '*').replace('÷', '/')))
-                except: st.session_state.calc_expr = "Err"
+                except: st.session_state.calc_expr = "Erro"
             
             c1, c2, c3, c4 = st.columns(4)
             c1.button("7", on_click=kp, args=("7",)); c2.button("8", on_click=kp, args=("8",)); c3.button("9", on_click=kp, args=("9",)); c4.button("÷", on_click=kp, args=("/",))
@@ -116,5 +115,16 @@ def render_kid_view():
             c1.button("0", on_click=kp, args=("0",)); c2.button(".", on_click=kp, args=(".",)); c3.button("C", on_click=kc); c4.button("=", on_click=ks)
         
         with c_fx:
-            usd = 5.05
-            st.write(f"🇺🇸 USD: $ {(user_bal/usd):,.2f}")
+            usd, eur = 5.05, 5.45
+            st.markdown(f"""
+            <div class='glass-card'>
+                <div style="display:flex; justify-content:space-between;">
+                    <span>🇺🇸 Dólar (USD)</span>
+                    <span style="color:#00C6FF; font-weight:700;">$ {(user_bal/usd):,.2f}</span>
+                </div>
+                <hr style="border:0; border-top:1px solid #222; margin: 10px 0;">
+                <div style="display:flex; justify-content:space-between;">
+                    <span>🇪🇺 Euro (EUR)</span>
+                    <span style="color:#00C6FF; font-weight:700;">€ {(user_bal/eur):,.2f}</span>
+                </div>
+            </div>""", unsafe_allow_html=True)
