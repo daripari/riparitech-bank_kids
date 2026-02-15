@@ -3,11 +3,11 @@ import streamlit as st
 import pandas as pd
 from database import run_query
 
-# Dicionário de traduções actualizado para maior fluidez e intuição
+# Dicionário de traduções atualizado para PT-BR (Brasileiro)
 TRANSLATIONS = {
     'pt': {
         'bal': 'Meu Saldo', 
-        'family_bal': '💰 Monitorização de Ativos (Saldos)',
+        'family_bal': '💰 Monitoramento de Ativos (Saldos)',
         'missions': 'Missões', 
         'tools': 'Ferramentas', 
         'admin': 'Comando', 
@@ -15,7 +15,7 @@ TRANSLATIONS = {
         'home': 'Extrato e Histórico', 
         'transfer': 'Transferir', 
         'last_mov': 'Últimas Movimentações',
-        'active_missions': 'As Tuas Missões Ativas', 
+        'active_missions': 'Suas Missões Ativas', 
         'send_money': 'Enviar Dinheiro', 
         'to_whom': 'Destinatário',
         'how_much': 'Valor (R$)', 
@@ -26,7 +26,7 @@ TRANSLATIONS = {
         'fx': 'Câmbio', 
         'panel': '🔎 Monitor de Tarefas', 
         'new_task': '➕ Nova Tarefa', 
-        'mgmt': '⚙️ Gestão de Utilizadores', 
+        'mgmt': '⚙️ Gestão de Usuários', 
         'cashier': '💸 Lançamentos Financeiros',
         'late_tasks': 'Tarefas Atrasadas', 
         'apply_fine': 'Aplicar Multa', 
@@ -45,19 +45,19 @@ TRANSLATIONS = {
 }
 
 def t(key):
-    """Função de tradução baseada no estado da sessão"""
+    """Função de tradução baseada no estado da sessão (Padrão PT-BR)"""
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
 @st.cache_data(ttl=600)
 def get_balance(uid):
-    """Calcula o saldo individual de um utilizador"""
+    """Calcula o saldo individual de um usuário"""
     res = run_query("SELECT SUM(amount) as total FROM transactions WHERE user_id=:uid", params={'uid': uid})
     val = res.iloc[0]['total'] if res is not None and not res.empty and pd.notnull(res.iloc[0]['total']) else 0.0
     return val
 
 def get_family_balances():
-    """Obtém o saldo de todos os utilizadores com perfil 'user' para o Admin"""
+    """Obtém o saldo de todos os usuários com perfil 'user' para o Admin"""
     query = """
         SELECT u.id, u.name, COALESCE(SUM(t.amount), 0) as balance 
         FROM users u 
