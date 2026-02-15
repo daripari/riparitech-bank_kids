@@ -294,12 +294,12 @@ else:
             c1.button("1", key="n1", on_click=k_press, args=("1",))
             c2.button("2", key="n2", on_click=k_press, args=("2",))
             c3.button("3", key="n3", on_click=k_press, args=("3",))
-            c4.button("-", key="nsub", on_click=k_press, args=("-",))
+            c4.button("menos", key="nsub", on_click=k_press, args=("-",))
 
             c1.button("0", key="n0", on_click=k_press, args=("0",))
             c2.button(".", key="ndot", on_click=k_press, args=(".",))
             c3.button("C", key="nclr", on_click=k_clr)
-            c4.button("+", key="nadd", on_click=k_press, args=("+",))
+            c4.button("mais", key="nadd", on_click=k_press, args=("+",))
 
             st.button("CALCULAR", key="nsolve", type="primary", use_container_width=True, on_click=k_solve)
 
