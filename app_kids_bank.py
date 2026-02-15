@@ -193,14 +193,16 @@ else:
     if st.session_state.role == 'user':
         tab1, tab2 = st.tabs(["HISTÓRICO", "ANÁLISE"])
         with tab1:
-            df_hist = run_query("SELECT timestamp as Data, description as Motivo, amount as Valor FROM transactions WHERE user_id=:uid ORDER BY id DESC LIMIT 10", params={'uid': st.session_state.user_id})
+            # SQL aliases alterados para minúsculas para evitar KeyError
+            df_hist = run_query("SELECT timestamp as data, description as motivo, amount as valor FROM transactions WHERE user_id=:uid ORDER BY id DESC LIMIT 10", params={'uid': st.session_state.user_id})
             if df_hist is not None and not df_hist.empty:
                 st.dataframe(df_hist, use_container_width=True, hide_index=True)
             else:
                 st.info("Ainda não tens movimentos.")
         with tab2:
             if df_hist is not None and not df_hist.empty:
-                st.area_chart(df_hist.set_index('Data')['Valor'], height=200)
+                # Acessando via minúsculas 'data' e 'valor'
+                st.area_chart(df_hist.set_index('data')['valor'], height=200)
     
     else:
         # Área do Administrador
