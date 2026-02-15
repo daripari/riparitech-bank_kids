@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 from database import run_query
 
-# Dicionário de traduções atualizado para PT-BR (Brasileiro)
+# Dicionário de traduções simplificado conforme solicitado (PT-BR)
 TRANSLATIONS = {
     'pt': {
         'bal': 'Meu Saldo', 
@@ -26,8 +26,8 @@ TRANSLATIONS = {
         'fx': 'Câmbio', 
         'panel': '🔎 Monitor de Tarefas', 
         'new_task': '➕ Nova Tarefa', 
-        'mgmt': '⚙️ Gestão de Usuários', 
-        'cashier': '💸 Lançamentos Financeiros',
+        'mgmt': '⚙️ Usuários', 
+        'cashier': '💸 Lançamentos',
         'late_tasks': 'Tarefas Atrasadas', 
         'apply_fine': 'Aplicar Multa', 
         'approve': 'Aprovar', 
@@ -45,7 +45,7 @@ TRANSLATIONS = {
 }
 
 def t(key):
-    """Função de tradução baseada no estado da sessão (Padrão PT-BR)"""
+    """Função de tradução baseada no estado da sessão (PT-BR)"""
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
