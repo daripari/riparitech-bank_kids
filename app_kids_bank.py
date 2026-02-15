@@ -7,7 +7,7 @@ import time
 # --- 1. CONFIGURAÇÃO DE TEMA ---
 st.set_page_config(page_title="RipariBank Premium", page_icon="💎", layout="centered")
 
-# CSS PREMIUM NEO-BANK UI - VERSÃO CORRIGIDA PARA BOTÕES
+# CSS PREMIUM NEO-BANK UI - VERSÃO CORRIGIDA (GRID E BOTÕES)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -56,11 +56,6 @@ st.markdown("""
         display: flex;
         justify-content: space-between;
         align-items: center;
-        transition: 0.3s;
-    }
-    .admin-user-card:hover {
-        background: rgba(16, 185, 129, 0.05);
-        border-color: rgba(16, 185, 129, 0.3);
     }
     
     .balance-label {
@@ -79,31 +74,35 @@ st.markdown("""
         letter-spacing: -1px;
     }
 
-    /* --- CORREÇÃO DEFINITIVA DOS BOTÕES --- */
+    /* --- CORREÇÃO DE BOTÕES ESTREITOS E SÍMBOLOS --- */
     .stButton>button {
-        border-radius: 14px !important;
+        border-radius: 16px !important;
         background-color: #111111 !important;
         color: #FFFFFF !important;
         border: 1px solid #262626 !important;
-        font-size: 1.1rem !important; /* Aumentado para visibilidade */
+        font-size: 1.2rem !important;
         font-weight: 700 !important;
-        height: 50px !important;
+        height: 55px !important;
         width: 100% !important;
+        min-width: 60px !important; /* Garante que não fiquem estreitos */
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        line-height: 1 !important;
-        padding: 0 !important; /* Remove padding que "esmagava" o texto */
+        line-height: normal !important; /* Evita corte vertical de símbolos como + */
+        padding: 5px !important; /* Espaço interno mínimo */
+        margin: 0 !important;
         transition: all 0.2s ease-in-out !important;
     }
     
     .stButton>button:hover {
         border-color: #10B981 !important;
         background-color: #161616 !important;
+        color: #10B981 !important;
     }
 
-    /* Botão Primário (Login/Lançar) */
-    div[data-testid="stFormSubmitButton"] button {
+    /* Botão Igual e Submit */
+    div[data-testid="stFormSubmitButton"] button, 
+    button[key="nsolve"] {
         background: #10B981 !important;
         color: #000000 !important;
         border: none !important;
@@ -119,7 +118,7 @@ st.markdown("""
         font-size: 2.2rem;
         font-weight: 600;
         color: #10B981;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
         min-height: 85px;
         display: flex;
         align-items: center;
@@ -191,7 +190,6 @@ def get_cached_family_balances():
 
 @st.cache_data(ttl=600)
 def get_cached_history(uid):
-    # Uso de minúsculas 'data', 'motivo', 'valor' para evitar KeyError
     return run_query("SELECT timestamp as data, description as motivo, amount as valor FROM transactions WHERE user_id=:uid ORDER BY id DESC LIMIT 15", params={'uid': uid})
 
 # --- 3. INICIALIZAÇÃO ---
@@ -305,9 +303,13 @@ else:
             def k_press(k): st.session_state.calc_expr += str(k)
             def k_clr(): st.session_state.calc_expr = ""
             def k_solve():
-                try: st.session_state.calc_expr = str(eval(st.session_state.calc_expr.replace('×', '*').replace('÷', '/')))
+                try: 
+                    # Avaliação segura básica
+                    expr = st.session_state.calc_expr.replace('×', '*').replace('÷', '/')
+                    st.session_state.calc_expr = str(eval(expr))
                 except: st.session_state.calc_expr = "Erro"
 
+            # Grid de botões com colunas Streamlit
             c1, c2, c3, c4 = st.columns(4)
             c1.button("7", key="n7", on_click=k_press, args=("7",))
             c2.button("8", key="n8", on_click=k_press, args=("8",))
@@ -322,16 +324,16 @@ else:
             c1.button("1", key="n1", on_click=k_press, args=("1",))
             c2.button("2", key="n2", on_click=k_press, args=("2",))
             c3.button("3", key="n3", on_click=k_press, args=("3",))
-            # Símbolo "Menos" Matemático (U+2212) para maior visibilidade
+            # Símbolo "Menos" Matemático (U+2212)
             c4.button("−", key="nsub", on_click=k_press, args=("-",))
 
             c1.button("0", key="n0", on_click=k_press, args=("0",))
             c2.button(".", key="ndot", on_click=k_press, args=(".",))
             c3.button("C", key="nclr", on_click=k_clr)
-            # Símbolo "Mais"
+            # Símbolo "Mais" Matemático Robusto
             c4.button("+", key="nadd", on_click=k_press, args=("+",))
 
             st.button("=", key="nsolve", type="primary", use_container_width=True, on_click=k_solve)
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#262626; font-size:0.65rem; margin-top:4rem;'>RipariBank v7.1 • 2024</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#262626; font-size:0.65rem; margin-top:4rem;'>RipariBank v7.2 • 2024</div>", unsafe_allow_html=True)
