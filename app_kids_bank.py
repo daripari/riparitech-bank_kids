@@ -11,7 +11,7 @@ st.set_page_config(page_title="Banco da Família Obsidian", page_icon="💎", la
 # --- 2. DICIONÁRIO DE TRADUÇÃO (i18n) ---
 TRANSLATIONS = {
     'pt': {
-        'protocol': 'Banco da Família v9.6',
+        'protocol': 'Banco da Família v10.0',
         'user': 'Utilizador',
         'password': 'Palavra-passe',
         'auth_btn': 'AUTENTICAR',
@@ -49,10 +49,16 @@ TRANSLATIONS = {
         'welcome': 'Olá',
         'actions': 'Ações',
         'del_user': 'Eliminar Utilizador',
-        'change_pw': 'Alterar Palavra-passe'
+        'change_pw': 'Alterar Palavra-passe',
+        'notif_title': 'Notificações',
+        'notif_empty': 'Sem alertas novos 🔕',
+        'notif_clear': 'Limpar Tudo',
+        'notif_new': 'Tens novas mensagens! 🔔',
+        'msg_gain': 'Recebeste um incremento de',
+        'msg_loss': 'Houve um decréscimo de'
     },
     'en': {
-        'protocol': 'Family Bank v9.6',
+        'protocol': 'Family Bank v10.0',
         'user': 'User',
         'password': 'Password',
         'auth_btn': 'AUTHENTICATE',
@@ -90,10 +96,16 @@ TRANSLATIONS = {
         'welcome': 'Hello',
         'actions': 'Actions',
         'del_user': 'Delete User',
-        'change_pw': 'Change Password'
+        'change_pw': 'Change Password',
+        'notif_title': 'Notifications',
+        'notif_empty': 'No new alerts 🔕',
+        'notif_clear': 'Clear All',
+        'notif_new': 'You have new messages! 🔔',
+        'msg_gain': 'You received an increase of',
+        'msg_loss': 'There was a decrease of'
     },
     'es': {
-        'protocol': 'Banco de la Familia v9.6',
+        'protocol': 'Banco de la Familia v10.0',
         'user': 'Usuario',
         'password': 'Contraseña',
         'auth_btn': 'AUTENTICAR',
@@ -131,7 +143,13 @@ TRANSLATIONS = {
         'welcome': 'Hola',
         'actions': 'Acciones',
         'del_user': 'Eliminar Usuario',
-        'change_pw': 'Cambiar Contraseña'
+        'change_pw': 'Cambiar Contraseña',
+        'notif_title': 'Notificaciones',
+        'notif_empty': 'Sin alertas nuevas 🔕',
+        'notif_clear': 'Limpiar Todo',
+        'notif_new': '¡Tienes nuevos mensajes! 🔔',
+        'msg_gain': 'Recibiste un incremento de',
+        'msg_loss': 'Hubo un decrecimiento de'
     }
 }
 
@@ -139,7 +157,7 @@ def t(key):
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
-# --- CSS REFINADO (AJUSTE DE CONTRASTE) ---
+# --- CSS REFINADO ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -147,7 +165,7 @@ st.markdown("""
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
         background-color: #080809;
-        color: #F0F0F0; /* Texto principal mais claro */
+        color: #F0F0F0;
     }
     
     .stApp { background-color: #080809; }
@@ -185,9 +203,8 @@ st.markdown("""
         align-items: center;
     }
     
-    /* CORREÇÃO: Letras cinza agora mais próximas do branco para legibilidade */
     .label-caption {
-        color: #D1D5DB; /* Cinza claro/Off-white */
+        color: #D1D5DB;
         font-size: 0.7rem;
         font-weight: 700;
         text-transform: uppercase;
@@ -228,13 +245,16 @@ st.markdown("""
         font-weight: 700 !important;
     }
 
-    button[key*="del_"] {
-        border-color: #EF4444 !important;
-        color: #EF4444 !important;
-    }
-    button[key*="del_"]:hover {
-        background: #EF4444 !important;
-        color: white !important;
+    /* Notificação Badge */
+    .notif-badge {
+        background-color: #EF4444;
+        color: white;
+        border-radius: 50%;
+        padding: 2px 6px;
+        font-size: 0.6rem;
+        position: relative;
+        top: -10px;
+        right: 10px;
     }
 
     .stSelectbox div[data-baseweb="select"] {
@@ -288,8 +308,7 @@ def get_connection():
 conn = get_connection()
 
 def run_query(query_str, params=None, commit=False):
-    if not conn: 
-        return None
+    if not conn: return None
     try:
         if commit:
             with conn.session as s:
@@ -306,6 +325,8 @@ def init_db():
     if not conn: return
     run_query('''CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name TEXT NOT NULL, role TEXT, password TEXT, language TEXT DEFAULT 'pt');''', commit=True)
     run_query('''CREATE TABLE IF NOT EXISTS transactions (id SERIAL PRIMARY KEY, user_id INTEGER, amount REAL, description TEXT, timestamp TIMESTAMP, type TEXT);''', commit=True)
+    # Tabela de Notificações
+    run_query('''CREATE TABLE IF NOT EXISTS notifications (id SERIAL PRIMARY KEY, user_id INTEGER, message TEXT, is_read BOOLEAN DEFAULT FALSE, timestamp TIMESTAMP);''', commit=True)
     try: run_query("ALTER TABLE users ADD COLUMN IF NOT EXISTS language TEXT DEFAULT 'pt';", commit=True)
     except: pass
 
@@ -332,10 +353,14 @@ def get_cached_family_balances():
 def get_cached_history(uid):
     return run_query("SELECT timestamp as data, description as motivo, amount as valor FROM transactions WHERE user_id=:uid ORDER BY id DESC LIMIT 15", params={'uid': uid})
 
+def get_unread_notifs(uid):
+    return run_query("SELECT * FROM notifications WHERE user_id=:uid AND is_read=FALSE ORDER BY timestamp DESC", params={'uid': uid})
+
 # --- 4. ESTADO ---
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 if 'calc_expr' not in st.session_state: st.session_state.calc_expr = ""
 if 'lang' not in st.session_state: st.session_state.lang = 'pt'
+if 'show_notifs' not in st.session_state: st.session_state.show_notifs = False
 
 # --- 5. LOGIN ---
 if not st.session_state.logged_in:
@@ -343,7 +368,6 @@ if not st.session_state.logged_in:
         st.error("Erro: Base de dados não configurada.")
         st.stop()
         
-    # Texto de protocolo ajustado para cinza claro (A1A1AA) para legibilidade
     st.markdown(f"<div style='margin-top:5rem; text-align:center;'><h1 class='obsidian-logo'>💎 Banco da Família</h1><p style='color:#A1A1AA; font-weight:600; font-size:0.8rem;'>{t('protocol')}</p></div>", unsafe_allow_html=True)
     
     with st.form("login_form"):
@@ -364,8 +388,8 @@ if not st.session_state.logged_in:
 
 # --- 6. DASHBOARD ---
 else:
-    # --- NAVBAR REFINADA ---
-    n_col1, n_col2, n_col3, n_col4 = st.columns([1.6, 0.7, 0.35, 0.35])
+    # --- NAVBAR ---
+    n_col1, n_col2, n_col_bell, n_col3, n_col4 = st.columns([1.3, 0.7, 0.3, 0.3, 0.3])
     with n_col1:
         st.markdown("<div class='obsidian-logo'>💎 Banco da Família</div>", unsafe_allow_html=True)
     
@@ -380,28 +404,45 @@ else:
             run_query("UPDATE users SET language=:l WHERE id=:id", params={'l': new_lang_code, 'id': st.session_state.user_id}, commit=True)
             st.rerun()
 
+    # Logica de Notificações no Header
+    unread = get_unread_notifs(st.session_state.user_id)
+    count = len(unread) if unread is not None else 0
+    
+    with n_col_bell:
+        bell_icon = "🔔" if count > 0 else "🔕"
+        if st.button(bell_icon, key="bell_btn"):
+            st.session_state.show_notifs = not st.session_state.show_notifs
+
     with n_col3:
-        if st.button("🔄", key="ref", help=t('refresh')):
-            st.cache_data.clear()
-            st.rerun()
+        if st.button("🔄", key="ref"):
+            st.cache_data.clear(); st.rerun()
     with n_col4:
-        if st.button("🚪", key="out", help=t('logout')):
-            st.session_state.logged_in = False
-            st.cache_data.clear()
-            st.rerun()
+        if st.button("🚪", key="out"):
+            st.session_state.logged_in = False; st.cache_data.clear(); st.rerun()
+
+    # Painel de Notificações
+    if st.session_state.show_notifs:
+        with st.container():
+            st.markdown(f"<div class='obsidian-card' style='border-color:#00E5FF;'>", unsafe_allow_html=True)
+            st.markdown(f"<div class='label-caption'>{t('notif_title')}</div>", unsafe_allow_html=True)
+            if count > 0:
+                for _, n in unread.iterrows():
+                    st.markdown(f"<div style='font-size:0.85rem; padding:5px 0;'>• {n['message']} <br><small style='color:#6B7280;'>{n['timestamp'].strftime('%H:%M:%S')}</small></div>", unsafe_allow_html=True)
+                if st.button(t('notif_clear'), key="clear_notif"):
+                    run_query("UPDATE notifications SET is_read=TRUE WHERE user_id=:uid", params={'uid': st.session_state.user_id}, commit=True)
+                    st.session_state.show_notifs = False; st.rerun()
+            else:
+                st.markdown(f"<div style='font-size:0.85rem; color:#6B7280;'>{t('notif_empty')}</div>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
     if st.session_state.role == 'admin':
+        # --- ADMIN VIEW ---
         st.markdown("<div class='obsidian-card'>", unsafe_allow_html=True)
         st.markdown(f"<div class='label-caption'>{t('bal_family')}</div>", unsafe_allow_html=True)
         df_saldos = get_cached_family_balances()
         if df_saldos is not None and not df_saldos.empty:
             for _, row in df_saldos.iterrows():
-                st.markdown(f"""
-                <div class='row-item'>
-                    <span style='font-weight:600; font-size:1.05rem;'>{row['name'].title()}</span>
-                    <span style='color:#00E5FF; font-family:monospace; font-weight:700;'>R$ {row['balance']:,.2f}</span>
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown(f"<div class='row-item'><span style='font-weight:600;'>{row['name'].title()}</span><span style='color:#00E5FF; font-family:monospace; font-weight:700;'>R$ {row['balance']:,.2f}</span></div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
         
         with st.expander(t('quick_tr')):
@@ -416,54 +457,45 @@ else:
                         if val > 0 and desc:
                             u_target_id = users_df[users_df['name'] == target]['id'].values[0]
                             db_t = 'Depósito' if tipo == t('op_dep') else 'Levantamento'
+                            # Inserir Transação
                             run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, :ts, :t)", 
                                       params={'uid': int(u_target_id), 'amt': val if db_t == 'Depósito' else -val, 'desc': desc, 'ts': datetime.now(), 't': db_t}, commit=True)
-                            st.success(t('tr_success'))
-                            time.sleep(1)
-                            st.rerun()
+                            
+                            # Inserir Notificação
+                            prefix = t('msg_gain') if db_t == 'Depósito' else t('msg_loss')
+                            msg = f"{prefix} R$ {val:,.2f} ({desc})"
+                            run_query("INSERT INTO notifications (user_id, message, timestamp) VALUES (:uid, :msg, :ts)", 
+                                      params={'uid': int(u_target_id), 'msg': msg, 'ts': datetime.now()}, commit=True)
+                            
+                            st.success(t('tr_success')); time.sleep(1); st.rerun()
 
         with st.expander(t('user_mgmt')):
             t_l, t_a = st.tabs([t('tab_list'), t('tab_add')])
             with t_l:
-                all_u = run_query("SELECT id, name, role, language FROM users ORDER BY name")
+                all_u = run_query("SELECT id, name, role FROM users ORDER BY name")
                 if all_u is not None and not all_u.empty:
                     st.dataframe(all_u, use_container_width=True, hide_index=True)
-                    
-                    st.markdown("---")
-                    st.markdown(f"<div class='label-caption'>{t('actions')}</div>", unsafe_allow_html=True)
                     sel_user_name = st.selectbox(t('user'), all_u['name'].tolist(), key="sel_mod")
                     sel_u_data = all_u[all_u['name'] == sel_user_name].iloc[0]
-                    
                     c_pw, c_del = st.columns(2)
                     with c_pw:
                         with st.popover(t('change_pw'), use_container_width=True):
                             new_pw = st.text_input(t('password'), type="password", key="new_pw_f")
                             if st.button(t('exec'), key="btn_pw"):
-                                run_query("UPDATE users SET password=:p WHERE id=:id", 
-                                          params={'p': new_pw, 'id': int(sel_u_data['id'])}, commit=True)
+                                run_query("UPDATE users SET password=:p WHERE id=:id", params={'p': new_pw, 'id': int(sel_u_data['id'])}, commit=True)
                                 st.success("OK")
-                    
                     with c_del:
                         if st.button(t('del_user'), key=f"del_{sel_u_data['id']}", use_container_width=True):
                             if int(sel_u_data['id']) != st.session_state.user_id:
+                                run_query("DELETE FROM notifications WHERE user_id=:id", params={'id': int(sel_u_data['id'])}, commit=True)
                                 run_query("DELETE FROM transactions WHERE user_id=:id", params={'id': int(sel_u_data['id'])}, commit=True)
                                 run_query("DELETE FROM users WHERE id=:id", params={'id': int(sel_u_data['id'])}, commit=True)
                                 st.rerun()
-                            else:
-                                st.warning("Self-delete blocked.")
-
-            with t_a:
-                with st.form("add_user_form"):
-                    nn = st.text_input(t('user')).lower().strip()
-                    np = st.text_input(t('password'))
-                    nr = st.selectbox(t('lvl'), ["user", "admin"])
-                    if st.form_submit_button(t('create_acc'), use_container_width=True):
-                        if nn and np:
-                            run_query("INSERT INTO users (name, role, password, language) VALUES (:n, :r, :p, 'pt')", 
-                                      params={'n': nn, 'r': nr, 'p': np}, commit=True)
-                            st.rerun()
 
     else:
+        # --- USER VIEW (FILHOS) ---
+        if count > 0: st.toast(t('notif_new')) # Alerta flutuante ao entrar
+        
         saldo_brl = get_cached_balance(st.session_state.user_id)
         st.markdown(f"""
         <div class="obsidian-card">
@@ -490,7 +522,6 @@ else:
             def k_s():
                 try: st.session_state.calc_expr = str(eval(st.session_state.calc_expr.replace('×', '*').replace('÷', '/')))
                 except: st.session_state.calc_expr = "Error"
-
             c1, c2, c3, c4 = st.columns(4)
             c1.button("7", key="k7", on_click=k_p, args=("7",))
             c2.button("8", key="k8", on_click=k_p, args=("8",))
@@ -529,5 +560,4 @@ else:
             st.caption(t('fx_cap'))
 
 # --- FOOTER ---
-# Rodapé ajustado para cinza suave (4B5563) para não desaparecer mas ser discreto
-st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v9.6 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v10.0 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
