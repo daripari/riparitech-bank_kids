@@ -11,7 +11,7 @@ st.set_page_config(page_title="Banco da Família Obsidian", page_icon="💎", la
 # --- 2. DICIONÁRIO DE TRADUÇÃO (i18n) ---
 TRANSLATIONS = {
     'pt': {
-        'protocol': 'Banco da Família v10.3',
+        'protocol': 'Banco da Família v10.4',
         'user': 'Usuário',
         'password': 'Senha',
         'auth_btn': 'AUTENTICAR',
@@ -58,7 +58,7 @@ TRANSLATIONS = {
         'msg_loss': 'Houve uma retirada de'
     },
     'en': {
-        'protocol': 'Family Bank v10.3',
+        'protocol': 'Family Bank v10.4',
         'user': 'User',
         'password': 'Password',
         'auth_btn': 'AUTHENTICATE',
@@ -105,7 +105,7 @@ TRANSLATIONS = {
         'msg_loss': 'There was a decrease of'
     },
     'es': {
-        'protocol': 'Banco de la Familia v10.3',
+        'protocol': 'Banco de la Familia v10.4',
         'user': 'Usuario',
         'password': 'Contraseña',
         'auth_btn': 'AUTENTICAR',
@@ -157,7 +157,7 @@ def t(key):
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
-# --- CSS REFINADO & RESPONSIVO (V10.3 NANO) ---
+# --- CSS REFINADO & RESPONSIVO (V10.4 PICO-COMPACT) ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -276,32 +276,35 @@ st.markdown("""
     .stTextInput input, .stNumberInput input { background-color: #0F0F12 !important; border: 1px solid #222226 !important; border-radius: 12px !important; }
     hr { border: 0; border-top: 1px solid #222226; margin: 1.5rem 0; }
 
-    /* --- MOBILE RESPONSIVE FIX V10.3 (NANO COMPACT) --- */
+    /* --- MOBILE RESPONSIVE FIX V10.4 (PICO-COMPACT) --- */
     @media (max-width: 480px) {
-        /* Margem quase zero para aproveitar cada pixel */
+        /* Container Principal: Margem Mínima */
         .block-container {
-            padding-left: 0.2rem !important;
-            padding-right: 0.2rem !important;
+            padding-left: 0.1rem !important;
+            padding-right: 0.1rem !important;
         }
 
-        /* Forçar gap zero entre colunas */
+        /* FORÇAR GRID: Impede quebra de linha nas colunas */
         div[data-testid="stHorizontalBlock"] {
             gap: 0px !important;
+            flex-wrap: nowrap !important; /* CRÍTICO: Impede empilhamento */
+            overflow-x: hidden !important;
         }
 
-        /* GARANTIA MATEMÁTICA: 4 colunas = 25% cada */
+        /* COLUNAS: Largura Exata 25% */
         div[data-testid="column"] {
             width: 25% !important;
-            flex: 0 0 25% !important;
-            min-width: 0 !important;
-            padding: 0 1px !important; /* Mínimo espaçamento para não colar visualmente */
+            flex: 1 1 25% !important;
+            min-width: 25% !important; /* Força bruta */
+            max-width: 25% !important;
+            padding: 0 1px !important;
         }
 
-        /* Botões "Nano": Menores e Fonte Reduzida */
+        /* BOTÕES: Compactos */
         .stButton>button {
-            height: 50px !important; /* Reduzido de 65px para 50px */
-            min-height: 50px !important;
-            font-size: 1.1rem !important; /* Fonte menor para não quebrar */
+            height: 45px !important;
+            min-height: 45px !important;
+            font-size: 0.9rem !important; /* Fonte pequena */
             padding: 0px !important;
             margin: 0px !important;
             width: 100% !important;
@@ -573,4 +576,4 @@ else:
             st.caption(t('fx_cap'))
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v10.3 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v10.4 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
