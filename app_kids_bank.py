@@ -11,7 +11,7 @@ st.set_page_config(page_title="Banco da Família Obsidian", page_icon="💎", la
 # --- 2. DICIONÁRIO DE TRADUÇÃO (i18n) ---
 TRANSLATIONS = {
     'pt': {
-        'protocol': 'Banco da Família v9.5',
+        'protocol': 'Banco da Família v9.6',
         'user': 'Utilizador',
         'password': 'Palavra-passe',
         'auth_btn': 'AUTENTICAR',
@@ -52,7 +52,7 @@ TRANSLATIONS = {
         'change_pw': 'Alterar Palavra-passe'
     },
     'en': {
-        'protocol': 'Family Bank v9.5',
+        'protocol': 'Family Bank v9.6',
         'user': 'User',
         'password': 'Password',
         'auth_btn': 'AUTHENTICATE',
@@ -93,7 +93,7 @@ TRANSLATIONS = {
         'change_pw': 'Change Password'
     },
     'es': {
-        'protocol': 'Banco de la Familia v9.5',
+        'protocol': 'Banco de la Familia v9.6',
         'user': 'Usuario',
         'password': 'Contraseña',
         'auth_btn': 'AUTENTICAR',
@@ -139,7 +139,7 @@ def t(key):
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
-# --- CSS REFINADO ---
+# --- CSS REFINADO (AJUSTE DE CONTRASTE) ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -147,7 +147,7 @@ st.markdown("""
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
         background-color: #080809;
-        color: #E0E0E0;
+        color: #F0F0F0; /* Texto principal mais claro */
     }
     
     .stApp { background-color: #080809; }
@@ -185,8 +185,9 @@ st.markdown("""
         align-items: center;
     }
     
+    /* CORREÇÃO: Letras cinza agora mais próximas do branco para legibilidade */
     .label-caption {
-        color: #6B7280;
+        color: #D1D5DB; /* Cinza claro/Off-white */
         font-size: 0.7rem;
         font-weight: 700;
         text-transform: uppercase;
@@ -204,7 +205,7 @@ st.markdown("""
     .stButton>button {
         border-radius: 12px !important;
         background: #1A1A1D !important;
-        color: #E0E0E0 !important;
+        color: #F0F0F0 !important;
         border: 1px solid #2D2D32 !important;
         font-size: 0.9rem !important;
         font-weight: 600 !important;
@@ -263,7 +264,7 @@ st.markdown("""
     }
 
     .stTabs [data-baseweb="tab-list"] { background-color: transparent; border-bottom: 1px solid #222226; gap: 4px; }
-    .stTabs [data-baseweb="tab"] { color: #6B7280; font-weight: 600; font-size: 0.8rem; }
+    .stTabs [data-baseweb="tab"] { color: #A1A1AA; font-weight: 600; font-size: 0.8rem; }
     .stTabs [aria-selected="true"] { color: #00E5FF !important; border-bottom-color: #00E5FF !important; }
 
     .stTextInput input, .stNumberInput input {
@@ -342,7 +343,8 @@ if not st.session_state.logged_in:
         st.error("Erro: Base de dados não configurada.")
         st.stop()
         
-    st.markdown(f"<div style='margin-top:5rem; text-align:center;'><h1 class='obsidian-logo'>💎 Banco da Família</h1><p style='color:#4B5563; font-weight:600; font-size:0.8rem;'>{t('protocol')}</p></div>", unsafe_allow_html=True)
+    # Texto de protocolo ajustado para cinza claro (A1A1AA) para legibilidade
+    st.markdown(f"<div style='margin-top:5rem; text-align:center;'><h1 class='obsidian-logo'>💎 Banco da Família</h1><p style='color:#A1A1AA; font-weight:600; font-size:0.8rem;'>{t('protocol')}</p></div>", unsafe_allow_html=True)
     
     with st.form("login_form"):
         u = st.text_input(t('user')).lower().strip()
@@ -515,11 +517,11 @@ else:
             <div class='obsidian-card'>
                 <div class='label-caption'>{t('fx_title')}</div>
                 <div class="row-item">
-                    <div style="display:flex; align-items:center; gap:12px;"><span style="font-size:1.4rem;">🇺🇸</span><div><div style="font-size:0.9rem; font-weight:600;">{t('fx_usd')}</div><div style="font-size:0.6rem; color:#6B7280;">{t('fx_ref')} {usd:,.2f}</div></div></div>
+                    <div style="display:flex; align-items:center; gap:12px;"><span style="font-size:1.4rem;">🇺🇸</span><div><div style="font-size:0.9rem; font-weight:600;">{t('fx_usd')}</div><div style="font-size:0.6rem; color:#A1A1AA;">{t('fx_ref')} {usd:,.2f}</div></div></div>
                     <div style="font-family:'JetBrains Mono'; font-weight:700; color:#00E5FF;">$ {s_u:,.2f}</div>
                 </div>
                 <div class="row-item" style="border:none;">
-                    <div style="display:flex; align-items:center; gap:12px;"><span style="font-size:1.4rem;">🇪🇺</span><div><div style="font-size:0.9rem; font-weight:600;">{t('fx_eur')}</div><div style="font-size:0.6rem; color:#6B7280;">{t('fx_ref')} {eur:,.2f}</div></div></div>
+                    <div style="display:flex; align-items:center; gap:12px;"><span style="font-size:1.4rem;">🇪🇺</span><div><div style="font-size:0.9rem; font-weight:600;">{t('fx_eur')}</div><div style="font-size:0.6rem; color:#A1A1AA;">{t('fx_ref')} {eur:,.2f}</div></div></div>
                     <div style="font-family:'JetBrains Mono'; font-weight:700; color:#00E5FF;">€ {s_e:,.2f}</div>
                 </div>
             </div>
@@ -527,4 +529,5 @@ else:
             st.caption(t('fx_cap'))
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#222226; font-size:0.65rem; margin-top:3rem;'>Banco da Família v9.5 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
+# Rodapé ajustado para cinza suave (4B5563) para não desaparecer mas ser discreto
+st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v9.6 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
