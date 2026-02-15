@@ -63,13 +63,19 @@ st.markdown("""
         margin: 0.5rem 0;
     }
 
+    /* Estilização Global dos Botões */
     .stButton>button {
         border-radius: 12px !important;
         background-color: #111111 !important;
         color: #FFFFFF !important;
         border: 1px solid #222222 !important;
-        font-size: 0.8rem !important;
-        height: 38px !important;
+        font-size: 1rem !important; /* Aumentado de 0.8 para 1.0 */
+        height: 42px !important;    /* Ajustado para acomodar melhor os símbolos */
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: 0.2s;
+        line-height: 1 !important;
     }
     
     .stButton>button:hover {
@@ -95,7 +101,10 @@ st.markdown("""
         font-family: 'Inter', sans-serif;
         color: #10B981;
         margin-bottom: 10px;
-        min-height: 50px;
+        min-height: 55px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
     }
 
     hr { border: 0; border-top: 1px solid #222; margin: 2rem 0; }
@@ -250,12 +259,13 @@ else:
             if c1.button("1", key="c1"): add_to_calc(1)
             if c2.button("2", key="c2"): add_to_calc(2)
             if c3.button("3", key="c3"): add_to_calc(3)
-            if c4.button("-", key="csub"): add_to_calc("-")
+            # Labels com espaços para garantir renderização correta
+            if c4.button(" - ", key="csub"): add_to_calc("-")
 
             if c1.button("0", key="c0"): add_to_calc(0)
             if c2.button(".", key="cdot"): add_to_calc(".")
             if c3.button("C", key="cclr"): clear_calc()
-            if c4.button("+", key="cadd"): add_to_calc("+")
+            if c4.button(" + ", key="cadd"): add_to_calc("+")
 
             if st.button("=", key="csolve", type="primary", use_container_width=True): solve_calc()
     
@@ -294,4 +304,4 @@ else:
                     st.rerun()
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#333; font-size:0.7rem; margin-top:4rem;'>RipariBank v6.2 | Secured Minimalist Hub</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#333; font-size:0.7rem; margin-top:4rem;'>RipariBank v6.3 | Secured Minimalist Hub</div>", unsafe_allow_html=True)
