@@ -7,7 +7,7 @@ from database import run_query
 from utils import t, get_family_balances
 
 def render_admin_view():
-    # 1. Visualização de Saldos das Crianças (O Cockpit)
+    # 1. Visualização de Saldos das Crianças (Monitoramento)
     st.markdown(f"### {t('family_bal')}")
     df_saldos = get_family_balances()
     if df_saldos is not None and not df_saldos.empty:
@@ -21,21 +21,21 @@ def render_admin_view():
             """, unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # 2. Navegação por Tabs com Nomes Intuitivos
+    # 2. Navegação por Tabs PT-BR
     tabs = st.tabs([t('panel'), t('new_task'), t('mgmt'), t('cashier')])
     
     # --- TAB 1: MONITOR DE TAREFAS ---
     with tabs[0]:
-        st.markdown("#### Monitorização de Estado")
+        st.markdown("#### Monitoramento de Status")
         
-        # Secção de Punição por Atraso (Lógica de Multas)
+        # Seção de Punição por Atraso
         overdue = run_query("""
             SELECT c.id, c.description, c.reward, u.name, u.id as uid 
             FROM chores c JOIN users u ON c.assigned_to = u.id 
             WHERE c.status='open' AND c.deadline < NOW()
         """)
         if overdue is not None and not overdue.empty:
-            st.error(f"🚨 Tarefas em Atraso Identificadas")
+            st.error(f"🚨 Tarefas Atrasadas Identificadas")
             for _, o in overdue.iterrows():
                 with st.expander(f"🔴 Punir {o['name'].title()} - {o['description']}"):
                     val_multa = st.number_input(f"Valor da Multa", value=float(o['reward']), key=f"m_{o['id']}")
@@ -87,38 +87,38 @@ def render_admin_view():
                               params={'d': desc, 'r': rew, 'uid': int(kid_id), 'dl': dl}, commit=True)
                     st.success("Missão Agendada!")
 
-    # --- TAB 3: GESTÃO DE UTILIZADORES (FUNCIONALIDADE COMPLETA) ---
+    # --- TAB 3: GESTÃO DE USUÁRIOS ---
     with tabs[2]:
         st.markdown("#### Gestão de Acessos")
-        sub_list, sub_add = st.tabs(["Lista e Ações", "Novo Registo"])
+        sub_list, sub_add = st.tabs(["Lista e Ações", "Novo Registro"])
         
         with sub_list:
             all_u = run_query("SELECT id, name, role FROM users ORDER BY name")
             st.dataframe(all_u, use_container_width=True, hide_index=True)
             
-            sel_user = st.selectbox("Escolher Utilizador", all_u['name'].tolist())
+            sel_user = st.selectbox("Escolher Usuário", all_u['name'].tolist())
             u_data = all_u[all_u['name'] == sel_user].iloc[0]
             
             c_pw, c_del = st.columns(2)
             with c_pw:
                 with st.popover("Alterar Senha"):
                     n_pw = st.text_input("Nova Senha", type="password")
-                    if st.button("Guardar Senha"):
+                    if st.button("Salvar Senha"):
                         run_query("UPDATE users SET password=:p WHERE id=:id", params={'p': n_pw, 'id': int(u_data['id'])}, commit=True)
                         st.success("Senha alterada!")
             with c_del:
-                if st.button("APAGAR UTILIZADOR", key="del_u"):
+                if st.button("EXCLUIR USUÁRIO", key="del_u"):
                     if int(u_data['id']) != st.session_state.user_id:
                         run_query("DELETE FROM users WHERE id=:id", params={'id': int(u_data['id'])}, commit=True)
                         st.rerun()
-                    else: st.error("Não podes apagar a tua própria conta.")
+                    else: st.error("Você não pode excluir sua própria conta.")
 
         with sub_add:
             with st.form("add_u"):
-                n_name = st.text_input("Nome de Utilizador").lower().strip()
+                n_name = st.text_input("Nome de Usuário").lower().strip()
                 n_pass = st.text_input("Senha Inicial")
                 n_role = st.selectbox("Perfil", ["user", "admin"])
-                if st.form_submit_button("REGISTAR UTILIZADOR"):
+                if st.form_submit_button("CADASTRAR USUÁRIO"):
                     run_query("INSERT INTO users (name, password, role) VALUES (:n, :p, :r)", params={'n': n_name, 'p': n_pass, 'r': n_role}, commit=True)
                     st.success("Conta criada!")
 
@@ -128,7 +128,7 @@ def render_admin_view():
         kids = run_query("SELECT id, name FROM users WHERE role='user'")
         if kids is not None:
             with st.form("cashier_f"):
-                k_target = st.selectbox("Utilizador Alvo", kids['name'].tolist())
+                k_target = st.selectbox("Usuário Alvo", kids['name'].tolist())
                 val = st.number_input("Valor R$", min_value=0.0)
                 op_type = st.radio("Tipo de Movimento", [t('deposit'), t('withdraw')], horizontal=True)
                 note = st.text_input(t('reason'))
