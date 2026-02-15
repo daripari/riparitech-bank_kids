@@ -84,6 +84,20 @@ st.markdown("""
         color: white !important;
     }
 
+    /* Estilo Específico da Calculadora */
+    .calc-display {
+        background-color: #000;
+        border: 1px solid #333;
+        border-radius: 10px;
+        padding: 10px;
+        text-align: right;
+        font-size: 1.5rem;
+        font-family: 'Inter', sans-serif;
+        color: #10B981;
+        margin-bottom: 10px;
+        min-height: 50px;
+    }
+
     hr { border: 0; border-top: 1px solid #222; margin: 2rem 0; }
 </style>
 """, unsafe_allow_html=True)
@@ -121,6 +135,7 @@ init_db()
 
 # --- 3. LOGICA DE ESTADO ---
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
+if 'calc_expr' not in st.session_state: st.session_state.calc_expr = ""
 
 # --- 4. INTERFACE DE LOGIN ---
 if not st.session_state.logged_in:
@@ -154,7 +169,6 @@ else:
 
     # --- VISUALIZAÇÃO DE SALDOS ---
     if st.session_state.role == 'admin':
-        # Admin vê o resumo de todos os utilizadores
         st.markdown("<div class='balance-label'>Saldos da Família</div>", unsafe_allow_html=True)
         saldos_query = """
             SELECT u.name, COALESCE(SUM(t.amount), 0) as balance 
@@ -177,7 +191,6 @@ else:
         else:
             st.info("Nenhum utilizador registado.")
     else:
-        # Utilizador normal vê apenas o seu saldo
         res_bal = run_query("SELECT SUM(amount) as total FROM transactions WHERE user_id=:uid", params={'uid': st.session_state.user_id})
         saldo = res_bal.iloc[0]['total'] if res_bal is not None and not res_bal.empty and pd.notnull(res_bal.iloc[0]['total']) else 0.0
         
@@ -189,19 +202,62 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-    # --- SEÇÃO DE CONTEÚDO (HISTÓRICO / ADMIN) ---
+    # --- SEÇÃO DE CONTEÚDO (TABS) ---
     if st.session_state.role == 'user':
-        tab1, tab2 = st.tabs(["HISTÓRICO", "ANÁLISE"])
+        tab1, tab2, tab3 = st.tabs(["HISTÓRICO", "ANÁLISE", "CALCULADORA"])
+        
         with tab1:
-            # SQL aliases em minúsculas para evitar KeyError
             df_hist = run_query("SELECT timestamp as data, description as motivo, amount as valor FROM transactions WHERE user_id=:uid ORDER BY id DESC LIMIT 10", params={'uid': st.session_state.user_id})
             if df_hist is not None and not df_hist.empty:
                 st.dataframe(df_hist, use_container_width=True, hide_index=True)
             else:
                 st.info("Ainda não tens movimentos.")
+        
         with tab2:
             if df_hist is not None and not df_hist.empty:
                 st.area_chart(df_hist.set_index('data')['valor'], height=200)
+        
+        with tab3:
+            # Layout da Calculadora
+            st.markdown(f"<div class='calc-display'>{st.session_state.calc_expr if st.session_state.calc_expr else '0'}</div>", unsafe_allow_html=True)
+            
+            def add_to_calc(val):
+                st.session_state.calc_expr += str(val)
+
+            def clear_calc():
+                st.session_state.calc_expr = ""
+
+            def solve_calc():
+                try:
+                    # Substitui X por * para avaliação
+                    expr = st.session_state.calc_expr.replace('x', '*')
+                    st.session_state.calc_expr = str(eval(expr))
+                except:
+                    st.session_state.calc_expr = "Erro"
+
+            # Grid de botões
+            c1, c2, c3, c4 = st.columns(4)
+            if c1.button("7", key="c7"): add_to_calc(7)
+            if c2.button("8", key="c8"): add_to_calc(8)
+            if c3.button("9", key="c9"): add_to_calc(9)
+            if c4.button("/", key="cdiv"): add_to_calc("/")
+
+            if c1.button("4", key="c4"): add_to_calc(4)
+            if c2.button("5", key="c5"): add_to_calc(5)
+            if c3.button("6", key="c6"): add_to_calc(6)
+            if c4.button("x", key="cmul"): add_to_calc("x")
+
+            if c1.button("1", key="c1"): add_to_calc(1)
+            if c2.button("2", key="c2"): add_to_calc(2)
+            if c3.button("3", key="c3"): add_to_calc(3)
+            if c4.button("-", key="csub"): add_to_calc("-")
+
+            if c1.button("0", key="c0"): add_to_calc(0)
+            if c2.button(".", key="cdot"): add_to_calc(".")
+            if c3.button("C", key="cclr"): clear_calc()
+            if c4.button("+", key="cadd"): add_to_calc("+")
+
+            if st.button("=", key="csolve", type="primary", use_container_width=True): solve_calc()
     
     else:
         # Área do Administrador
@@ -238,4 +294,4 @@ else:
                     st.rerun()
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#333; font-size:0.7rem; margin-top:4rem;'>RipariBank v6.1 | Secured Minimalist Hub</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#333; font-size:0.7rem; margin-top:4rem;'>RipariBank v6.2 | Secured Minimalist Hub</div>", unsafe_allow_html=True)
