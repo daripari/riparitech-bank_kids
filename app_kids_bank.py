@@ -11,7 +11,7 @@ st.set_page_config(page_title="Banco da Família Obsidian", page_icon="💎", la
 # --- 2. DICIONÁRIO DE TRADUÇÃO (i18n) ---
 TRANSLATIONS = {
     'pt': {
-        'protocol': 'Banco da Família v10.6',
+        'protocol': 'Banco da Família v10.7',
         'user': 'Usuário',
         'password': 'Senha',
         'auth_btn': 'AUTENTICAR',
@@ -34,7 +34,6 @@ TRANSLATIONS = {
         'bal_acc': 'Saldo em Conta',
         'enc_conn': '● CONEXÃO SEGURA',
         'tab_hist': '📊 Histórico',
-        'tab_evo': '📈 Evolução',
         'tab_calc': '🧮 Calculadora',
         'tab_fx': '🌍 Câmbio',
         'no_reg': 'Sem registros no momento.',
@@ -58,7 +57,7 @@ TRANSLATIONS = {
         'msg_loss': 'Houve uma retirada de'
     },
     'en': {
-        'protocol': 'Family Bank v10.6',
+        'protocol': 'Family Bank v10.7',
         'user': 'User',
         'password': 'Password',
         'auth_btn': 'AUTHENTICATE',
@@ -81,7 +80,6 @@ TRANSLATIONS = {
         'bal_acc': 'Account Balance',
         'enc_conn': '● SECURE CONNECTION',
         'tab_hist': '📊 History',
-        'tab_evo': '📈 Analysis',
         'tab_calc': '🧮 Calculator',
         'tab_fx': '🌍 Exchange',
         'no_reg': 'No records found.',
@@ -105,7 +103,7 @@ TRANSLATIONS = {
         'msg_loss': 'There was a decrease of'
     },
     'es': {
-        'protocol': 'Banco de la Familia v10.6',
+        'protocol': 'Banco de la Familia v10.7',
         'user': 'Usuario',
         'password': 'Contraseña',
         'auth_btn': 'AUTENTICAR',
@@ -128,7 +126,6 @@ TRANSLATIONS = {
         'bal_acc': 'Saldo en Cuenta',
         'enc_conn': '● CONEXIÓN SEGURA',
         'tab_hist': '📊 Historial',
-        'tab_evo': '📈 Evolución',
         'tab_calc': '🧮 Calculadora',
         'tab_fx': '🌍 Cambio',
         'no_reg': 'Sin registros por ahora.',
@@ -157,7 +154,7 @@ def t(key):
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
-# --- CSS REFINADO & RESPONSIVO (V10.6 LANDSCAPE FORCE) ---
+# --- CSS REFINADO & RESPONSIVO (V10.7 LEAN) ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -544,18 +541,17 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-        tabs = st.tabs([t('tab_hist'), t('tab_evo'), t('tab_calc'), t('tab_fx')])
+        # --- TABS REORGANIZADOS (SEM EVOLUÇÃO) ---
+        tabs = st.tabs([t('tab_hist'), t('tab_calc'), t('tab_fx')])
         
         with tabs[0]:
             df_h = get_cached_history(st.session_state.user_id)
             if df_h is not None and not df_h.empty: st.dataframe(df_h, use_container_width=True, hide_index=True)
             else: st.info(t('no_reg'))
         
+        # --- TAB CALCULADORA (AGORA NO ÍNDICE 1) ---
         with tabs[1]:
-            if df_h is not None and not df_h.empty: st.area_chart(df_h.set_index('data')['valor'], color="#00E5FF")
-        
-        with tabs[2]:
-            # --- OVERLAY INJETADO APENAS NA ABA DA CALCULADORA ---
+            # Overlay de Rotação
             st.markdown("""
             <div id="rotate-overlay">
                 <div class="rotate-icon">📱</div>
@@ -571,7 +567,6 @@ else:
                 try: st.session_state.calc_expr = str(eval(st.session_state.calc_expr.replace('×', '*').replace('÷', '/')))
                 except: st.session_state.calc_expr = "Error"
             
-            # --- CALCULADORA (Grid Normal para Desktop/Landscape) ---
             c1, c2, c3, c4 = st.columns(4)
             c1.button("7", key="k7", on_click=k_p, args=("7",))
             c2.button("8", key="k8", on_click=k_p, args=("8",))
@@ -591,7 +586,8 @@ else:
             c4.button("_+_", key="kadd", on_click=k_p, args=("+",))
             st.button(t('calc_btn'), key="nsolve", type="primary", use_container_width=True, on_click=k_s)
 
-        with tabs[3]:
+        # --- TAB CÂMBIO (AGORA NO ÍNDICE 2) ---
+        with tabs[2]:
             usd, eur = 5.05, 5.45
             s_u, s_e = saldo_brl / usd, saldo_brl / eur
             st.markdown(f"""
@@ -610,4 +606,4 @@ else:
             st.caption(t('fx_cap'))
 
 # --- FOOTER ---
-st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v10.6 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
+st.markdown(f"<div style='text-align:center; color:#4B5563; font-size:0.65rem; margin-top:3rem;'>Banco da Família v10.7 • Criado por RipariTech • 2026</div>", unsafe_allow_html=True)
