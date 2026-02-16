@@ -126,5 +126,10 @@ def apply_styles():
             color: #1a1a1a !important;
             border: none !important;
         }
+        
+        /* --- POPOVER (MULTAS) --- */
+        [data-testid="stPopoverBody"] * {
+            color: #1a1a1a !important;
+        }
     </style>
     """, unsafe_allow_html=True)
