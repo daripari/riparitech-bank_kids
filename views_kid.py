@@ -7,16 +7,16 @@ import time
 
 def render_kid_view():
     """
-    Interface da Criança v13.4.
+    Interface da Criança v13.5.
     REBRANDED: BANCO RIPARITECH.
     FIX: Remoção de componentes vazios e ícones duplicados.
-    UPDATED: Aba de câmbio com conversão USD/EUR.
+    UPDATED: Aba de câmbio com conversão USD/EUR e terminologia PT-PT.
     """
     uid = st.session_state.user_id
     balance = get_balance(uid)
     
     # --- SECÇÃO HERO: EXIBIÇÃO DO SALDO CENTRAL ---
-    # Utiliza as classes de CSS definidas no styles.py para o efeito de profundidade
+    # Foco visual no património do utilizador com tipografia premium
     st.markdown(f"""
     <div class="hero-balance">
         <div class="hero-label">{t('bal')}</div>
@@ -25,15 +25,15 @@ def render_kid_view():
     """, unsafe_allow_html=True)
     
     # --- NAVEGAÇÃO POR ABAS (TABS LIQUID) ---
-    # Os nomes das abas são extraídos dinamicamente do utils.py
+    # As abas utilizam as chaves do utils.py para evitar duplicidade de ícones
     t_extrato, t_missoes, t_transfer, t_cambio = st.tabs([
-        t('home'),      # 'Extrato e Histórico'
+        t('home'),      # 'Extracto e Histórico'
         t('missions'),  # 'Missões'
         t('transfer'),  # 'Transferir'
         t('tools')      # 'Câmbio'
     ])
     
-    # --- ABA 1: EXTRATO ---
+    # --- ABA 1: EXTRACTO ---
     with t_extrato:
         st.markdown("##### Últimas Movimentações")
         hist = run_query("""
@@ -44,7 +44,7 @@ def render_kid_view():
         """, {'u': uid})
         
         if hist is not None and not hist.empty:
-            # Container nativo com borda para evitar artefactos visuais
+            # Uso de container com borda para evitar artefactos de componentes vazios
             with st.container(border=True):
                 for _, r in hist.iterrows():
                     cor = "#00f2ff" if r['amount'] >= 0 else "#ff4b4b"
@@ -59,7 +59,7 @@ def render_kid_view():
 
     # --- ABA 2: MISSÕES ---
     with t_missoes:
-        st.markdown("##### Minhas Missões Ativas")
+        st.markdown("##### As Tuas Missões Activas")
         m = run_query("SELECT * FROM chores WHERE assigned_to=:u AND status='open'", {'u': uid})
         
         if m is not None and not m.empty:
@@ -69,7 +69,7 @@ def render_kid_view():
                     st.write(f"Recompensa: **R$ {c['reward']:.2f}**")
                     if st.button("CONCLUIR TAREFA", key=f"c_{c['id']}", use_container_width=True):
                         run_query("UPDATE chores SET status='pending' WHERE id=:id", {'id':c['id']}, commit=True)
-                        st.toast("Enviado para aprovação do Comando! 🚀")
+                        st.toast("Tarefa enviada para aprovação do Comando! 🚀")
                         st.rerun()
         else:
             st.markdown("<div class='liquid-card' style='text-align:center; opacity:0.6;'>Tudo em dia por aqui! 🏖️</div>", unsafe_allow_html=True)
@@ -130,4 +130,5 @@ def render_kid_view():
             </div>
             """, unsafe_allow_html=True)
 
-    st.markdown("<div style='text-align:center; opacity:0.1; font-size:0.6rem; margin-top:50px;'>RIPARITECH LIQUID UI • v13.4</div>", unsafe_allow_html=True)
+    # Rodapé institucional Riparitech
+    st.markdown("<div style='text-align:center; opacity:0.1; font-size:0.6rem; margin-top:50px;'>BANCO RIPARITECH • v13.5</div>", unsafe_allow_html=True)
