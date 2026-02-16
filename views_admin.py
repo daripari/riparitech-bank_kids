@@ -8,18 +8,20 @@ from utils import t, get_family_balances
 
 def render_admin_view():
     """
-    Interface do Administrador v13.4.
+    Interface do Administrador v13.5.
     REBRANDED: BANCO RIPARITECH.
     FIX: Remoção de componentes vazios e ícones duplicados nas abas.
+    TIP: Utiliza st.container(border=True) para evitar artefactos visuais.
     """
     
     # --- CABEÇALHO DO PAINEL ---
     st.markdown("<h4 style='letter-spacing:2px; font-weight:300; margin-bottom:20px;'>COMANDO RIPARITECH</h4>", unsafe_allow_html=True)
     
     # --- GRID DE SALDOS DA FAMÍLIA ---
-    # Apresenta o saldo de todos os utilizadores 'user' em cartões de vidro
+    # Apresenta o saldo de todos os utilizadores com perfil 'user' em cartões de vidro
     df_saldos = get_family_balances()
     if df_saldos is not None and not df_saldos.empty:
+        # No mobile, as colunas do Streamlit ajustam-se automaticamente
         cols = st.columns(len(df_saldos))
         for i, row in df_saldos.iterrows():
             with cols[i]:
@@ -32,11 +34,11 @@ def render_admin_view():
                 </div>
                 """, unsafe_allow_html=True)
     
-    # --- NAVEGAÇÃO POR ABAS (FIX: Sem ícones manuais para evitar duplicidade) ---
+    # --- NAVEGAÇÃO POR ABAS (FIX: Usando apenas t(key) para evitar ícones duplicados) ---
     t_tarefas, t_lancamentos, t_usuarios = st.tabs([
-        t('panel'),     # '🔎 Tarefas'
-        t('cashier'),   # '💸 Lançamentos'
-        t('mgmt')       # '⚙️ Usuários'
+        t('panel'),     # '🔎 Tarefas' vindo do utils.py
+        t('cashier'),   # '💸 Lançamentos' vindo do utils.py
+        t('mgmt')       # '⚙️ Utilizadores' vindo do utils.py
     ])
     
     # --- ABA 1: GESTÃO DE TAREFAS (MISSÕES) ---
@@ -44,8 +46,8 @@ def render_admin_view():
         c1, c2 = st.columns([0.6, 0.4])
         
         with c1:
-            st.markdown("##### Monitoramento de Missões")
-            # Tarefas aguardando aprovação
+            st.markdown("##### Monitorização de Missões")
+            # Procura tarefas com estado 'pending' (aguardando aprovação)
             pending = run_query("""
                 SELECT c.id, c.description, c.reward, u.name, u.id as uid 
                 FROM chores c JOIN users u ON c.assigned_to = u.id 
@@ -53,7 +55,7 @@ def render_admin_view():
             """)
             
             if pending is not None and not pending.empty:
-                st.info(f"Existem {len(pending)} missões aguardando validação.")
+                st.info(f"Existem {len(pending)} missões aguardando a sua validação.")
                 for _, p in pending.iterrows():
                     with st.container(border=True):
                         st.write(f"**{p['name'].title()}** entregou: *{p['description']}*")
@@ -61,27 +63,29 @@ def render_admin_view():
                         
                         col_ok, col_no = st.columns(2)
                         if col_ok.button(f"✅ Aprovar", key=f"app_{p['id']}", use_container_width=True):
+                            # Transforma a tarefa em paga e gera a transacção de crédito
                             run_query("UPDATE chores SET status='paid' WHERE id=:id", {'id': p['id']}, commit=True)
                             run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:u, :a, :d, NOW(), 'Tarefa')", 
                                       {'u': p['uid'], 'a': p['reward'], 'd': f"Missão: {p['description']}"}, commit=True)
-                            st.success("Aprovado!")
+                            st.success("Missão aprovada e paga!")
                             time.sleep(1); st.rerun()
                             
                         if col_no.button(f"❌ Recusar", key=f"rej_{p['id']}", use_container_width=True):
+                            # Devolve a tarefa para o estado 'open' para nova tentativa
                             run_query("UPDATE chores SET status='open' WHERE id=:id", {'id': p['id']}, commit=True)
-                            st.warning("Recusado. A missão voltou para 'Aberta'.")
+                            st.warning("Recusado. A missão voltou ao estado 'Em Aberto'.")
                             time.sleep(1); st.rerun()
             else:
                 st.markdown("<div class='liquid-card' style='text-align:center; opacity:0.5;'>Nenhuma missão pendente para aprovação.</div>", unsafe_allow_html=True)
 
         with c2:
-            st.markdown("##### Nova Missão")
+            st.markdown("##### Criar Nova Missão")
             kids = run_query("SELECT id, name FROM users WHERE role='user'")
             if kids is not None:
                 with st.form("new_mission_liquid", clear_on_submit=True):
-                    desc = st.text_input("O que deve ser feito?")
+                    desc = st.text_input("Descrição da tarefa")
                     reward = st.number_input("Valor da Recompensa (R$)", min_value=0.5, step=0.5)
-                    who = st.selectbox("Quem deve fazer?", kids['name'].tolist())
+                    who = st.selectbox("Atribuir a:", kids['name'].tolist())
                     d_date = st.date_input("Data Limite")
                     d_time = st.time_input("Hora Limite", value=dt_time(23, 59))
                     
@@ -93,18 +97,18 @@ def render_admin_view():
                         st.success("Missão agendada com sucesso!")
                         time.sleep(1); st.rerun()
 
-    # --- ABA 2: LANÇAMENTOS (MANUAL) ---
+    # --- ABA 2: LANÇAMENTOS (MOVIMENTAÇÃO MANUAL) ---
     with t_lancamentos:
-        st.markdown("##### Lançamento Financeiro Direto")
+        st.markdown("##### Lançamento Financeiro Directo")
         kids = run_query("SELECT id, name FROM users WHERE role='user'")
         if kids is not None:
             # FIX: Uso de st.container(border=True) para evitar a anomalia visual de barras vazias
             with st.container(border=True):
                 with st.form("cashier_liquid_form", clear_on_submit=True):
-                    target = st.selectbox("Conta da Criança", kids['name'].tolist())
+                    target = st.selectbox("Seleccionar Conta", kids['name'].tolist())
                     val = st.number_input("Valor R$", min_value=0.0, step=1.0)
-                    op_type = st.radio("Tipo de Movimentação", ["Depósito", "Retirada"], horizontal=True)
-                    note = st.text_input("Motivo / Descrição", placeholder="Ex: Ajuste Riparitech")
+                    op_type = st.radio("Tipo de Operação", ["Depósito", "Levantamento"], horizontal=True)
+                    note = st.text_input("Observação / Motivo", placeholder="Ex: Ajuste de saldo Riparitech")
                     
                     if st.form_submit_button("EXECUTAR LANÇAMENTO", use_container_width=True):
                         kid_id = kids[kids['name'] == target]['id'].values[0]
@@ -114,19 +118,19 @@ def render_admin_view():
                         st.success("Saldo actualizado com sucesso!")
                         time.sleep(1); st.rerun()
 
-    # --- ABA 3: USUÁRIOS (GESTÃO DE ACESSOS) ---
+    # --- ABA 3: UTILIZADORES (GESTÃO DE ACESSOS) ---
     with t_usuarios:
         col_u1, col_u2 = st.columns([0.6, 0.4])
         
         with col_u1:
-            st.markdown("##### Usuários Cadastrados")
+            st.markdown("##### Utilizadores Registados")
             all_users = run_query("SELECT id, name, role FROM users ORDER BY role, name")
             if all_users is not None:
                 st.dataframe(all_users, use_container_width=True, hide_index=True)
             
             st.markdown("---")
-            st.markdown("##### Acções de Utilizador")
-            sel_u_name = st.selectbox("Seleccionar Utilizador para Modificar", all_users['name'].tolist() if all_users is not None else [])
+            st.markdown("##### Acções Rápidas")
+            sel_u_name = st.selectbox("Seleccionar Utilizador", all_users['name'].tolist() if all_users is not None else [])
             
             if sel_u_name:
                 u_row = all_users[all_users['name'] == sel_u_name].iloc[0]
@@ -134,30 +138,30 @@ def render_admin_view():
                 
                 c_pw, c_del = st.columns(2)
                 with c_pw:
-                    with st.popover("Trocar Senha", use_container_width=True):
+                    with st.popover("Alterar Senha", use_container_width=True):
                         new_p = st.text_input("Nova Senha", type="password")
-                        if st.button("Confirmar Troca"):
+                        if st.button("Confirmar Alteração"):
                             run_query("UPDATE users SET password=:p WHERE id=:id", {'p': new_p, 'id': u_id}, commit=True)
-                            st.success("Senha alterada!")
+                            st.success("Senha alterada com sucesso!")
                 with c_del:
-                    if st.button("EXCLUIR UTILIZADOR", key="del_user", use_container_width=True):
+                    if st.button("ELIMINAR CONTA", key="del_user", use_container_width=True):
                         if u_id != st.session_state.user_id:
                             run_query("DELETE FROM users WHERE id=:id", {'id': u_id}, commit=True)
                             st.rerun()
                         else:
-                            st.error("Não pode excluir a sua própria conta.")
+                            st.error("Protocolo de segurança: Não pode eliminar o seu próprio acesso.")
 
         with col_u2:
-            st.markdown("##### Novo Utilizador")
+            st.markdown("##### Adicionar Utilizador")
             with st.form("new_user_liquid"):
-                n_name = st.text_input("Nome (Login)").lower().strip()
+                n_name = st.text_input("Nome de Login").lower().strip()
                 n_pass = st.text_input("Senha Inicial")
-                n_role = st.selectbox("Perfil", ["user", "admin"])
-                if st.form_submit_button("CRIAR CONTA", use_container_width=True):
+                n_role = st.selectbox("Perfil de Acesso", ["user", "admin"])
+                if st.form_submit_button("CRIAR UTILIZADOR", use_container_width=True):
                     run_query("INSERT INTO users (name, password, role) VALUES (:n, :p, :r)", 
                               {'n': n_name, 'p': n_pass, 'r': n_role}, commit=True)
-                    st.success(f"Utilizador {n_name} criado!")
+                    st.success(f"Utilizador {n_name} criado com sucesso!")
                     time.sleep(1); st.rerun()
 
     # Rodapé institucional Riparitech
-    st.markdown("<div style='text-align:center; opacity:0.1; font-size:0.6rem; margin-top:50px;'>COMANDO RIPARITECH v13.4 • LIQUID UI</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center; opacity:0.1; font-size:0.6rem; margin-top:50px;'>COMANDO RIPARITECH v13.5 • LIQUID UI ENGINE</div>", unsafe_allow_html=True)
