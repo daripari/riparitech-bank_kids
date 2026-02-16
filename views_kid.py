@@ -7,17 +7,14 @@ import time
 
 def render_kid_view():
     """
-    Interface da Criança v13.6 - Banco Riparitech.
-    - Notificações removidas.
-    - Câmbio USD/EUR integrado.
-    - Transferências entre utilizadores restauradas.
-    - Design Liquid UI sem componentes vazios.
+    Interface do Usuário (Kid) v13.7 - Banco Riparitech.
+    Foco: Português do Brasil (PT-BR), Câmbio USD/EUR e Transferências.
     """
     uid = st.session_state.user_id
     balance = get_balance(uid)
     
-    # --- SECÇÃO HERO: EXIBIÇÃO DO SALDO CENTRAL ---
-    # Foco na legibilidade e impacto visual do património
+    # --- SEÇÃO HERO: SALDO CENTRAL ---
+    # Layout disruptivo com foco no saldo em Reais
     st.markdown(f"""
     <div class="hero-balance">
         <div class="hero-label">{t('bal')}</div>
@@ -25,16 +22,15 @@ def render_kid_view():
     </div>
     """, unsafe_allow_html=True)
     
-    # --- NAVEGAÇÃO POR ABAS (TABS) ---
-    # Nomes extraídos dinamicamente do utils.py
-    t_extrato, t_missoes, t_transfer, t_cambio = st.tabs([
-        t('home'),      # Extracto e Histórico
+    # --- NAVEGAÇÃO POR ABAS (PADRÃO PT-BR) ---
+    t_extrato, t_missoes, t_transferencia, t_cambio = st.tabs([
+        t('home'),      # Extrato e Histórico
         t('missions'),  # Missões
         t('transfer'),  # Transferir
         t('tools')      # Câmbio
     ])
     
-    # --- ABA 1: EXTRACTO E MOVIMENTAÇÕES ---
+    # --- ABA 1: EXTRATO (HISTÓRICO) ---
     with t_extrato:
         st.markdown("##### Últimas Movimentações")
         hist = run_query("""
@@ -45,7 +41,7 @@ def render_kid_view():
         """, {'u': uid})
         
         if hist is not None and not hist.empty:
-            # Uso de container com borda para garantir um layout limpo
+            # Container com borda para evitar erro visual de "barra vazia"
             with st.container(border=True):
                 for _, r in hist.iterrows():
                     cor = "#00f2ff" if r['amount'] >= 0 else "#ff4b4b"
@@ -56,29 +52,34 @@ def render_kid_view():
                     </div>
                     """, unsafe_allow_html=True)
         else:
-            st.info("Ainda não existem movimentações registadas.")
+            st.info("Ainda não há movimentações em sua conta.")
 
-    # --- ABA 2: MISSÕES (TAREFAS DISPONÍVEIS) ---
+    # --- ABA 2: MISSÕES ATIVAS ---
     with t_missoes:
-        st.markdown("##### As Tuas Missões Activas")
-        m = run_query("SELECT * FROM chores WHERE assigned_to=:u AND status='open' ORDER BY created_at DESC", {'u': uid})
+        st.markdown(f"##### {t('active_missions')}")
+        m = run_query("""
+            SELECT * FROM chores 
+            WHERE assigned_to=:u AND status='open' 
+            ORDER BY deadline ASC
+        """, {'u': uid})
         
         if m is not None and not m.empty:
             for _, c in m.iterrows():
                 with st.container(border=True):
                     st.markdown(f"**{c['description']}**")
                     st.write(f"Recompensa: **R$ {c['reward']:.2f}**")
-                    if st.button("CONCLUIR MISSÃO", key=f"c_{c['id']}", use_container_width=True):
+                    # Botão para sinalizar conclusão ao admin
+                    if st.button("MARCAR COMO FEITO", key=f"c_{c['id']}", use_container_width=True):
                         run_query("UPDATE chores SET status='pending' WHERE id=:id", {'id':c['id']}, commit=True)
-                        st.toast("Enviado para o Comando! 🚀")
+                        st.toast("Enviado para aprovação do Comando! 🚀")
                         st.rerun()
         else:
-            st.markdown("<div class='liquid-card' style='text-align:center; opacity:0.6;'>Tudo em dia por agora! 🏖️</div>", unsafe_allow_html=True)
+            st.markdown("<div class='liquid-card' style='text-align:center; opacity:0.6;'>Tudo pronto! Você não tem missões pendentes. 🏖️</div>", unsafe_allow_html=True)
 
-    # --- ABA 3: TRANSFERÊNCIA ENTRE CONTAS ---
-    with t_transfer:
+    # --- ABA 3: TRANSFERÊNCIA ENTRE USUÁRIOS ---
+    with t_transferencia:
         st.markdown(f"##### {t('send_money')}")
-        # Procura outros utilizadores do tipo 'user'
+        # Busca outros usuários (irmãos/irmãs)
         siblings = run_query("SELECT id, name FROM users WHERE role='user' AND id != :uid", {'uid': uid})
         
         if siblings is not None and not siblings.empty:
@@ -90,27 +91,26 @@ def render_kid_view():
                     
                     if st.form_submit_button(t('send_now'), use_container_width=True):
                         if amount > balance:
-                            st.error("Saldo insuficiente para esta operação.")
+                            st.error("Saldo insuficiente.")
                         else:
                             target_id = siblings[siblings['name'] == target_name]['id'].values[0]
-                            
-                            # Execução da transacção dupla (Débito e Crédito)
-                            run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:u, :a, :d, NOW(), 'Envio')", 
+                            # Registro da transação de saída (Débito)
+                            run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:u, :a, :d, NOW(), 'Transferência Enviada')", 
                                       {'u': uid, 'a': -amount, 'd': f"Para {target_name}: {reason}"}, commit=True)
-                            
-                            run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:u, :a, :d, NOW(), 'Recebimento')", 
+                            # Registro da transação de entrada (Crédito)
+                            run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:u, :a, :d, NOW(), 'Transferência Recebida')", 
                                       {'u': int(target_id), 'a': amount, 'd': f"De {st.session_state.user_name}: {reason}"}, commit=True)
                             
-                            st.success(f"Transferência de R$ {amount:.2f} realizada!")
+                            st.success(f"Você enviou R$ {amount:.2f} para {target_name}!")
                             time.sleep(1)
                             st.rerun()
         else:
             st.info(t('no_transfer'))
 
-    # --- ABA 4: CÂMBIO (SIMULADOR USD/EUR) ---
+    # --- ABA 4: CÂMBIO (USD E EUR) ---
     with t_cambio:
-        st.markdown("##### Conversão de Património")
-        # Taxas de referência para simulação
+        st.markdown("##### Conversão de Moedas")
+        # Taxas de conversão simuladas
         usd_rate, eur_rate = 5.05, 5.45
         
         c_usd, c_eur = st.columns(2)
@@ -135,5 +135,5 @@ def render_kid_view():
             </div>
             """, unsafe_allow_html=True)
 
-    # Rodapé institucional v13.6
-    st.markdown("<div style='text-align:center; opacity:0.1; font-size:0.6rem; margin-top:50px;'>BANCO RIPARITECH • v13.6</div>", unsafe_allow_html=True)
+    # Rodapé institucional atualizado
+    st.markdown("<div style='text-align:center; opacity:0.1; font-size:0.6rem; margin-top:50px;'>BANCO RIPARITECH • v13.7</div>", unsafe_allow_html=True)
