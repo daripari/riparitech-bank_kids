@@ -131,5 +131,15 @@ def apply_styles():
         [data-testid="stPopoverBody"] * {
             color: #1a1a1a !important;
         }
+        
+        /* Botão dentro do popover deve ser escuro para contraste e consistência */
+        [data-testid="stPopoverBody"] button {
+            background: #1a1a2e !important;
+            color: #fff !important;
+        }
+        [data-testid="stPopoverBody"] button:hover {
+            background: #999 !important;
+            color: #1a1a1a !important;
+        }
     </style>
     """, unsafe_allow_html=True)
