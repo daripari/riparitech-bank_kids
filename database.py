@@ -82,3 +82,8 @@ def init_db():
                 completed_at TIMESTAMP
             );
         ''', commit=True)
+        
+        # Patch de Migração v14.1: Garantir que completed_at existe em tabelas antigas
+        try:
+            run_query("ALTER TABLE chores ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP;", commit=True)
+        except: pass

@@ -127,6 +127,11 @@ def render_admin_view():
                         else: st.write(r_str)
                     
                     with r5: st.write(status.upper())
+                    with r5:
+                        # Cores para facilitar a identificação visual dos status
+                        s_colors = {'open': '#00f2ff', 'pending': '#ffa500', 'paid': '#00ff00', 'canceled': '#ff4b4b', 'failed': '#ff4b4b'}
+                        color = s_colors.get(status, '#ffffff')
+                        st.markdown(f"<span style='color:{color}; font-weight:bold;'>{status.upper()}</span>", unsafe_allow_html=True)
                     
                     with r6:
                         if can_cancel:
