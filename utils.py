@@ -4,7 +4,7 @@ import pandas as pd
 from database import run_query
 
 # Dicionário de traduções v13.7 - Padrão RIGOROSO PT-BR
-# Foco: Termos brasileiros (Usuário, Retirada, Extrato, Atualizar)
+# Termos revisados: Usuário, Atualizar, Extrato, Retirada, Patrimônio.
 TRANSLATIONS = {
     'pt': {
         'bal': 'Meu Saldo', 
@@ -43,7 +43,7 @@ TRANSLATIONS = {
         'withdraw': 'Retirada', 
         'execute': 'EXECUTAR LANÇAMENTO',
         'lang_sel': 'Idioma',
-        # Chaves de Status e Monitoramento v13.7
+        # Chaves de Status e Monitoramento Administrativo
         'status': 'Status',
         'kid_resp': 'Responsável',
         'paid': 'Paga',
@@ -154,22 +154,19 @@ TRANSLATIONS = {
 }
 
 def t(key):
-    """
-    Retorna a tradução da chave solicitada com base no idioma da sessão.
-    Garante o padrão PT-BR como fallback.
-    """
+    """Retorna a tradução da chave baseada no idioma ativo (Padrão PT-BR)."""
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
 @st.cache_data(ttl=600)
 def get_balance(uid):
-    """Calcula o saldo em tempo real de um usuário específico."""
+    """Calcula o saldo somando todas as transações do usuário no banco."""
     res = run_query("SELECT SUM(amount) as total FROM transactions WHERE user_id=:uid", params={'uid': uid})
     val = res.iloc[0]['total'] if res is not None and not res.empty and pd.notnull(res.iloc[0]['total']) else 0.0
     return val
 
 def get_family_balances():
-    """Gera a tabela de saldos de todos os kids para o painel administrativo."""
+    """Recupera o saldo de todos os usuários com papel 'user'."""
     query = """
         SELECT u.id, u.name, COALESCE(SUM(t.amount), 0) as balance 
         FROM users u 
