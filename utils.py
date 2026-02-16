@@ -4,7 +4,7 @@ import pandas as pd
 from database import run_query
 
 # Dicionário de traduções v13.7 - Padrão RIGOROSO PT-BR
-# Termos corrigidos: Atualizar, Extrato, Retirada, Usuário, etc.
+# Foco: Termos brasileiros (Usuário, Retirada, Extrato, Atualizar)
 TRANSLATIONS = {
     'pt': {
         'bal': 'Meu Saldo', 
@@ -42,7 +42,18 @@ TRANSLATIONS = {
         'deposit': 'Depósito', 
         'withdraw': 'Retirada', 
         'execute': 'EXECUTAR LANÇAMENTO',
-        'lang_sel': 'Idioma'
+        'lang_sel': 'Idioma',
+        # Chaves de Status e Monitoramento v13.7
+        'status': 'Status',
+        'kid_resp': 'Responsável',
+        'paid': 'Paga',
+        'open': 'Aberta',
+        'pending': 'Pendente',
+        'canceled': 'Cancelada',
+        'apply_fine': 'Aplicar Multa',
+        'cancel_task': 'Cancelar Missão',
+        'fine_applied': 'Multa Aplicada',
+        'overdue': 'Vencida'
     },
     'en': {
         'bal': 'My Balance', 
@@ -80,7 +91,17 @@ TRANSLATIONS = {
         'deposit': 'Deposit', 
         'withdraw': 'Withdraw', 
         'execute': 'EXECUTE',
-        'lang_sel': 'Language'
+        'lang_sel': 'Language',
+        'status': 'Status',
+        'kid_resp': 'Responsible',
+        'paid': 'Paid',
+        'open': 'Open',
+        'pending': 'Pending',
+        'canceled': 'Canceled',
+        'apply_fine': 'Apply Fine',
+        'cancel_task': 'Cancel Mission',
+        'fine_applied': 'Fine Applied',
+        'overdue': 'Overdue'
     },
     'es': {
         'bal': 'Mi Saldo', 
@@ -114,28 +135,41 @@ TRANSLATIONS = {
         'date': 'Fecha', 
         'time': 'Hora', 
         'schedule': 'AGENDAR',
-        'manual_entry': 'Lanzamiento Manual', 
+        'manual_entry': 'Lançamento Manual', 
         'deposit': 'Depósito', 
         'withdraw': 'Retiro', 
         'execute': 'EJECUTAR',
-        'lang_sel': 'Idioma'
+        'lang_sel': 'Idioma',
+        'status': 'Estado',
+        'kid_resp': 'Responsable',
+        'paid': 'Pagada',
+        'open': 'Abierta',
+        'pending': 'Pendiente',
+        'canceled': 'Cancelada',
+        'apply_fine': 'Aplicar Multa',
+        'cancel_task': 'Cancelar Misión',
+        'fine_applied': 'Multa Aplicada',
+        'overdue': 'Vencida'
     }
 }
 
 def t(key):
-    """Retorna a tradução da chave solicitada com base no idioma da sessão (Padrão PT-BR)."""
+    """
+    Retorna a tradução da chave solicitada com base no idioma da sessão.
+    Garante o padrão PT-BR como fallback.
+    """
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
 @st.cache_data(ttl=600)
 def get_balance(uid):
-    """Calcula o saldo de um usuário somando todas as suas transações."""
+    """Calcula o saldo em tempo real de um usuário específico."""
     res = run_query("SELECT SUM(amount) as total FROM transactions WHERE user_id=:uid", params={'uid': uid})
     val = res.iloc[0]['total'] if res is not None and not res.empty and pd.notnull(res.iloc[0]['total']) else 0.0
     return val
 
 def get_family_balances():
-    """Retorna o saldo consolidado de todos os usuários com papel 'user'."""
+    """Gera a tabela de saldos de todos os kids para o painel administrativo."""
     query = """
         SELECT u.id, u.name, COALESCE(SUM(t.amount), 0) as balance 
         FROM users u 
