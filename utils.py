@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 from database import run_query
 
-# Dicionário atualizado com suporte a rótulos de botões no cabeçalho
+# Dicionário de traduções v12.7 - Foco em PT-BR e Nomenclatura Simplificada
 TRANSLATIONS = {
     'pt': {
         'bal': 'Meu Saldo', 
@@ -47,7 +47,7 @@ TRANSLATIONS = {
     },
     'en': {
         'bal': 'My Balance', 
-        'family_bal': '💰 Asset Monitoring',
+        'family_bal': '💰 Asset Monitoring (Balances)',
         'missions': 'Missions', 
         'tools': 'Tools', 
         'admin': 'Command', 
@@ -63,7 +63,7 @@ TRANSLATIONS = {
         'how_much': 'Amount ($)', 
         'reason': 'Reason', 
         'send_now': 'SEND NOW 💸', 
-        'no_transfer': 'No users found.',
+        'no_transfer': 'No one available for transfer.',
         'calc': 'Calculator', 
         'fx': 'Exchange', 
         'panel': '🔎 Tasks', 
@@ -74,7 +74,7 @@ TRANSLATIONS = {
         'apply_fine': 'Apply Fine', 
         'approve': 'Approve', 
         'reject': 'Reject',
-        'desc': 'Description', 
+        'desc': 'What needs to be done?', 
         'value': 'Reward ($)', 
         'date': 'Due Date', 
         'time': 'Due Time', 
@@ -87,7 +87,7 @@ TRANSLATIONS = {
     },
     'es': {
         'bal': 'Mi Saldo', 
-        'family_bal': '💰 Monitoreo de Activos',
+        'family_bal': '💰 Monitoreo de Activos (Saldos)',
         'missions': 'Misiones', 
         'tools': 'Herramientas', 
         'admin': 'Comando', 
@@ -112,14 +112,14 @@ TRANSLATIONS = {
         'cashier': '💸 Lanzamientos',
         'late_tasks': 'Tareas Atrasadas', 
         'apply_fine': 'Aplicar Multa', 
-        'approve': 'Aprobar', 
+        'approve': 'Aprovar', 
         'reject': 'Rechazar',
-        'desc': 'Descripción', 
+        'desc': '¿Qué hay que hacer?', 
         'value': 'Recompensa ($)', 
         'date': 'Fecha Límite', 
         'time': 'Hora Límite', 
         'schedule': 'AGENDAR MISIÓN',
-        'manual_entry': 'Lanzamiento Manual', 
+        'manual_entry': 'Lançamento Manual', 
         'deposit': 'Depósito', 
         'withdraw': 'Retiro', 
         'execute': 'EJECUTAR LANZAMIENTO',
@@ -128,16 +128,19 @@ TRANSLATIONS = {
 }
 
 def t(key):
+    """Retorna a tradução para a chave solicitada com base no idioma da sessão."""
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
 @st.cache_data(ttl=600)
 def get_balance(uid):
+    """Busca e calcula o saldo atual de um usuário específico."""
     res = run_query("SELECT SUM(amount) as total FROM transactions WHERE user_id=:uid", params={'uid': uid})
     val = res.iloc[0]['total'] if res is not None and not res.empty and pd.notnull(res.iloc[0]['total']) else 0.0
     return val
 
 def get_family_balances():
+    """Calcula o saldo de todos os usuários com papel 'user' para o painel Admin."""
     query = """
         SELECT u.id, u.name, COALESCE(SUM(t.amount), 0) as balance 
         FROM users u 
