@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
-import styles
-import database
-import utils
-import views_kid
-import views_admin
-from database import run_query
-from utils import t
+import core.styles as styles
+import core.database as database
+import core.utils as utils
+import views.kid as views_kid
+import views.admin as views_admin
+from core.database import run_query
+from core.utils import t
 
 # 1. CONFIGURAÇÃO DA PÁGINA (BRANDING RIPARITECH)
 # Define o título da aba no navegador e o ícone
