@@ -3,8 +3,9 @@ import streamlit as st
 import pandas as pd
 from database import run_query
 
-# Dicionário de traduções v13.7 - Padrão RIGOROSO PT-BR
+# Dicionário de traduções v14.0 - PADRÃO RIGOROSO PT-BR
 # Termos revisados: Usuário, Atualizar, Extrato, Retirada, Patrimônio.
+# Removida qualquer menção a notificações.
 TRANSLATIONS = {
     'pt': {
         'bal': 'Meu Saldo', 
@@ -43,7 +44,7 @@ TRANSLATIONS = {
         'withdraw': 'Retirada', 
         'execute': 'EXECUTAR LANÇAMENTO',
         'lang_sel': 'Idioma',
-        # Chaves de Status e Monitoramento Administrativo
+        # Chaves de Status e Monitoramento Administrativo v14.0
         'status': 'Status',
         'kid_resp': 'Responsável',
         'paid': 'Paga',
@@ -53,7 +54,8 @@ TRANSLATIONS = {
         'apply_fine': 'Aplicar Multa',
         'cancel_task': 'Cancelar Missão',
         'fine_applied': 'Multa Aplicada',
-        'overdue': 'Vencida'
+        'overdue': 'Vencida',
+        'monitoring': 'Acompanhar'
     },
     'en': {
         'bal': 'My Balance', 
@@ -101,7 +103,8 @@ TRANSLATIONS = {
         'apply_fine': 'Apply Fine',
         'cancel_task': 'Cancel Mission',
         'fine_applied': 'Fine Applied',
-        'overdue': 'Overdue'
+        'overdue': 'Overdue',
+        'monitoring': 'Monitor'
     },
     'es': {
         'bal': 'Mi Saldo', 
@@ -149,24 +152,25 @@ TRANSLATIONS = {
         'apply_fine': 'Aplicar Multa',
         'cancel_task': 'Cancelar Misión',
         'fine_applied': 'Multa Aplicada',
-        'overdue': 'Vencida'
+        'overdue': 'Vencida',
+        'monitoring': 'Seguimiento'
     }
 }
 
 def t(key):
-    """Retorna a tradução da chave baseada no idioma ativo (Padrão PT-BR)."""
+    """Retorna a tradução da chave solicitada com base no idioma da sessão."""
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
 @st.cache_data(ttl=600)
 def get_balance(uid):
-    """Calcula o saldo somando todas as transações do usuário no banco."""
+    """Calcula o saldo de um usuário somando todas as suas transações."""
     res = run_query("SELECT SUM(amount) as total FROM transactions WHERE user_id=:uid", params={'uid': uid})
     val = res.iloc[0]['total'] if res is not None and not res.empty and pd.notnull(res.iloc[0]['total']) else 0.0
     return val
 
 def get_family_balances():
-    """Recupera o saldo de todos os usuários com papel 'user'."""
+    """Retorna o saldo consolidado de todos os usuários com papel 'user'."""
     query = """
         SELECT u.id, u.name, COALESCE(SUM(t.amount), 0) as balance 
         FROM users u 
