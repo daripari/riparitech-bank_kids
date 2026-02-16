@@ -78,7 +78,7 @@ def apply_styles():
         }
         
         /* --- BOTÕES PREMIUM --- */
-        .stButton>button, div[data-testid="stPopover"]>button {
+        .stButton button, div[data-testid="stPopover"] button {
             border-radius: 18px !important;
             height: 52px !important;
             font-weight: 800 !important;
@@ -91,7 +91,7 @@ def apply_styles():
             text-transform: none; letter-spacing: 0px;
             white-space: nowrap !important;
         }
-        .stButton>button:hover, div[data-testid="stPopover"]>button:hover {
+        .stButton button:hover, div[data-testid="stPopover"] button:hover {
             background: #999 !important;
             color: #1a1a1a !important;
             transform: scale(1.02);
