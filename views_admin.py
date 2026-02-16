@@ -98,6 +98,12 @@ def render_admin_view():
                 c4.markdown("**Conclusão**")
                 c5.markdown("**Status**")
                 c6.markdown("**Ações**")
+                c1.markdown(f"**{t('col_responsible')}**")
+                c2.markdown(f"**{t('col_task')}**")
+                c3.markdown(f"**{t('deadline')}**")
+                c4.markdown(f"**{t('col_completion')}**")
+                c5.markdown(f"**{t('status')}**")
+                c6.markdown(f"**{t('col_actions')}**")
                 st.divider()
 
                 for _, chore in all_chores.iterrows():
@@ -132,6 +138,7 @@ def render_admin_view():
                         s_colors = {'open': '#00f2ff', 'pending': '#ffa500', 'paid': '#00ff00', 'canceled': '#ff4b4b', 'failed': '#ff4b4b'}
                         color = s_colors.get(status, '#ffffff')
                         st.markdown(f"<span style='color:{color}; font-weight:bold;'>{status.upper()}</span>", unsafe_allow_html=True)
+                        st.markdown(f"<span style='color:{color}; font-weight:bold;'>{t(f'status_{status}')}</span>", unsafe_allow_html=True)
                     
                     with r6:
                         if can_cancel:
