@@ -2,8 +2,8 @@
 import streamlit as st
 import pandas as pd
 import time
-from database import run_query
-from utils import t, get_balance
+from core.database import run_query
+from core.utils import t, get_balance
 
 def render_kid_view():
     """

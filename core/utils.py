@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
-from database import run_query
+from .database import run_query
 
 # Dicionário de traduções v14.1 - SUPORTE TOTAL MULTI-IDIOMA
 TRANSLATIONS = {
