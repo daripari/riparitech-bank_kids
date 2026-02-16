@@ -7,134 +7,158 @@ from database import run_query
 from utils import t, get_family_balances
 
 def render_admin_view():
-    # 1. Visualização de Saldos das Crianças (Monitoramento)
-    st.markdown(f"### {t('family_bal')}")
+    """
+    Interface do Administrador v13.0.
+    Foco em controle centralizado, métricas de saldo e gestão de usuários.
+    """
+    
+    # --- CABEÇALHO DO PAINEL ---
+    st.markdown("<h4 style='letter-spacing:2px; font-weight:300; margin-bottom:20px;'>PAINEL DE COMANDO</h4>", unsafe_allow_html=True)
+    
+    # --- GRID DE SALDOS DA FAMÍLIA ---
+    # Exibe o saldo de todas as crianças em cards de vidro
     df_saldos = get_family_balances()
     if df_saldos is not None and not df_saldos.empty:
-        st.markdown("<div class='glass-card' style='padding: 10px 1.5rem;'>", unsafe_allow_html=True)
-        for _, row in df_saldos.iterrows():
-            st.markdown(f"""
-            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #1A1A1E;">
-                <span style="font-weight:600;">{row['name'].title()}</span>
-                <span style="color:#00C6FF; font-family:'JetBrains Mono'; font-weight:700;">R$ {row['balance']:,.2f}</span>
-            </div>
-            """, unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # 2. Navegação por Tabs PT-BR
-    tabs = st.tabs([t('panel'), t('new_task'), t('mgmt'), t('cashier')])
+        # No mobile, as colunas do Streamlit se ajustam automaticamente
+        cols = st.columns(len(df_saldos))
+        for i, row in df_saldos.iterrows():
+            with cols[i]:
+                st.markdown(f"""
+                <div class="liquid-card" style="text-align:center; padding:20px 10px;">
+                    <div class="hero-label">{row['name'].upper()}</div>
+                    <div style="font-size:1.8rem; font-weight:800; color:#00f2ff; font-family:'JetBrains Mono'; margin:10px 0;">
+                        R$ {row['balance']:,.2f}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
     
-    # --- TAB 1: MONITOR DE TAREFAS ---
-    with tabs[0]:
-        st.markdown("#### Monitoramento de Status")
+    # --- NAVEGAÇÃO POR ABAS (TABS PREMIUM) ---
+    t_tarefas, t_lancamentos, t_usuarios = st.tabs([
+        f"🔎 {t('panel')}", 
+        f"💸 {t('cashier')}", 
+        f"⚙️ {t('mgmt')}"
+    ])
+    
+    # --- ABA 1: GESTÃO DE TAREFAS (MISSÕES) ---
+    with t_tarefas:
+        c1, c2 = st.columns([0.6, 0.4])
         
-        # Seção de Punição por Atraso
-        overdue = run_query("""
-            SELECT c.id, c.description, c.reward, u.name, u.id as uid 
-            FROM chores c JOIN users u ON c.assigned_to = u.id 
-            WHERE c.status='open' AND c.deadline < NOW()
-        """)
-        if overdue is not None and not overdue.empty:
-            st.error(f"🚨 Tarefas Atrasadas Identificadas")
-            for _, o in overdue.iterrows():
-                with st.expander(f"🔴 Punir {o['name'].title()} - {o['description']}"):
-                    val_multa = st.number_input(f"Valor da Multa", value=float(o['reward']), key=f"m_{o['id']}")
-                    if st.button(t('apply_fine'), key=f"bm_{o['id']}"):
-                         run_query("UPDATE chores SET status='failed' WHERE id=:id", params={'id': o['id']}, commit=True)
-                         run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, NOW(), 'Multa')", 
-                                   params={'uid': int(o['uid']), 'amt': -val_multa, 'desc': f"Multa: {o['description']}"}, commit=True)
-                         st.rerun()
+        with c1:
+            st.markdown("##### Monitoramento de Missões")
+            # Tarefas aguardando aprovação
+            pending = run_query("""
+                SELECT c.id, c.description, c.reward, u.name, u.id as uid 
+                FROM chores c JOIN users u ON c.assigned_to = u.id 
+                WHERE c.status='pending'
+            """)
+            
+            if pending is not None and not pending.empty:
+                st.info(f"Existem {len(pending)} missões aguardando sua validação.")
+                for _, p in pending.iterrows():
+                    with st.container():
+                        st.markdown("<div class='liquid-card'>", unsafe_allow_html=True)
+                        st.write(f"**{p['name'].title()}** entregou: *{p['description']}*")
+                        st.write(f"Recompensa: **R$ {p['reward']:.2f}**")
+                        
+                        col_ok, col_no = st.columns(2)
+                        if col_ok.button(f"✅ Aprovar", key=f"app_{p['id']}", use_container_width=True):
+                            run_query("UPDATE chores SET status='paid' WHERE id=:id", {'id': p['id']}, commit=True)
+                            run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:u, :a, :d, NOW(), 'Tarefa')", 
+                                      {'u': p['uid'], 'a': p['reward'], 'd': f"Missão: {p['description']}"}, commit=True)
+                            st.success("Aprovado!")
+                            time.sleep(1); st.rerun()
+                            
+                        if col_no.button(f"❌ Recusar", key=f"rej_{p['id']}", use_container_width=True):
+                            run_query("UPDATE chores SET status='open' WHERE id=:id", {'id': p['id']}, commit=True)
+                            st.warning("Recusado. A missão voltou para 'Aberta'.")
+                            time.sleep(1); st.rerun()
+                        st.markdown("</div>", unsafe_allow_html=True)
+            else:
+                st.markdown("<div class='liquid-card' style='text-align:center; opacity:0.5;'>Nenhuma missão pendente para aprovação.</div>", unsafe_allow_html=True)
 
-        # Aprovação de Tarefas Concluídas
-        pending = run_query("""
-            SELECT c.id, c.description, c.reward, u.name, u.id as uid 
-            FROM chores c JOIN users u ON c.assigned_to = u.id 
-            WHERE c.status='pending'
-        """)
-        if pending is not None and not pending.empty:
-            st.info(f"⏳ {len(pending)} Tarefas para Validar")
-            for _, p in pending.iterrows():
-                c1, c2, c3 = st.columns([0.6, 0.2, 0.2])
-                c1.write(f"**{p['name']}**: {p['description']}")
-                if c2.button("✅", key=f"ok_{p['id']}"):
-                    run_query("UPDATE chores SET status='paid' WHERE id=:id", params={'id': p['id']}, commit=True)
-                    run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, NOW(), 'Tarefa')", 
-                              params={'uid': int(p['uid']), 'amt': p['reward'], 'desc': f"Conclusão: {p['description']}"}, commit=True)
-                    st.rerun()
-                if c3.button("❌", key=f"no_{p['id']}"):
-                    run_query("UPDATE chores SET status='open' WHERE id=:id", params={'id': p['id']}, commit=True)
-                    st.rerun()
+        with c2:
+            st.markdown("##### Nova Missão")
+            kids = run_query("SELECT id, name FROM users WHERE role='user'")
+            if kids is not None:
+                with st.form("new_mission_liquid", clear_on_submit=True):
+                    desc = st.text_input("O que deve ser feito?")
+                    reward = st.number_input("Valor da Recompensa (R$)", min_value=0.5, step=0.5)
+                    who = st.selectbox("Quem deve fazer?", kids['name'].tolist())
+                    d_date = st.date_input("Data Limite")
+                    d_time = st.time_input("Hora Limite", value=dt_time(23, 59))
+                    
+                    if st.form_submit_button("AGENDAR MISSÃO", use_container_width=True):
+                        kid_id = kids[kids['name'] == who]['id'].values[0]
+                        deadline = datetime.combine(d_date, d_time)
+                        run_query("INSERT INTO chores (description, reward, assigned_to, created_at, deadline) VALUES (:d, :r, :uid, NOW(), :dl)",
+                                  params={'d': desc, 'r': reward, 'uid': int(kid_id), 'dl': deadline}, commit=True)
+                        st.success("Missão agendada com sucesso!")
+                        time.sleep(1); st.rerun()
 
-        st.markdown("---")
-        st.caption("LISTA COMPLETA DE MISSÕES")
-        df_all = run_query("SELECT u.name as Criança, c.description as Tarefa, c.reward as Valor, c.status as Status, c.deadline as Prazo FROM chores c JOIN users u ON c.assigned_to = u.id ORDER BY c.deadline DESC")
-        st.dataframe(df_all, use_container_width=True, hide_index=True)
-
-    # --- TAB 2: NOVA TAREFA ---
-    with tabs[1]:
+    # --- ABA 2: LANÇAMENTOS (MANUAL) ---
+    with t_lancamentos:
+        st.markdown("<div class='liquid-card' style='max-width:600px; margin: 0 auto;'>", unsafe_allow_html=True)
+        st.markdown("##### Lançamento Financeiro Direto")
         kids = run_query("SELECT id, name FROM users WHERE role='user'")
         if kids is not None:
-            with st.form("new_task_f"):
-                desc = st.text_input(t('desc'))
-                rew = st.number_input(t('value'), min_value=0.5, step=0.5)
-                who = st.selectbox(t('to_whom'), kids['name'].tolist())
-                d_date = st.date_input(t('date'))
-                d_time = st.time_input(t('time'), value=dt_time(23, 59))
-                if st.form_submit_button(t('schedule'), use_container_width=True):
-                    kid_id = kids[kids['name'] == who]['id'].values[0]
-                    dl = datetime.combine(d_date, d_time)
-                    run_query("INSERT INTO chores (description, reward, assigned_to, created_at, deadline) VALUES (:d, :r, :uid, NOW(), :dl)",
-                              params={'d': desc, 'r': rew, 'uid': int(kid_id), 'dl': dl}, commit=True)
-                    st.success("Missão Agendada!")
-
-    # --- TAB 3: GESTÃO DE USUÁRIOS ---
-    with tabs[2]:
-        st.markdown("#### Gestão de Acessos")
-        sub_list, sub_add = st.tabs(["Lista e Ações", "Novo Registro"])
-        
-        with sub_list:
-            all_u = run_query("SELECT id, name, role FROM users ORDER BY name")
-            st.dataframe(all_u, use_container_width=True, hide_index=True)
-            
-            sel_user = st.selectbox("Escolher Usuário", all_u['name'].tolist())
-            u_data = all_u[all_u['name'] == sel_user].iloc[0]
-            
-            c_pw, c_del = st.columns(2)
-            with c_pw:
-                with st.popover("Alterar Senha"):
-                    n_pw = st.text_input("Nova Senha", type="password")
-                    if st.button("Salvar Senha"):
-                        run_query("UPDATE users SET password=:p WHERE id=:id", params={'p': n_pw, 'id': int(u_data['id'])}, commit=True)
-                        st.success("Senha alterada!")
-            with c_del:
-                if st.button("EXCLUIR USUÁRIO", key="del_u"):
-                    if int(u_data['id']) != st.session_state.user_id:
-                        run_query("DELETE FROM users WHERE id=:id", params={'id': int(u_data['id'])}, commit=True)
-                        st.rerun()
-                    else: st.error("Você não pode excluir sua própria conta.")
-
-        with sub_add:
-            with st.form("add_u"):
-                n_name = st.text_input("Nome de Usuário").lower().strip()
-                n_pass = st.text_input("Senha Inicial")
-                n_role = st.selectbox("Perfil", ["user", "admin"])
-                if st.form_submit_button("CADASTRAR USUÁRIO"):
-                    run_query("INSERT INTO users (name, password, role) VALUES (:n, :p, :r)", params={'n': n_name, 'p': n_pass, 'r': n_role}, commit=True)
-                    st.success("Conta criada!")
-
-    # --- TAB 4: LANÇAMENTOS FINANCEIROS ---
-    with tabs[3]:
-        st.markdown(f"#### {t('manual_entry')}")
-        kids = run_query("SELECT id, name FROM users WHERE role='user'")
-        if kids is not None:
-            with st.form("cashier_f"):
-                k_target = st.selectbox("Usuário Alvo", kids['name'].tolist())
-                val = st.number_input("Valor R$", min_value=0.0)
-                op_type = st.radio("Tipo de Movimento", [t('deposit'), t('withdraw')], horizontal=True)
-                note = st.text_input(t('reason'))
-                if st.form_submit_button(t('execute'), use_container_width=True):
-                    kid_id = kids[kids['name'] == k_target]['id'].values[0]
-                    final_amt = val if op_type == t('deposit') else -val
+            with st.form("cashier_liquid_form", clear_on_submit=True):
+                target = st.selectbox("Conta da Criança", kids['name'].tolist())
+                val = st.number_input("Valor R$", min_value=0.0, step=1.0)
+                op_type = st.radio("Tipo de Movimentação", ["Depósito", "Retirada"], horizontal=True)
+                note = st.text_input("Motivo / Descrição", placeholder="Ex: Presente de aniversário")
+                
+                if st.form_submit_button("EXECUTAR LANÇAMENTO", use_container_width=True):
+                    kid_id = kids[kids['name'] == target]['id'].values[0]
+                    final_amt = val if op_type == "Depósito" else -val
                     run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, NOW(), :t)",
                               params={'uid': int(kid_id), 'amt': final_amt, 'desc': note, 't': op_type}, commit=True)
-                    st.success("Lançamento efetuado com sucesso!")
+                    st.success("Saldo atualizado com sucesso!")
+                    time.sleep(1); st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # --- ABA 3: USUÁRIOS (GESTÃO DE PESSOAS) ---
+    with t_usuarios:
+        col_u1, col_u2 = st.columns([0.6, 0.4])
+        
+        with col_u1:
+            st.markdown("##### Usuários Cadastrados")
+            all_users = run_query("SELECT id, name, role FROM users ORDER BY role, name")
+            st.dataframe(all_users, use_container_width=True, hide_index=True)
+            
+            st.markdown("---")
+            st.markdown("##### Ações de Usuário")
+            sel_u_name = st.selectbox("Selecionar Usuário para Modificar", all_users['name'].tolist() if all_users is not None else [])
+            
+            if sel_u_name:
+                u_row = all_users[all_users['name'] == sel_u_name].iloc[0]
+                u_id = int(u_row['id'])
+                
+                c_pw, c_del = st.columns(2)
+                with c_pw:
+                    with st.popover("Trocar Senha", use_container_width=True):
+                        new_p = st.text_input("Nova Senha", type="password")
+                        if st.button("Confirmar Troca"):
+                            run_query("UPDATE users SET password=:p WHERE id=:id", {'p': new_p, 'id': u_id}, commit=True)
+                            st.success("Senha alterada!")
+                with c_del:
+                    if st.button("EXCLUIR USUÁRIO", key="del_user", use_container_width=True):
+                        if u_id != st.session_state.user_id:
+                            run_query("DELETE FROM users WHERE id=:id", {'id': u_id}, commit=True)
+                            st.rerun()
+                        else:
+                            st.error("Não é possível excluir a si mesmo.")
+
+        with col_u2:
+            st.markdown("##### Novo Usuário")
+            with st.form("new_user_liquid"):
+                n_name = st.text_input("Nome (Login)").lower().strip()
+                n_pass = st.text_input("Senha Inicial")
+                n_role = st.selectbox("Perfil", ["user", "admin"])
+                if st.form_submit_button("CRIAR CONTA", use_container_width=True):
+                    run_query("INSERT INTO users (name, password, role) VALUES (:n, :p, :r)", 
+                              {'n': n_name, 'p': n_pass, 'r': n_role}, commit=True)
+                    st.success(f"Usuário {n_name} criado!")
+                    time.sleep(1); st.rerun()
+
+    # Rodapé de Versão
+    st.markdown("<div style='text-align:center; opacity:0.1; font-size:0.6rem; margin-top:50px;'>PAINEL DE COMANDO v13.0 • LIQUID UI</div>", unsafe_allow_html=True)
