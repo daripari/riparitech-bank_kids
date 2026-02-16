@@ -135,11 +135,11 @@ def render_admin_view():
                     
                     with r6:
                         if can_cancel:
-                            if st.button(t('cancel_btn'), key=f"can_{chore['id']}", help=t('cancel_btn')):
+                            if st.button(t('cancel_btn'), key=f"can_{chore['id']}", help=t('cancel_btn'), use_container_width=True):
                                 run_query("UPDATE chores SET status='canceled' WHERE id=:id", {'id': chore['id']}, commit=True)
                                 st.rerun()
                         if can_fine:
-                            with st.popover(t('btn_fine'), help=t('apply_fine')):
+                            with st.popover(t('btn_fine'), help=t('apply_fine'), use_container_width=True):
                                 val_multa = st.number_input("R$", min_value=0.5, value=1.0, step=0.5, key=f"f_{chore['id']}")
                                 if st.button("OK", key=f"fb_{chore['id']}"):
                                     run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:u, :a, :d, NOW(), 'Retirada')", 
