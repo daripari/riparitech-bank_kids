@@ -3,21 +3,21 @@ import streamlit as st
 import pandas as pd
 from database import run_query
 
-# Dicionário de traduções v13.4 - Marca Riparitech e Aba de Câmbio
+# Dicionário de traduções v13.5 - Marca Riparitech e terminologia de Portugal (PT-PT)
 TRANSLATIONS = {
     'pt': {
-        'bal': 'Meu Saldo', 
-        'family_bal': '💰 Monitoramento de Ativos (Saldos)',
+        'bal': 'O Meu Saldo', 
+        'family_bal': '💰 Monitorização de Ativos (Saldos)',
         'missions': 'Missões', 
         'tools': 'Câmbio', # Alterado de 'Ferramentas' para 'Câmbio'
         'admin': 'Comando', 
         'logout': 'Sair',
-        'refresh': 'Atualizar',
+        'refresh': 'Actualizar',
         'notifs': 'Notificações',
-        'home': 'Extrato e Histórico', 
+        'home': 'Extracto e Histórico', 
         'transfer': 'Transferir', 
         'last_mov': 'Últimas Movimentações',
-        'active_missions': 'Suas Missões Ativas', 
+        'active_missions': 'As Tuas Missões Activas', 
         'send_money': 'Enviar Dinheiro', 
         'to_whom': 'Destinatário',
         'how_much': 'Valor (R$)', 
@@ -28,7 +28,7 @@ TRANSLATIONS = {
         'fx': 'Câmbio', 
         'panel': '🔎 Tarefas', 
         'new_task': '➕ Nova Tarefa', 
-        'mgmt': '⚙️ Usuários', 
+        'mgmt': '⚙️ Utilizadores', 
         'cashier': '💸 Lançamentos',
         'late_tasks': 'Tarefas Atrasadas', 
         'apply_fine': 'Aplicar Multa', 
@@ -39,9 +39,9 @@ TRANSLATIONS = {
         'date': 'Data Limite', 
         'time': 'Hora Limite', 
         'schedule': 'AGENDAR MISSÃO',
-        'manual_entry': 'Lançamento Manual (Depósito/Retirada)', 
+        'manual_entry': 'Lançamento Manual (Depósito/Levantamento)', 
         'deposit': 'Depósito', 
-        'withdraw': 'Retirada', 
+        'withdraw': 'Levantamento', 
         'execute': 'EXECUTAR LANÇAMENTO',
         'lang_sel': 'Idioma'
     },
@@ -49,7 +49,7 @@ TRANSLATIONS = {
         'bal': 'My Balance', 
         'family_bal': '💰 Asset Monitoring (Balances)',
         'missions': 'Missions', 
-        'tools': 'Exchange', # Alterado para 'Exchange'
+        'tools': 'Exchange',
         'admin': 'Command', 
         'logout': 'Logout',
         'refresh': 'Refresh',
@@ -89,7 +89,7 @@ TRANSLATIONS = {
         'bal': 'Mi Saldo', 
         'family_bal': '💰 Monitoreo de Activos (Saldos)',
         'missions': 'Misiones', 
-        'tools': 'Cambio', # Alterado para 'Cambio'
+        'tools': 'Cambio',
         'admin': 'Comando', 
         'logout': 'Salir',
         'refresh': 'Actualizar',
@@ -119,7 +119,7 @@ TRANSLATIONS = {
         'date': 'Fecha Límite', 
         'time': 'Hora Límite', 
         'schedule': 'AGENDAR MISIÓN',
-        'manual_entry': 'Lançamento Manual', 
+        'manual_entry': 'Lanzamiento Manual', 
         'deposit': 'Depósito', 
         'withdraw': 'Retiro', 
         'execute': 'EJECUTAR LANZAMIENTO',
@@ -128,16 +128,19 @@ TRANSLATIONS = {
 }
 
 def t(key):
+    """Retorna a tradução da chave solicitada com base no idioma da sessão."""
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
 @st.cache_data(ttl=600)
 def get_balance(uid):
+    """Calcula o saldo total de um utilizador específico."""
     res = run_query("SELECT SUM(amount) as total FROM transactions WHERE user_id=:uid", params={'uid': uid})
     val = res.iloc[0]['total'] if res is not None and not res.empty and pd.notnull(res.iloc[0]['total']) else 0.0
     return val
 
 def get_family_balances():
+    """Recupera o saldo de todos os utilizadores com o perfil 'user'."""
     query = """
         SELECT u.id, u.name, COALESCE(SUM(t.amount), 0) as balance 
         FROM users u 
