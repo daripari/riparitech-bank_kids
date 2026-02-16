@@ -137,8 +137,16 @@ def apply_styles():
             background: #1a1a2e !important;
             color: #fff !important;
         }
+        /* Garante que o conteúdo interno dos botões (texto OK, símbolos +/-) seja branco */
+        [data-testid="stPopoverBody"] button * {
+            color: #fff !important;
+        }
+
         [data-testid="stPopoverBody"] button:hover {
             background: #999 !important;
+            color: #1a1a1a !important;
+        }
+        [data-testid="stPopoverBody"] button:hover * {
             color: #1a1a1a !important;
         }
     </style>
