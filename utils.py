@@ -51,6 +51,7 @@ TRANSLATIONS = {
         'status_paid': 'PAGO',
         'status_canceled': 'CANCELADO',
         'status_failed': 'FALHOU',
+        'btn_fine': '💸 Multar',
         
         # Admin - Lançamentos e Usuários
         'manual_adjust': 'Ajuste de Saldo Manual',
@@ -126,6 +127,7 @@ TRANSLATIONS = {
         'status_paid': 'PAID',
         'status_canceled': 'CANCELED',
         'status_failed': 'FAILED',
+        'btn_fine': '💸 Fine',
         'manual_adjust': 'Manual Balance Adjustment',
         'target_acc': 'Select Account',
         'op_type': 'Operation Type',
@@ -195,6 +197,7 @@ TRANSLATIONS = {
         'status_paid': 'PAGADO',
         'status_canceled': 'CANCELADO',
         'status_failed': 'FALLIDO',
+        'btn_fine': '💸 Multar',
         'manual_adjust': 'Ajuste Manual de Saldo',
         'target_acc': 'Elegir Cuenta',
         'op_type': 'Tipo de Operación',
