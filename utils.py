@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 from database import run_query
 
-# Dicionário de traduções v12.7 - Foco em PT-BR e Nomenclatura Simplificada
+# Dicionário de traduções v12.8 - Foco em PT-BR e Nomenclatura Simplificada
 TRANSLATIONS = {
     'pt': {
         'bal': 'Meu Saldo', 
@@ -119,7 +119,7 @@ TRANSLATIONS = {
         'date': 'Fecha Límite', 
         'time': 'Hora Límite', 
         'schedule': 'AGENDAR MISIÓN',
-        'manual_entry': 'Lançamento Manual', 
+        'manual_entry': 'Lanzamiento Manual', 
         'deposit': 'Depósito', 
         'withdraw': 'Retiro', 
         'execute': 'EJECUTAR LANZAMIENTO',
