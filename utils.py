@@ -3,21 +3,21 @@ import streamlit as st
 import pandas as pd
 from database import run_query
 
-# Dicionário de traduções v13.5 - Marca Riparitech e terminologia de Portugal (PT-PT)
+# Dicionário de traduções v13.6 - Marca Riparitech e terminologia PT-PT
+# Nota: Funcionalidade de notificações removida conforme ordem de desactivação.
 TRANSLATIONS = {
     'pt': {
         'bal': 'O Meu Saldo', 
-        'family_bal': '💰 Monitorização de Ativos (Saldos)',
+        'family_bal': '💰 Monitorização de Ativos',
         'missions': 'Missões', 
-        'tools': 'Câmbio', # Alterado de 'Ferramentas' para 'Câmbio'
+        'tools': 'Câmbio', 
         'admin': 'Comando', 
         'logout': 'Sair',
         'refresh': 'Actualizar',
-        'notifs': 'Notificações',
         'home': 'Extracto e Histórico', 
         'transfer': 'Transferir', 
         'last_mov': 'Últimas Movimentações',
-        'active_missions': 'As Tuas Missões Activas', 
+        'active_missions': 'Missões Activas', 
         'send_money': 'Enviar Dinheiro', 
         'to_whom': 'Destinatário',
         'how_much': 'Valor (R$)', 
@@ -31,10 +31,9 @@ TRANSLATIONS = {
         'mgmt': '⚙️ Utilizadores', 
         'cashier': '💸 Lançamentos',
         'late_tasks': 'Tarefas Atrasadas', 
-        'apply_fine': 'Aplicar Multa', 
         'approve': 'Aprovar', 
         'reject': 'Recusar',
-        'desc': 'O que deve ser feito?', 
+        'desc': 'Descrição', 
         'value': 'Recompensa (R$)', 
         'date': 'Data Limite', 
         'time': 'Hora Limite', 
@@ -47,23 +46,22 @@ TRANSLATIONS = {
     },
     'en': {
         'bal': 'My Balance', 
-        'family_bal': '💰 Asset Monitoring (Balances)',
+        'family_bal': '💰 Asset Monitoring',
         'missions': 'Missions', 
         'tools': 'Exchange',
         'admin': 'Command', 
         'logout': 'Logout',
         'refresh': 'Refresh',
-        'notifs': 'Notifications',
         'home': 'History', 
         'transfer': 'Transfer', 
         'last_mov': 'Recent Transactions',
-        'active_missions': 'Your Active Missions', 
+        'active_missions': 'Active Missions', 
         'send_money': 'Send Money', 
         'to_whom': 'Recipient',
         'how_much': 'Amount ($)', 
         'reason': 'Reason', 
         'send_now': 'SEND NOW 💸', 
-        'no_transfer': 'No one available for transfer.',
+        'no_transfer': 'No one available.',
         'calc': 'Calculator', 
         'fx': 'Exchange', 
         'panel': '🔎 Tasks', 
@@ -71,33 +69,31 @@ TRANSLATIONS = {
         'mgmt': '⚙️ Users', 
         'cashier': '💸 Entries',
         'late_tasks': 'Overdue Tasks', 
-        'apply_fine': 'Apply Fine', 
         'approve': 'Approve', 
         'reject': 'Reject',
-        'desc': 'What needs to be done?', 
-        'value': 'Reward ($)', 
+        'desc': 'Description', 
+        'value': 'Reward', 
         'date': 'Due Date', 
         'time': 'Due Time', 
-        'schedule': 'SCHEDULE MISSION',
+        'schedule': 'SCHEDULE',
         'manual_entry': 'Manual Entry', 
         'deposit': 'Deposit', 
         'withdraw': 'Withdraw', 
-        'execute': 'EXECUTE ENTRY',
+        'execute': 'EXECUTE',
         'lang_sel': 'Language'
     },
     'es': {
         'bal': 'Mi Saldo', 
-        'family_bal': '💰 Monitoreo de Activos (Saldos)',
+        'family_bal': '💰 Monitoreo de Activos',
         'missions': 'Misiones', 
         'tools': 'Cambio',
         'admin': 'Comando', 
         'logout': 'Salir',
         'refresh': 'Actualizar',
-        'notifs': 'Notificaciones',
         'home': 'Historial', 
         'transfer': 'Transferir', 
         'last_mov': 'Últimos Movimientos',
-        'active_missions': 'Tus Misiones Activas', 
+        'active_missions': 'Misiones Activas', 
         'send_money': 'Enviar Dinero', 
         'to_whom': 'Destinatario',
         'how_much': 'Monto ($)', 
@@ -111,36 +107,44 @@ TRANSLATIONS = {
         'mgmt': '⚙️ Usuarios', 
         'cashier': '💸 Lanzamientos',
         'late_tasks': 'Tareas Atrasadas', 
-        'apply_fine': 'Aplicar Multa', 
         'approve': 'Aprovar', 
         'reject': 'Rechazar',
-        'desc': '¿Qué hay que hacer?', 
-        'value': 'Recompensa ($)', 
-        'date': 'Fecha Límite', 
-        'time': 'Hora Límite', 
-        'schedule': 'AGENDAR MISIÓN',
-        'manual_entry': 'Lanzamiento Manual', 
+        'desc': 'Descripción', 
+        'value': 'Recompensa', 
+        'date': 'Fecha', 
+        'time': 'Hora', 
+        'schedule': 'AGENDAR',
+        'manual_entry': 'Lançamento Manual', 
         'deposit': 'Depósito', 
         'withdraw': 'Retiro', 
-        'execute': 'EJECUTAR LANZAMIENTO',
+        'execute': 'EJECUTAR',
         'lang_sel': 'Idioma'
     }
 }
 
 def t(key):
-    """Retorna a tradução da chave solicitada com base no idioma da sessão."""
+    """
+    Retorna a tradução da chave solicitada com base no idioma activo na sessão.
+    Predefine para Português ('pt') caso não haja idioma definido.
+    """
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
 @st.cache_data(ttl=600)
 def get_balance(uid):
-    """Calcula o saldo total de um utilizador específico."""
+    """
+    Calcula e retorna o saldo consolidado de um utilizador específico 
+    através da soma algébrica de todas as suas transacções.
+    """
     res = run_query("SELECT SUM(amount) as total FROM transactions WHERE user_id=:uid", params={'uid': uid})
     val = res.iloc[0]['total'] if res is not None and not res.empty and pd.notnull(res.iloc[0]['total']) else 0.0
     return val
 
 def get_family_balances():
-    """Recupera o saldo de todos os utilizadores com o perfil 'user'."""
+    """
+    Gera a lista de saldos de todos os utilizadores com perfil 'user' 
+    para visualização no Painel de Comando Administrativo.
+    """
     query = """
         SELECT u.id, u.name, COALESCE(SUM(t.amount), 0) as balance 
         FROM users u 
