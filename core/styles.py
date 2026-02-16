@@ -81,7 +81,7 @@ def apply_styles():
         .stButton>button {
             border-radius: 18px !important;
             height: 52px !important;
-            font-weight: 700 !important;
+            font-weight: 800 !important;
             font-size: 0.9rem !important;
             background: rgba(255, 255, 255, 0.05) !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -93,14 +93,15 @@ def apply_styles():
         }
         .stButton>button:hover {
             background: #999 !important;
-            color: #000 !important;
+            color: #1a1a1a !important;
             transform: scale(1.02);
         }
         
         div[data-testid="stFormSubmitButton"] button {
             background: linear-gradient(135deg, #00b8c5, #0052b9) !important;
-            color: #000 !important;
+            color: #1a1a1a !important;
             border: none !important;
+            font-weight: 800 !important;
         }
 
         /* --- GRID RESPONSIVO --- */
@@ -122,7 +123,7 @@ def apply_styles():
         }
         .stTabs [aria-selected="true"] {
             background: #999 !important;
-            color: #000 !important;
+            color: #1a1a1a !important;
             border: none !important;
         }
     </style>
