@@ -18,6 +18,10 @@ def apply_styles():
             background: radial-gradient(circle at 50% -20%, #1a1a2e 0%, #020203 80%);
         }
         
+        h1, h2, h3, h4, h5, h6, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4, .stMarkdown h5, .stMarkdown h6 {
+            color: #e0e0e0 !important;
+        }
+        
         header, footer, #MainMenu { visibility: hidden !important; }
         .block-container { padding: 1rem !important; max-width: 1200px !important; }
 
@@ -60,7 +64,7 @@ def apply_styles():
             text-align: center; padding: 2rem 0;
         }
         .hero-label {
-            font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 4px; font-weight: 600;
+            font-size: 0.75rem; color: #e0e0e0; text-transform: uppercase; letter-spacing: 4px; font-weight: 600;
         }
         .hero-value {
             font-family: 'JetBrains Mono', monospace;
@@ -109,7 +113,7 @@ def apply_styles():
             border: 1px solid rgba(255,255,255,0.05);
             border-radius: 14px;
             padding: 8px 16px;
-            color: #888;
+            color: #e0e0e0;
         }
         .stTabs [aria-selected="true"] {
             background: #fff !important;
