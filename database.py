@@ -23,13 +23,13 @@ def run_query(query_str, params=None, commit=False):
         else:
             return conn.query(query_str, params=params if params else {}, ttl=0)
     except Exception as e:
-        # Em produção, logar o erro: print(e)
         return None
 
 def init_db():
+    """Inicializa as tabelas essenciais (Notificações removidas)"""
     conn = get_connection()
     if conn:
         run_query('''CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name TEXT NOT NULL, role TEXT, password TEXT, language TEXT DEFAULT 'pt');''', commit=True)
         run_query('''CREATE TABLE IF NOT EXISTS transactions (id SERIAL PRIMARY KEY, user_id INTEGER, amount REAL, description TEXT, timestamp TIMESTAMP, type TEXT);''', commit=True)
-        run_query('''CREATE TABLE IF NOT EXISTS notifications (id SERIAL PRIMARY KEY, user_id INTEGER, message TEXT, is_read BOOLEAN DEFAULT FALSE, timestamp TIMESTAMP);''', commit=True)
+        # Tabela de notificações removida do protocolo de inicialização
         run_query('''CREATE TABLE IF NOT EXISTS chores (id SERIAL PRIMARY KEY, description TEXT, reward REAL, status TEXT DEFAULT 'open', assigned_to INTEGER, created_at TIMESTAMP, deadline TIMESTAMP);''', commit=True)
