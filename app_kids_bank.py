@@ -84,7 +84,7 @@ def render_login_liquid():
     with col_mid:
         # Branding Centralizado
         st.markdown("<div class='logo-text' style='text-align:center; font-size:3rem; margin-bottom:1rem;'>RIPARITECH</div>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center; color:#888; margin-top:-10px; margin-bottom:30px; letter-spacing:2px;'>FAMILY BANKING</p>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align:center; color:#e0e0e0; margin-top:-10px; margin-bottom:30px; letter-spacing:2px;'>FAMILY BANKING</p>", unsafe_allow_html=True)
         
         with st.container():
             st.markdown("<div class='liquid-card'>", unsafe_allow_html=True)
