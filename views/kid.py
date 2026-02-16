@@ -2,6 +2,7 @@
 import streamlit as st
 import pandas as pd
 import time
+# Importando módulos do core
 from core.database import run_query
 from core.utils import t, get_balance
 

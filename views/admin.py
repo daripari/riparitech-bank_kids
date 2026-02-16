@@ -3,8 +3,9 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import time
-from database import run_query
-from utils import t, get_family_balances
+# Importando módulos do core
+from core.database import run_query
+from core.utils import t, get_family_balances
 
 def cleanup_old_tasks():
     """
