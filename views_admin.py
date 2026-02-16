@@ -8,7 +8,7 @@ from utils import t, get_family_balances
 
 def render_admin_view():
     """
-    Interface do Administrador v13.0.
+    Interface do Administrador v13.0 - FIX: Ícones Duplicados removidos.
     Foco em controle centralizado, métricas de saldo e gestão de usuários.
     """
     
@@ -16,10 +16,8 @@ def render_admin_view():
     st.markdown("<h4 style='letter-spacing:2px; font-weight:300; margin-bottom:20px;'>PAINEL DE COMANDO</h4>", unsafe_allow_html=True)
     
     # --- GRID DE SALDOS DA FAMÍLIA ---
-    # Exibe o saldo de todas as crianças em cards de vidro
     df_saldos = get_family_balances()
     if df_saldos is not None and not df_saldos.empty:
-        # No mobile, as colunas do Streamlit se ajustam automaticamente
         cols = st.columns(len(df_saldos))
         for i, row in df_saldos.iterrows():
             with cols[i]:
@@ -32,11 +30,11 @@ def render_admin_view():
                 </div>
                 """, unsafe_allow_html=True)
     
-    # --- NAVEGAÇÃO POR ABAS (TABS PREMIUM) ---
+    # --- NAVEGAÇÃO POR ABAS (FIX: Usando apenas t(key) para evitar ícones duplicados) ---
     t_tarefas, t_lancamentos, t_usuarios = st.tabs([
-        f"🔎 {t('panel')}", 
-        f"💸 {t('cashier')}", 
-        f"⚙️ {t('mgmt')}"
+        t('panel'),     # '🔎 Tarefas' já vem do utils.py
+        t('cashier'),   # '💸 Lançamentos' já vem do utils.py
+        t('mgmt')       # '⚙️ Usuários' já vem do utils.py
     ])
     
     # --- ABA 1: GESTÃO DE TAREFAS (MISSÕES) ---
@@ -45,7 +43,6 @@ def render_admin_view():
         
         with c1:
             st.markdown("##### Monitoramento de Missões")
-            # Tarefas aguardando aprovação
             pending = run_query("""
                 SELECT c.id, c.description, c.reward, u.name, u.id as uid 
                 FROM chores c JOIN users u ON c.assigned_to = u.id 
@@ -92,7 +89,7 @@ def render_admin_view():
                         deadline = datetime.combine(d_date, d_time)
                         run_query("INSERT INTO chores (description, reward, assigned_to, created_at, deadline) VALUES (:d, :r, :uid, NOW(), :dl)",
                                   params={'d': desc, 'r': reward, 'uid': int(kid_id), 'dl': deadline}, commit=True)
-                        st.success("Missão agendada com sucesso!")
+                        st.success("Missão agendada!")
                         time.sleep(1); st.rerun()
 
     # --- ABA 2: LANÇAMENTOS (MANUAL) ---
@@ -105,14 +102,14 @@ def render_admin_view():
                 target = st.selectbox("Conta da Criança", kids['name'].tolist())
                 val = st.number_input("Valor R$", min_value=0.0, step=1.0)
                 op_type = st.radio("Tipo de Movimentação", ["Depósito", "Retirada"], horizontal=True)
-                note = st.text_input("Motivo / Descrição", placeholder="Ex: Presente de aniversário")
+                note = st.text_input("Motivo / Descrição", placeholder="Ex: Presente")
                 
                 if st.form_submit_button("EXECUTAR LANÇAMENTO", use_container_width=True):
                     kid_id = kids[kids['name'] == target]['id'].values[0]
                     final_amt = val if op_type == "Depósito" else -val
                     run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, NOW(), :t)",
                               params={'uid': int(kid_id), 'amt': final_amt, 'desc': note, 't': op_type}, commit=True)
-                    st.success("Saldo atualizado com sucesso!")
+                    st.success("Saldo atualizado!")
                     time.sleep(1); st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -145,8 +142,7 @@ def render_admin_view():
                         if u_id != st.session_state.user_id:
                             run_query("DELETE FROM users WHERE id=:id", {'id': u_id}, commit=True)
                             st.rerun()
-                        else:
-                            st.error("Não é possível excluir a si mesmo.")
+                        else: st.error("Não pode excluir a si mesmo.")
 
         with col_u2:
             st.markdown("##### Novo Usuário")
@@ -160,5 +156,4 @@ def render_admin_view():
                     st.success(f"Usuário {n_name} criado!")
                     time.sleep(1); st.rerun()
 
-    # Rodapé de Versão
     st.markdown("<div style='text-align:center; opacity:0.1; font-size:0.6rem; margin-top:50px;'>PAINEL DE COMANDO v13.0 • LIQUID UI</div>", unsafe_allow_html=True)
