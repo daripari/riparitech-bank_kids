@@ -213,4 +213,4 @@ def render_admin_view():
                             st.rerun()
                         else: st.error(t('cancel'))
 
-    st.markdown(f"<div style='text-align:center; opacity:0.1; font-size:0.6rem; margin-top:50px;'>RIPARITECH COMMAND v14.1</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align:center; color:#e0e0e0; opacity:0.5; font-size:0.6rem; margin-top:50px;'>RIPARITECH COMMAND v14.1</div>", unsafe_allow_html=True)

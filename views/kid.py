@@ -41,7 +41,7 @@ def render_kid_view():
                     cor = "#00f2ff" if r['amount'] >= 0 else "#ff4b4b"
                     st.markdown(f"""
                     <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
-                        <div style="font-size:0.9rem; opacity:0.8;">{r['description']}</div>
+                        <div style="font-size:0.9rem; color:#e0e0e0;">{r['description']}</div>
                         <div style="color:{cor}; font-weight:700;">R$ {r['amount']:.2f}</div>
                     </div>
                     """, unsafe_allow_html=True)
@@ -112,4 +112,4 @@ def render_kid_view():
             st.markdown(f"<div class='liquid-card' style='text-align:center;'><div class='hero-label'>EURO (EUR)</div><div style='font-size:1.8rem; font-weight:800; color:#7000ff;'>€ {balance/eur:,.2f}</div></div>", unsafe_allow_html=True)
 
     # Rodapé Institucional
-    st.markdown(f"<div style='text-align:center; opacity:0.1; font-size:0.6rem; margin-top:50px;'>BANCO RIPARITECH • v14.1 PREMIUM</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align:center; color:#e0e0e0; opacity:0.5; font-size:0.6rem; margin-top:50px;'>BANCO RIPARITECH • v14.1 PREMIUM</div>", unsafe_allow_html=True)

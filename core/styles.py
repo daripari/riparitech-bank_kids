@@ -22,6 +22,11 @@ def apply_styles():
             color: #e0e0e0 !important;
         }
         
+        /* --- TEXTOS GERAIS E TABELAS --- */
+        p, .stMarkdown p, [data-testid="stDataFrame"] *, [data-testid="stTable"] * {
+            color: #e0e0e0 !important;
+        }
+        
         header, footer, #MainMenu { visibility: hidden !important; }
         .block-container { padding: 1rem !important; max-width: 1200px !important; }
 
