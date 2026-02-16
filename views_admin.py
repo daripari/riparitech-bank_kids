@@ -23,13 +23,13 @@ def cleanup_old_tasks():
 
 def render_admin_view():
     """
-    Interface do Administrador v14.0 - Comando Riparitech.
-    Foco: Acompanhamento de Prazos, Multas Inteligentes e Gestão PT-BR.
+    Interface do Administrador v14.1 - Comando Riparitech.
+    Foco: Acompanhamento de Prazos, Multas Inteligentes e Suporte Multi-idioma.
     """
     # Executa a limpeza automática de registros antigos
     cleanup_old_tasks()
     
-    st.markdown("<h4 style='letter-spacing:2px; font-weight:300; margin-bottom:20px;'>COMANDO RIPARITECH</h4>", unsafe_allow_html=True)
+    st.markdown(f"<h4 style='letter-spacing:2px; font-weight:300; margin-bottom:20px;'>{t('cmd_header')}</h4>", unsafe_allow_html=True)
     
     # --- PAINEL DE SALDOS EM TEMPO REAL ---
     df_saldos = get_family_balances()
@@ -46,15 +46,15 @@ def render_admin_view():
                 </div>
                 """, unsafe_allow_html=True)
     
-    # --- ABAS DE COMANDO ---
+    # --- ABAS DE COMANDO (MULTI-IDIOMA) ---
     t_tarefas, t_lancamentos, t_usuarios = st.tabs([t('panel'), t('cashier'), t('mgmt')])
     
     with t_tarefas:
-        # Sub-abas: Aprovações, Acompanhar (ex-Monitoramento) e Criação
-        st_pendentes, st_acompanhar, st_nova = st.tabs(["✅ Aprovações", "📊 Acompanhar", "➕ Nova Missão"])
+        # Sub-abas: Aprovações, Acompanhar e Criação
+        st_pendentes, st_acompanhar, st_nova = st.tabs([f"✅ {t('tab_approvals')}", f"📊 {t('tab_followup')}", f"➕ {t('tab_new_mission')}"])
 
         with st_pendentes:
-            st.markdown("##### Validar Conclusões")
+            st.markdown(f"##### {t('validate_delivery')}")
             pending = run_query("""
                 SELECT c.id, c.description, c.reward, u.name, u.id as uid 
                 FROM chores c JOIN users u ON c.assigned_to = u.id 
@@ -63,23 +63,22 @@ def render_admin_view():
             if pending is not None and not pending.empty:
                 for _, p in pending.iterrows():
                     with st.container(border=True):
-                        st.write(f"**{p['name'].title()}** avisou que terminou: *{p['description']}*")
+                        st.write(f"**{p['name'].title()}**: *{p['description']}*")
                         c_ok, c_no = st.columns(2)
-                        if c_ok.button(f"Pagar R$ {p['reward']:.2f}", key=f"app_{p['id']}", use_container_width=True):
+                        if c_ok.button(f"{t('pay_btn')} R$ {p['reward']:.2f}", key=f"app_{p['id']}", use_container_width=True):
                             run_query("UPDATE chores SET status='paid' WHERE id=:id", {'id': p['id']}, commit=True)
                             run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:u, :a, :d, NOW(), 'Tarefa')", 
-                                      {'u': p['uid'], 'a': p['reward'], 'd': f"Missão: {p['description']}"}, commit=True)
-                            st.success("Pagamento realizado!")
+                                      {'u': p['uid'], 'a': p['reward'], 'd': f"{t('missions')}: {p['description']}"}, commit=True)
+                            st.success(t('fine_applied_toast') if 'fine' in p['description'] else t('confirm'))
                             time.sleep(0.5); st.rerun()
-                        if c_no.button("Reabrir Missão", key=f"rej_{p['id']}", use_container_width=True):
+                        if c_no.button(t('reopen_btn'), key=f"rej_{p['id']}", use_container_width=True):
                             run_query("UPDATE chores SET status='open' WHERE id=:id", {'id': p['id']}, commit=True)
-                            st.warning("Tarefa devolvida para o usuário.")
-                            time.sleep(0.5); st.rerun()
+                            st.rerun()
             else:
-                st.info("Nenhuma tarefa aguardando aprovação.")
+                st.info(t('no_pending'))
 
         with st_acompanhar:
-            st.markdown("##### Auditoria de Prazos e Status")
+            st.markdown(f"##### {t('audit_title')}")
             all_chores = run_query("""
                 SELECT c.id, c.description, c.reward, c.status, c.deadline, c.completed_at, u.name as kid_name, u.id as uid 
                 FROM chores c JOIN users u ON c.assigned_to = u.id 
@@ -87,7 +86,6 @@ def render_admin_view():
             """)
             
             if all_chores is not None and not all_chores.empty:
-                # Garantir que as colunas são tratadas como datetime pelo pandas
                 all_chores['deadline'] = pd.to_datetime(all_chores['deadline'])
                 all_chores['completed_at'] = pd.to_datetime(all_chores['completed_at'])
                 now = datetime.now()
@@ -97,10 +95,7 @@ def render_admin_view():
                     completed = chore['completed_at']
                     status = chore['status']
                     
-                    # --- LÓGICA DE MULTA E CANCELAMENTO v14.0 ---
-                    # 1. Está vencida e ainda não foi concluída (Status Aberto)
                     is_overdue_open = (not pd.isna(deadline) and deadline < now and status == 'open')
-                    # 2. Foi concluída, mas a data de aviso é posterior ao prazo
                     is_late_delivery = (not pd.isna(deadline) and not pd.isna(completed) and completed > deadline)
                     
                     can_fine = is_overdue_open or is_late_delivery
@@ -111,77 +106,93 @@ def render_admin_view():
                         
                         with c_info:
                             st.markdown(f"**{chore['kid_name'].title()}**: {chore['description']}")
-                            d_str = deadline.strftime('%d/%m/%Y %H:%M') if not pd.isna(deadline) else "Não definido"
-                            r_str = completed.strftime('%d/%m/%Y %H:%M') if not pd.isna(completed) else "Pendente"
+                            d_str = deadline.strftime('%d/%m/%Y %H:%M') if not pd.isna(deadline) else t('no_deadline')
+                            r_str = completed.strftime('%d/%m/%Y %H:%M') if not pd.isna(completed) else "---"
                             
-                            st.caption(f"📅 Vencimento: {d_str}")
-                            st.caption(f"🕒 Realização: {r_str}")
-                            st.caption(f"Valor: R$ {chore['reward']:.2f} | Status: {status.upper()}")
-                            if is_overdue_open: st.markdown("<span style='color:#ff4b4b; font-size:0.7rem;'>⚠️ ATRASO DETECTADO</span>", unsafe_allow_html=True)
-                            if is_late_delivery: st.markdown("<span style='color:#ffa500; font-size:0.7rem;'>⌛ ENTREGUE COM ATRASO</span>", unsafe_allow_html=True)
+                            st.caption(f"📅 {t('deadline')}: {d_str} | 🕒 Realização: {r_str}")
+                            st.caption(f"{t('value')}: R$ {chore['reward']:.2f} | {t('status')}: {status.upper()}")
+                            if is_overdue_open: st.markdown(f"<span style='color:#ff4b4b; font-size:0.7rem;'>{t('overdue_warn')}</span>", unsafe_allow_html=True)
+                            if is_late_delivery: st.markdown(f"<span style='color:#ffa500; font-size:0.7rem;'>{t('late_delivery_warn')}</span>", unsafe_allow_html=True)
                         
                         with c_actions:
-                            # Cancelar missões que não foram concluídas
                             if can_cancel:
-                                if st.button("🚫 Cancelar", key=f"can_{chore['id']}", use_container_width=True):
+                                if st.button(t('cancel_btn'), key=f"can_{chore['id']}", use_container_width=True):
                                     run_query("UPDATE chores SET status='canceled' WHERE id=:id", {'id': chore['id']}, commit=True)
                                     st.rerun()
                             
-                            # Aplicar multa por indisciplina de prazo
                             if can_fine:
-                                with st.popover("💸 Aplicar Multa", use_container_width=True):
-                                    val_multa = st.number_input("Valor da Multa (R$)", min_value=0.5, value=1.0, step=0.5, key=f"f_{chore['id']}")
-                                    if st.button("Confirmar Multa", key=f"fb_{chore['id']}", use_container_width=True):
+                                with st.popover(f"💸 {t('apply_fine')}", use_container_width=True):
+                                    val_multa = st.number_input(t('how_much'), min_value=0.5, value=1.0, step=0.5, key=f"f_{chore['id']}")
+                                    if st.button(t('conf_fine_btn'), key=f"fb_{chore['id']}", use_container_width=True):
                                         run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:u, :a, :d, NOW(), 'Retirada')", 
-                                                  {'u': int(chore['uid']), 'a': -val_multa, 'd': f"Multa: Atraso na missão {chore['description']}"}, commit=True)
-                                        st.toast("Punição financeira aplicada!")
+                                                  {'u': int(chore['uid']), 'a': -val_multa, 'd': f"Multa: {chore['description']}"}, commit=True)
+                                        st.toast(t('fine_applied_toast'))
                                         time.sleep(0.5); st.rerun()
                             elif status not in ['paid', 'canceled']:
-                                st.success("No prazo ✅")
+                                st.success(t('on_time'))
             else:
-                st.info("Nenhum registro de missão para acompanhar.")
+                st.info(t('no_pending'))
 
         with st_nova:
-            st.markdown("##### Agendar Nova Missão")
+            st.markdown(f"##### {t('tab_new_mission')}")
             kids = run_query("SELECT id, name FROM users WHERE role='user'")
             if kids is not None:
-                with st.form("new_mission_form_v14", clear_on_submit=True):
-                    desc = st.text_input("O que deve ser feito?")
-                    val = st.number_input("Recompensa (R$)", min_value=0.5, step=0.5)
-                    who = st.selectbox("Responsável", kids['name'].tolist())
-                    d_date = st.date_input("Data de Vencimento")
-                    d_time = st.time_input("Hora de Vencimento", value=datetime.now().time())
+                with st.form("new_mission_v14_1", clear_on_submit=True):
+                    desc = st.text_input(t('desc'))
+                    val = st.number_input(t('value'), min_value=0.5, step=0.5)
+                    who = st.selectbox(t('mgmt'), kids['name'].tolist())
+                    d_date = st.date_input(t('date'))
+                    d_time = st.time_input(t('time'), value=datetime.now().time())
                     
-                    if st.form_submit_button("LANÇAR NO SISTEMA", use_container_width=True):
+                    if st.form_submit_button(t('execute'), use_container_width=True):
                         deadline = datetime.combine(d_date, d_time)
                         run_query("INSERT INTO chores (description, reward, assigned_to, created_at, deadline) VALUES (:d, :r, :u, NOW(), :dl)", 
                                   {'d': desc, 'r': val, 'u': int(kids[kids['name']==who]['id'].values[0]), 'dl': deadline}, commit=True)
-                        st.success("Missão agendada!")
+                        st.success(t('confirm'))
                         time.sleep(0.5); st.rerun()
 
     # --- ABA 2: LANÇAMENTOS DIRETOS ---
     with t_lancamentos:
-        st.markdown("##### Ajuste de Saldo Manual")
+        st.markdown(f"##### {t('manual_adjust')}")
         kids = run_query("SELECT id, name FROM users WHERE role='user'")
         if kids is not None:
             with st.container(border=True):
                 with st.form("admin_cashier_direct"):
-                    target = st.selectbox("Escolher Conta", kids['name'].tolist())
-                    val = st.number_input("Valor (R$)", min_value=0.0)
-                    op = st.radio("Tipo de Operação", ["Depósito", "Retirada"], horizontal=True)
-                    motivo = st.text_input("Motivo do Lançamento")
-                    if st.form_submit_button("EXECUTAR", use_container_width=True):
+                    target = st.selectbox(t('target_acc'), kids['name'].tolist())
+                    val = st.number_input(t('value'), min_value=0.0)
+                    op = st.radio(t('op_type'), [t('deposit'), t('withdraw')], horizontal=True)
+                    motivo = st.text_input(t('reason'))
+                    if st.form_submit_button(t('execute'), use_container_width=True):
                         kid_id = kids[kids['name']==target]['id'].values[0]
-                        final_amt = val if op == "Depósito" else -val
+                        final_amt = val if op == t('deposit') else -val
                         run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:u, :a, :d, NOW(), :t)", 
                                   {'u': int(kid_id), 'a': final_amt, 'd': motivo, 't': op}, commit=True)
-                        st.success("Operação concluída!")
+                        st.success(t('confirm'))
                         time.sleep(0.5); st.rerun()
 
     # --- ABA 3: GESTÃO DE USUÁRIOS ---
     with t_usuarios:
-        st.markdown("##### Usuários Ativos")
+        st.markdown(f"##### {t('active_users')}")
         all_users = run_query("SELECT id, name, role FROM users ORDER BY role, name")
-        st.dataframe(all_users, use_container_width=True, hide_index=True)
+        if all_users is not None:
+            st.dataframe(all_users, use_container_width=True, hide_index=True)
+            
+            st.markdown("---")
+            sel_user = st.selectbox(t('mgmt'), all_users['name'].tolist())
+            if sel_user:
+                u_id = int(all_users[all_users['name'] == sel_user]['id'].values[0])
+                c_pw, c_del = st.columns(2)
+                with c_pw:
+                    with st.popover(t('loading')): # Usando chave genérica para exemplo
+                        new_p = st.text_input(t('mgmt'), type="password") # Usando chave genérica
+                        if st.button(t('confirm')):
+                            run_query("UPDATE users SET password=:p WHERE id=:id", {'p': new_p, 'id': u_id}, commit=True)
+                            st.success(t('confirm'))
+                with c_del:
+                    if st.button(t('delete_acc'), use_container_width=True):
+                        if u_id != st.session_state.user_id:
+                            run_query("DELETE FROM users WHERE id=:id", {'id': u_id}, commit=True)
+                            st.rerun()
+                        else: st.error(t('cancel'))
 
-    st.markdown("<div style='text-align:center; opacity:0.1; font-size:0.6rem; margin-top:50px;'>RIPARITECH COMMAND v14.0</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align:center; opacity:0.1; font-size:0.6rem; margin-top:50px;'>RIPARITECH COMMAND v14.1</div>", unsafe_allow_html=True)
