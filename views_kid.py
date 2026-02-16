@@ -7,124 +7,155 @@ from database import run_query
 from utils import t, get_balance
 
 def render_kid_view():
+    """
+    Renderiza a interface da criança com o design Obsidian Liquid UI v13.0.
+    Focado em cartões de vidro, tipografia premium e responsividade.
+    """
     uid = st.session_state.user_id
-    user_bal = get_balance(uid)
+    balance = get_balance(uid)
     
-    # Hero Section
+    # --- SEÇÃO HERO: SALDO CENTRAL ---
+    # Utiliza as classes hero-balance, hero-label e hero-value do styles.py
     st.markdown(f"""
-    <div class="glass-card balance-container">
-        <div class="balance-label">{t('bal')}</div>
-        <div class="balance-value">R$ {user_bal:,.2f}</div>
-        <div style="margin-top:10px; font-size:0.75rem; color:#10B981;">● CONEXÃO SEGURA</div>
+    <div class="hero-balance">
+        <div class="hero-label">{t('bal')}</div>
+        <div class="hero-value">R$ {balance:,.2f}</div>
+        <div style="font-size: 0.7rem; opacity: 0.5; letter-spacing: 2px; margin-top: -10px;">
+            ATUALIZADO AGORA
+        </div>
     </div>
     """, unsafe_allow_html=True)
     
-    tabs = st.tabs([f"🏠 {t('home')}", f"📝 {t('missions')}", f"💸 {t('transfer')}", f"🧰 {t('tools')}"])
+    # --- NAVEGAÇÃO POR ABAS (TABS DISRUPTIVAS) ---
+    # As tabs foram estilizadas no styles.py para parecerem botões flutuantes
+    t_hist, t_miss, t_transf, t_tools = st.tabs([
+        f"📊 {t('home')}", 
+        f"🎯 {t('missions')}", 
+        f"💸 {t('transfer')}", 
+        f"🧰 {t('tools')}"
+    ])
     
-    # --- TAB 1: EXTRATO ---
-    with tabs[0]:
-        st.markdown(f"<h4 style='margin-bottom:15px;'>{t('last_mov')}</h4>", unsafe_allow_html=True)
-        hist = run_query("SELECT timestamp, description, amount, type FROM transactions WHERE user_id=:uid ORDER BY id DESC LIMIT 5", params={'uid': uid})
-        if hist is not None and not hist.empty:
-            for _, h in hist.iterrows():
-                color = "#10B981" if h['amount'] >= 0 else "#EF4444"
-                icon = "⬇️" if h['amount'] >= 0 else "⬆️"
-                st.markdown(f"""
-                <div style="background:#111113; border-radius:12px; padding:12px; margin-bottom:8px; border-left: 3px solid {color}; display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <div style="font-weight:600; font-size:0.9rem;">{h['description']}</div>
-                        <div style="font-size:0.7rem; color:#6B7280;">{h['timestamp'].strftime('%d/%m %H:%M')}</div>
-                    </div>
-                    <div style="font-family:'JetBrains Mono'; font-weight:700; color:{color};">{icon} R$ {abs(h['amount']):,.2f}</div>
-                </div>""", unsafe_allow_html=True)
-        else:
-            st.info("Nenhuma movimentação encontrada.")
-
-    # --- TAB 2: MISSÕES ---
-    with tabs[1]:
-        st.markdown(f"<h4 style='margin-bottom:15px;'>{t('active_missions')}</h4>", unsafe_allow_html=True)
-        open_chores = run_query("SELECT * FROM chores WHERE status = 'open' AND assigned_to = :uid ORDER BY deadline ASC", params={'uid': uid})
+    # --- ABA 1: EXTRATO E HISTÓRICO ---
+    with t_hist:
+        st.markdown("<div class='liquid-card'>", unsafe_allow_html=True)
+        st.markdown(f"<div style='font-weight:600; margin-bottom:15px; letter-spacing:1px;'>{t('last_mov')}</div>", unsafe_allow_html=True)
         
-        if open_chores is not None and not open_chores.empty:
-            for _, chore in open_chores.iterrows():
-                is_late = False
-                deadline_str = ""
-                if pd.notnull(chore['deadline']):
-                    dl = pd.to_datetime(chore['deadline'])
-                    deadline_str = dl.strftime("%d/%m às %H:%M")
-                    if dl < datetime.now(): is_late = True
-                
-                border = "#EF4444" if is_late else "#00C6FF"
-                badge = f"<span class='badge-late'>ATRASADA!</span>" if is_late else f"<span class='badge-pending'>{deadline_str}</span>"
+        hist = run_query("""
+            SELECT timestamp, description, amount, type 
+            FROM transactions 
+            WHERE user_id=:uid 
+            ORDER BY id DESC LIMIT 8
+        """, {'uid': uid})
+        
+        if hist is not None and not hist.empty:
+            for _, r in hist.iterrows():
+                is_positive = r['amount'] >= 0
+                color = "#00f2ff" if is_positive else "#ff4b4b"
+                icon = "↓" if is_positive else "↑"
                 
                 st.markdown(f"""
-                <div class="glass-card" style="border-left: 4px solid {border}; padding: 1rem;">
-                    <div style="display:flex; justify-content:space-between;">
-                        <div>
-                            <div style="font-size:1.1rem; font-weight:700;">{chore['description']}</div>
-                            <div style="margin-top:5px;">{badge}</div>
-                        </div>
-                        <div style="font-family:'JetBrains Mono'; font-size:1.2rem; font-weight:800; color:#10B981;">R$ {chore['reward']:,.2f}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <div>
+                        <div style="font-size:0.9rem; font-weight:600;">{r['description']}</div>
+                        <div style="font-size:0.7rem; color:#888;">{r['timestamp'].strftime('%d %b, %H:%M')}</div>
                     </div>
-                </div>""", unsafe_allow_html=True)
-                
-                if st.button("✅ ENTREGAR TAREFA", key=f"do_{chore['id']}", use_container_width=True):
-                    run_query("UPDATE chores SET status='pending' WHERE id=:cid", params={'cid': chore['id']}, commit=True)
-                    st.toast("Tarefa enviada para análise!"); time.sleep(1); st.rerun()
+                    <div style="color:{color}; font-weight:700; font-family:'JetBrains Mono';">
+                        {icon} R$ {abs(r['amount']):,.2f}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
         else:
-            st.info("Nenhuma missão pendente no momento.")
+            st.caption("Nenhuma movimentação encontrada.")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    # --- TAB 3: TRANSFERIR ---
-    with tabs[2]:
-        st.markdown(f"<h4 style='margin-bottom:15px;'>{t('send_money')}</h4>", unsafe_allow_html=True)
-        siblings = run_query("SELECT id, name FROM users WHERE role='user' AND id != :uid", params={'uid': uid})
+    # --- ABA 2: MISSÕES (TAREFAS) ---
+    with t_miss:
+        st.markdown(f"<div style='font-weight:600; margin-bottom:15px; letter-spacing:1px;'>{t('active_missions')}</div>", unsafe_allow_html=True)
+        
+        chores = run_query("""
+            SELECT * FROM chores 
+            WHERE assigned_to=:uid AND status='open' 
+            ORDER BY deadline ASC
+        """, {'uid': uid})
+        
+        if chores is not None and not chores.empty:
+            for _, c in chores.iterrows():
+                deadline_dt = pd.to_datetime(c['deadline'])
+                is_late = deadline_dt < datetime.now()
+                
+                with st.container():
+                    st.markdown(f"<div class='liquid-card' style='border-left: 4px solid {'#ff4b4b' if is_late else '#7000ff'};'>", unsafe_allow_html=True)
+                    c1, c2 = st.columns([0.7, 0.3])
+                    with c1:
+                        st.markdown(f"<b>{c['description']}</b>", unsafe_allow_html=True)
+                        st.markdown(f"<small style='color:{'#ff4b4b' if is_late else '#888'};'>Prazo: {deadline_dt.strftime('%d/%m %H:%M')}</small>", unsafe_allow_html=True)
+                    with c2:
+                        st.markdown(f"<div style='text-align:right; color:#10B981; font-weight:800;'>R$ {c['reward']:.2f}</div>", unsafe_allow_html=True)
+                    
+                    if st.button(f"ENTREGAR MISSÃO", key=f"chore_{c['id']}", use_container_width=True):
+                        run_query("UPDATE chores SET status='pending' WHERE id=:id", {'id': c['id']}, commit=True)
+                        st.toast("Missão enviada para aprovação! 🚀")
+                        time.sleep(1)
+                        st.rerun()
+                    st.markdown("</div>", unsafe_allow_html=True)
+        else:
+            st.markdown("<div class='liquid-card' style='text-align:center; opacity:0.6;'>Nenhuma missão pendente. Aproveite o descanso! 🏖️</div>", unsafe_allow_html=True)
+
+    # --- ABA 3: TRANSFERÊNCIA ---
+    with t_transf:
+        st.markdown("<div class='liquid-card'>", unsafe_allow_html=True)
+        st.markdown(f"<div style='font-weight:600; margin-bottom:15px; letter-spacing:1px;'>{t('send_money')}</div>", unsafe_allow_html=True)
+        
+        siblings = run_query("SELECT id, name FROM users WHERE role='user' AND id != :uid", {'uid': uid})
         if siblings is not None and not siblings.empty:
-            with st.container():
-                st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-                target = st.selectbox(t('to_whom'), siblings['name'].tolist())
-                amt = st.number_input(t('how_much'), min_value=0.0, step=1.0)
-                reason = st.text_input(t('reason'))
-                if st.button(t('send_now'), use_container_width=True, type="primary"):
-                    if amt > user_bal:
-                        st.error("Saldo insuficiente para transferência.")
-                    elif amt > 0 and reason:
-                        dest_id = siblings[siblings['name'] == target]['id'].values[0]
-                        run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, :ts, 'Transferência Enviada')", params={'uid': uid, 'amt': -amt, 'desc': f"Para: {target} | {reason}", 'ts': datetime.now()}, commit=True)
-                        run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:uid, :amt, :desc, :ts, 'Transferência Recebida')", params={'uid': int(dest_id), 'amt': amt, 'desc': f"De: {st.session_state.user_name} | {reason}", 'ts': datetime.now()}, commit=True)
-                        st.success("Dinheiro enviado!"); time.sleep(1); st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
+            with st.form("transfer_liquid_form", clear_on_submit=True):
+                target_name = st.selectbox(t('to_whom'), siblings['name'].tolist())
+                amount = st.number_input(t('how_much'), min_value=0.0, step=1.0)
+                reason = st.text_input(t('reason'), placeholder="Ex: Pagamento de lanche")
+                
+                if st.form_submit_button(t('send_now'), use_container_width=True):
+                    if amount > balance:
+                        st.error("Saldo insuficiente.")
+                    elif amount <= 0:
+                        st.warning("Insira um valor válido.")
+                    else:
+                        target_id = siblings[siblings['name'] == target_name]['id'].values[0]
+                        # Retira do remetente
+                        run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:u, :a, :d, NOW(), 'Envio')", 
+                                  {'u': uid, 'a': -amount, 'd': f"Para {target_name}: {reason}"}, commit=True)
+                        # Adiciona ao destinatário
+                        run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:u, :a, :d, NOW(), 'Recebimento')", 
+                                  {'u': int(target_id), 'a': amount, 'd': f"De {st.session_state.user_name}: {reason}"}, commit=True)
+                        st.success("Transferência realizada com sucesso!")
+                        time.sleep(1)
+                        st.rerun()
         else:
             st.info(t('no_transfer'))
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    # --- TAB 4: FERRAMENTAS ---
-    with tabs[3]:
-        c_calc, c_fx = st.tabs([f"🧮 {t('calc')}", f"🌍 {t('fx')}"])
+    # --- ABA 4: FERRAMENTAS (CÂMBIO) ---
+    with t_tools:
+        st.markdown("<div style='font-weight:600; margin-bottom:15px; letter-spacing:1px;'>INVESTIMENTOS E CÂMBIO</div>", unsafe_allow_html=True)
         
-        with c_calc:
-            st.markdown(f"<div class='display-calc'>{st.session_state.calc_expr if st.session_state.calc_expr else '0'}</div>", unsafe_allow_html=True)
-            def kp(k): st.session_state.calc_expr += str(k)
-            def kc(): st.session_state.calc_expr = ""
-            def ks():
-                try: st.session_state.calc_expr = str(eval(st.session_state.calc_expr.replace('×', '*').replace('÷', '/')))
-                except: st.session_state.calc_expr = "Erro"
-            
-            c1, c2, c3, c4 = st.columns(4)
-            c1.button("7", on_click=kp, args=("7",)); c2.button("8", on_click=kp, args=("8",)); c3.button("9", on_click=kp, args=("9",)); c4.button("÷", on_click=kp, args=("/",))
-            c1.button("4", on_click=kp, args=("4",)); c2.button("5", on_click=kp, args=("5",)); c3.button("6", on_click=kp, args=("6",)); c4.button("×", on_click=kp, args=("*",))
-            c1.button("1", on_click=kp, args=("1",)); c2.button("2", on_click=kp, args=("2",)); c3.button("3", on_click=kp, args=("3",)); c4.button("-", on_click=kp, args=("-",))
-            c1.button("0", on_click=kp, args=("0",)); c2.button(".", on_click=kp, args=(".",)); c3.button("C", on_click=kc); c4.button("=", on_click=ks)
+        c_usd, c_eur = st.columns(2)
+        usd_rate = 5.05
+        eur_rate = 5.45
         
-        with c_fx:
-            usd, eur = 5.05, 5.45
+        with c_usd:
             st.markdown(f"""
-            <div class='glass-card'>
-                <div style="display:flex; justify-content:space-between;">
-                    <span>🇺🇸 Dólar (USD)</span>
-                    <span style="color:#00C6FF; font-weight:700;">$ {(user_bal/usd):,.2f}</span>
-                </div>
-                <hr style="border:0; border-top:1px solid #222; margin: 10px 0;">
-                <div style="display:flex; justify-content:space-between;">
-                    <span>🇪🇺 Euro (EUR)</span>
-                    <span style="color:#00C6FF; font-weight:700;">€ {(user_bal/eur):,.2f}</span>
-                </div>
-            </div>""", unsafe_allow_html=True)
+            <div class="liquid-card" style="text-align:center;">
+                <div class="hero-label">DÓLAR (USD)</div>
+                <div style="font-size:1.8rem; font-weight:800; color:#00f2ff; font-family:'JetBrains Mono'; margin:10px 0;">$ {balance/usd_rate:,.2f}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        with c_eur:
+            st.markdown(f"""
+            <div class="liquid-card" style="text-align:center;">
+                <div class="hero-label">EURO (EUR)</div>
+                <div style="font-size:1.8rem; font-weight:800; color:#7000ff; font-family:'JetBrains Mono'; margin:10px 0;">€ {balance/eur_rate:,.2f}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # Rodapé de Versão
+    st.markdown("<div style='text-align:center; opacity:0.2; font-size:0.6rem; margin-top:40px;'>OBSIDIAN LIQUID UI ENGINE v13.0</div>", unsafe_allow_html=True)
