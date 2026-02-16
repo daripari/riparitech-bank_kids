@@ -92,12 +92,6 @@ def render_admin_view():
 
                 # Cabeçalho da Tabela
                 c1, c2, c3, c4, c5, c6 = st.columns([1.5, 2.5, 1.2, 1.2, 1, 1])
-                c1.markdown("**Responsável**")
-                c2.markdown("**Tarefa**")
-                c3.markdown("**Prazo**")
-                c4.markdown("**Conclusão**")
-                c5.markdown("**Status**")
-                c6.markdown("**Ações**")
                 c1.markdown(f"**{t('col_responsible')}**")
                 c2.markdown(f"**{t('col_task')}**")
                 c3.markdown(f"**{t('deadline')}**")
@@ -137,7 +131,6 @@ def render_admin_view():
                         # Cores para facilitar a identificação visual dos status
                         s_colors = {'open': '#00f2ff', 'pending': '#ffa500', 'paid': '#00ff00', 'canceled': '#ff4b4b', 'failed': '#ff4b4b'}
                         color = s_colors.get(status, '#ffffff')
-                        st.markdown(f"<span style='color:{color}; font-weight:bold;'>{status.upper()}</span>", unsafe_allow_html=True)
                         st.markdown(f"<span style='color:{color}; font-weight:bold;'>{t(f'status_{status}')}</span>", unsafe_allow_html=True)
                     
                     with r6:
