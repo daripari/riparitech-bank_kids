@@ -90,6 +90,16 @@ def render_admin_view():
                 all_chores['completed_at'] = pd.to_datetime(all_chores['completed_at'])
                 now = datetime.now()
 
+                # Cabeçalho da Tabela
+                c1, c2, c3, c4, c5, c6 = st.columns([1.5, 2.5, 1.2, 1.2, 1, 1])
+                c1.markdown("**Responsável**")
+                c2.markdown("**Tarefa**")
+                c3.markdown("**Prazo**")
+                c4.markdown("**Conclusão**")
+                c5.markdown("**Status**")
+                c6.markdown("**Ações**")
+                st.divider()
+
                 for _, chore in all_chores.iterrows():
                     deadline = chore['deadline']
                     completed = chore['completed_at']
@@ -101,35 +111,38 @@ def render_admin_view():
                     can_fine = is_overdue_open or is_late_delivery
                     can_cancel = (status == 'open')
 
-                    with st.container(border=True):
-                        c_info, c_actions = st.columns([0.65, 0.35])
-                        
-                        with c_info:
-                            st.markdown(f"**{chore['kid_name'].title()}**: {chore['description']}")
-                            d_str = deadline.strftime('%d/%m/%Y %H:%M') if not pd.isna(deadline) else t('no_deadline')
-                            r_str = completed.strftime('%d/%m/%Y %H:%M') if not pd.isna(completed) else "---"
-                            
-                            st.caption(f"📅 {t('deadline')}: {d_str} | 🕒 Realização: {r_str}")
-                            st.caption(f"{t('value')}: R$ {chore['reward']:.2f} | {t('status')}: {status.upper()}")
-                            if is_overdue_open: st.markdown(f"<span style='color:#ff4b4b; font-size:0.7rem;'>{t('overdue_warn')}</span>", unsafe_allow_html=True)
-                            if is_late_delivery: st.markdown(f"<span style='color:#ffa500; font-size:0.7rem;'>{t('late_delivery_warn')}</span>", unsafe_allow_html=True)
-                        
-                        with c_actions:
-                            if can_cancel:
-                                if st.button(t('cancel_btn'), key=f"can_{chore['id']}", use_container_width=True):
-                                    run_query("UPDATE chores SET status='canceled' WHERE id=:id", {'id': chore['id']}, commit=True)
-                                    st.rerun()
-                            
-                            if can_fine:
-                                with st.popover(f"💸 {t('apply_fine')}", use_container_width=True):
-                                    val_multa = st.number_input(t('how_much'), min_value=0.5, value=1.0, step=0.5, key=f"f_{chore['id']}")
-                                    if st.button(t('conf_fine_btn'), key=f"fb_{chore['id']}", use_container_width=True):
-                                        run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:u, :a, :d, NOW(), 'Retirada')", 
-                                                  {'u': int(chore['uid']), 'a': -val_multa, 'd': f"Multa: {chore['description']}"}, commit=True)
-                                        st.toast(t('fine_applied_toast'))
-                                        time.sleep(0.5); st.rerun()
-                            elif status not in ['paid', 'canceled']:
-                                st.success(t('on_time'))
+                    r1, r2, r3, r4, r5, r6 = st.columns([1.5, 2.5, 1.2, 1.2, 1, 1])
+                    
+                    with r1: st.write(chore['kid_name'].split()[0])
+                    with r2: st.write(f"{chore['description']} (R$ {chore['reward']:.2f})")
+                    
+                    with r3:
+                        d_str = deadline.strftime('%d/%m %H:%M') if not pd.isna(deadline) else "-"
+                        if is_overdue_open: st.markdown(f"<span style='color:#ff4b4b'>{d_str}</span>", unsafe_allow_html=True)
+                        else: st.write(d_str)
+                    
+                    with r4:
+                        r_str = completed.strftime('%d/%m %H:%M') if not pd.isna(completed) else "-"
+                        if is_late_delivery: st.markdown(f"<span style='color:#ffa500'>{r_str}</span>", unsafe_allow_html=True)
+                        else: st.write(r_str)
+                    
+                    with r5: st.write(status.upper())
+                    
+                    with r6:
+                        if can_cancel:
+                            if st.button("🚫", key=f"can_{chore['id']}", help=t('cancel_btn')):
+                                run_query("UPDATE chores SET status='canceled' WHERE id=:id", {'id': chore['id']}, commit=True)
+                                st.rerun()
+                        if can_fine:
+                            with st.popover("💸", help=t('apply_fine')):
+                                val_multa = st.number_input("R$", min_value=0.5, value=1.0, step=0.5, key=f"f_{chore['id']}")
+                                if st.button("OK", key=f"fb_{chore['id']}"):
+                                    run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:u, :a, :d, NOW(), 'Retirada')", 
+                                              {'u': int(chore['uid']), 'a': -val_multa, 'd': f"Multa: {chore['description']}"}, commit=True)
+                                    st.toast(t('fine_applied_toast'))
+                                    time.sleep(0.5); st.rerun()
+                    
+                    st.markdown("<hr style='margin:0.2rem 0; opacity:0.1;'>", unsafe_allow_html=True)
             else:
                 st.info(t('no_pending'))
 
