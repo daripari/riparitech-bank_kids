@@ -82,6 +82,8 @@ def render_admin_view():
             all_chores = run_query("""
                 SELECT c.id, c.description, c.reward, c.status, c.deadline, c.completed_at, u.name as kid_name, u.id as uid 
                 FROM chores c JOIN users u ON c.assigned_to = u.id 
+                FROM chores c JOIN users u ON c.assigned_to = u.id
+                WHERE c.status IN ('open', 'pending')
                 ORDER BY c.deadline ASC
             """)
             
