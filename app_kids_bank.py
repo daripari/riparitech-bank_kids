@@ -9,7 +9,7 @@ from database import run_query
 from utils import t
 
 # 1. CONFIGURAÇÃO DA PÁGINA (BRANDING RIPARITECH)
-# Define o título que aparece no separador do navegador (Chrome)
+# O page_title define o nome que aparece no separador do navegador
 st.set_page_config(
     page_title="Banco Riparitech", 
     page_icon="💎", 
@@ -17,11 +17,11 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Inicializar o Banco de Dados e aplicar Estilos Visuais
+# Inicializar o Banco de Dados e aplicar os Estilos Globais
 database.init_db()
 styles.apply_styles()
 
-# 2. INICIALIZAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
+# 2. GESTÃO DE ESTADO DA SESSÃO (SESSION STATE)
 if 'logged_in' not in st.session_state: 
     st.session_state.logged_in = False
 if 'user_role' not in st.session_state: 
@@ -33,24 +33,24 @@ if 'user_name' not in st.session_state:
 if 'user_id' not in st.session_state:
     st.session_state.user_id = None
 
-# 3. COMPONENTES DO CABEÇALHO (LIQUID HEADER)
+# 3. COMPONENTES DE INTERFACE (LIQUID HEADER)
 def render_liquid_header():
-    """Renderiza o cabeçalho fixo com o nome BANCO RIPARITECH e controlos invertidos"""
+    """Renderiza o cabeçalho fixo v13.6 - Notificações removidas e layout reajustado"""
     st.markdown(f"""
     <div class="main-header">
         <div class="logo-text">💎 BANCO RIPARITECH</div>
         <div style="display: flex; gap: 10px; align-items: center;">
-            <span style="font-size: 0.7rem; opacity: 0.4; letter-spacing: 1px;">V13.5 PREMIUM</span>
+            <span style="font-size: 0.7rem; opacity: 0.4; letter-spacing: 1px;">V13.6 PREMIUM</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
     
-    # Barra de Ferramentas: [Espaço, Idioma, Notificações, Actualizar, Sair]
-    # As proporções garantem que os botões não quebrem no mobile
-    c_spacer, c_lang, c_notif, c_ref, c_out = st.columns([1.2, 0.5, 0.6, 0.5, 0.4])
+    # Barra de Ferramentas Reajustada: [Espaço, Idioma, Actualizar, Sair]
+    # As proporções foram recalibradas para preencher o espaço da funcionalidade removida
+    c_spacer, c_lang, c_ref, c_out = st.columns([1.8, 0.5, 0.5, 0.4])
     
     with c_lang:
-        # Seletor de Idioma (Agora na primeira posição de controlos)
+        # Seletor de Idioma Minimalista
         langs = {'🇧🇷 PT': 'pt', '🇺🇸 EN': 'en', '🇪🇸 ES': 'es'}
         curr = st.session_state.lang
         idx = list(langs.values()).index(curr) if curr in langs.values() else 0
@@ -63,33 +63,28 @@ def render_liquid_header():
                           params={'l': langs[sel], 'id': st.session_state.user_id}, commit=True)
             st.rerun()
 
-    with c_notif:
-        # Botão de Notificações
-        if st.button(f"🔔 {t('notifs')}", key="liquid_notif", use_container_width=True):
-            st.toast("Central de notificações Riparitech 🛠️")
-
     with c_ref:
-        # Botão Actualizar (Refresh)
+        # Botão de Actualização de Dados
         if st.button(f"🔄 {t('refresh')}", key="liquid_refresh", use_container_width=True):
             st.cache_data.clear()
             st.rerun()
 
     with c_out:
-        # Botão Sair (Logout)
+        # Botão de Encerramento de Sessão
         if st.button(f"🚪 {t('logout')}", key="liquid_logout", use_container_width=True):
             st.session_state.logged_in = False
             st.rerun()
 
 def render_login_liquid():
-    """Interface de Autenticação com estética Glassmorphism centrada"""
+    """Interface de Autenticação Riparitech com estética Glassmorphism"""
     st.markdown("<br><br><br>", unsafe_allow_html=True)
     
     _, col_mid, _ = st.columns([1, 1.2, 1])
     
     with col_mid:
-        # Logótipo centralizado no Login
-        st.markdown("<div class='logo-text' style='text-align:center; font-size:3.5rem; margin-bottom:1.5rem;'>RIPARITECH</div>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align:center; color:#888; margin-top:-20px; margin-bottom:30px; letter-spacing:2px;'>FAMILY BANKING</p>", unsafe_allow_html=True)
+        # Logótipo centralizado com a nova marca
+        st.markdown("<div class='logo-text' style='text-align:center; font-size:3rem; margin-bottom:1rem;'>RIPARITECH</div>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align:center; color:#888; margin-top:-10px; margin-bottom:30px; letter-spacing:2px;'>FAMILY BANKING</p>", unsafe_allow_html=True)
         
         with st.container():
             st.markdown("<div class='liquid-card'>", unsafe_allow_html=True)
@@ -108,17 +103,17 @@ def render_login_liquid():
                     })
                     st.rerun()
                 else:
-                    st.error("Credenciais inválidas. Tente novamente.")
+                    st.error("Credenciais inválidas. Por favor, verifique os seus dados.")
             st.markdown("</div>", unsafe_allow_html=True)
 
-# 4. FUNÇÃO PRINCIPAL
+# 4. ORQUESTRADOR PRINCIPAL
 def main():
     if not st.session_state.logged_in:
         render_login_liquid()
     else:
         render_liquid_header()
         
-        # Encaminhamento de acordo com o perfil do utilizador
+        # Redirecionamento baseado no perfil de acesso
         if st.session_state.user_role == 'admin':
             views_admin.render_admin_view()
         else:
