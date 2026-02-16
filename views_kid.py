@@ -3,10 +3,12 @@ import streamlit as st
 from database import run_query
 from utils import t, get_balance
 from datetime import datetime
+import time
 
 def render_kid_view():
     """
-    Interface da Criança v13.1.
+    Interface da Criança v13.2.
+    RESTORED: Funcionalidade de transferência entre kids.
     FIX: Remoção de componentes vazios e ícones duplicados.
     """
     uid = st.session_state.user_id
@@ -21,15 +23,16 @@ def render_kid_view():
     """, unsafe_allow_html=True)
     
     # --- NAVEGAÇÃO POR ABAS (FIX: Usando apenas t(key) para evitar ícones duplicados) ---
-    t_extrato, t_missoes, t_cambio = st.tabs([
-        t('home'),      # 'Extrato e Histórico' (ícone já vem do utils.py)
+    # Adicionada a aba de transferência (t_transfer)
+    t_extrato, t_missoes, t_transfer, t_cambio = st.tabs([
+        t('home'),      # 'Extrato e Histórico'
         t('missions'),  # 'Missões'
+        t('transfer'),  # 'Transferir'
         t('tools')      # 'Ferramentas'
     ])
     
     # --- ABA 1: EXTRATO ---
     with t_extrato:
-        # FIX: Removida a div liquid-card manual que causava a barra vazia
         st.markdown("##### Últimas Movimentações")
         hist = run_query("""
             SELECT description, amount, timestamp 
@@ -39,7 +42,6 @@ def render_kid_view():
         """, {'u': uid})
         
         if hist is not None and not hist.empty:
-            # Usamos o container nativo com borda para envelopar o conteúdo Streamlit corretamente
             with st.container(border=True):
                 for _, r in hist.iterrows():
                     cor = "#00f2ff" if r['amount'] >= 0 else "#ff4b4b"
@@ -59,7 +61,6 @@ def render_kid_view():
         
         if m is not None and not m.empty:
             for _, c in m.iterrows():
-                # FIX: st.container(border=True) evita o componente vazio na renderização
                 with st.container(border=True):
                     st.markdown(f"**{c['description']}**")
                     st.write(f"Recompensa: **R$ {c['reward']:.2f}**")
@@ -70,10 +71,44 @@ def render_kid_view():
         else:
             st.markdown("<div class='liquid-card' style='text-align:center; opacity:0.6;'>Tudo em dia por aqui! 🏖️</div>", unsafe_allow_html=True)
 
-    # --- ABA 3: FERRAMENTAS (CÂMBIO) ---
+    # --- ABA 3: TRANSFERÊNCIA (RESTORED) ---
+    with t_transfer:
+        st.markdown(f"##### {t('send_money')}")
+        # Buscar outros usuários kids (role user) para transferência
+        siblings = run_query("SELECT id, name FROM users WHERE role='user' AND id != :uid", {'uid': uid})
+        
+        if siblings is not None and not siblings.empty:
+            with st.container(border=True):
+                with st.form("transfer_form_liquid", clear_on_submit=True):
+                    target_name = st.selectbox(t('to_whom'), siblings['name'].tolist())
+                    amount = st.number_input(t('how_much'), min_value=0.0, step=1.0)
+                    reason = st.text_input(t('reason'), placeholder="Ex: Pagamento de lanche")
+                    
+                    if st.form_submit_button(t('send_now'), use_container_width=True):
+                        if amount > balance:
+                            st.error("Saldo insuficiente para esta transferência.")
+                        elif amount <= 0:
+                            st.warning("Insira um valor maior que zero.")
+                        else:
+                            target_id = siblings[siblings['name'] == target_name]['id'].values[0]
+                            
+                            # Transação de saída para o remetente
+                            run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:u, :a, :d, NOW(), 'Transferência Enviada')", 
+                                      {'u': uid, 'a': -amount, 'd': f"Para {target_name}: {reason}"}, commit=True)
+                            
+                            # Transação de entrada para o destinatário
+                            run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:u, :a, :d, NOW(), 'Transferência Recebida')", 
+                                      {'u': int(target_id), 'a': amount, 'd': f"De {st.session_state.user_name}: {reason}"}, commit=True)
+                            
+                            st.success(f"R$ {amount:.2f} enviados para {target_name}!")
+                            time.sleep(1)
+                            st.rerun()
+        else:
+            st.info(t('no_transfer'))
+
+    # --- ABA 4: FERRAMENTAS (CÂMBIO) ---
     with t_cambio:
         usd = 5.05
-        # Elementos HTML puros podem continuar usando liquid-card sem problemas
         st.markdown(f"""
         <div class='liquid-card' style='text-align:center;'>
             <div class='hero-label'>PATRIMÔNIO EM DÓLAR</div>
@@ -81,4 +116,4 @@ def render_kid_view():
         </div>
         """, unsafe_allow_html=True)
 
-    st.markdown("<div style='text-align:center; opacity:0.1; font-size:0.6rem; margin-top:50px;'>OBSIDIAN LIQUID UI • v13.1</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center; opacity:0.1; font-size:0.6rem; margin-top:50px;'>OBSIDIAN LIQUID UI • v13.2</div>", unsafe_allow_html=True)
