@@ -92,13 +92,13 @@ def apply_styles():
             white-space: nowrap !important;
         }
         .stButton>button:hover {
-            background: #fff !important;
+            background: #bfbfbf !important;
             color: #000 !important;
             transform: scale(1.02);
         }
         
         div[data-testid="stFormSubmitButton"] button {
-            background: linear-gradient(135deg, #00f2ff, #0072ff) !important;
+            background: linear-gradient(135deg, #00d2df, #0062df) !important;
             color: #000 !important;
             border: none !important;
         }
@@ -121,7 +121,7 @@ def apply_styles():
             color: #e0e0e0;
         }
         .stTabs [aria-selected="true"] {
-            background: #fff !important;
+            background: #bfbfbf !important;
             color: #000 !important;
             border: none !important;
         }
