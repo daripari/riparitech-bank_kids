@@ -5,31 +5,80 @@ import pandas as pd
 
 @st.cache_resource
 def get_connection():
+    """Estabelece conexão com o banco de dados Supabase via Streamlit Connection"""
     try:
         return st.connection("supabase", type="sql")
     except Exception:
+        # Em caso de erro na conexão, retorna None para tratamento posterior
         return None
 
 def run_query(query_str, params=None, commit=False):
+    """
+    Executa queries SQL no banco de dados.
+    - query_str: A string da consulta SQL.
+    - params: Dicionário de parâmetros para a query.
+    - commit: Se True, executa commit (INSERT, UPDATE, DELETE).
+    """
     conn = get_connection()
-    if not conn: return None
+    if not conn:
+        return None
+        
     try:
         if commit:
             with conn.session as s:
                 s.execute(text(query_str), params if params else {})
                 s.commit()
+            # Limpa o cache após alterações para garantir dados atualizados
             st.cache_data.clear()
             return True
         else:
+            # Retorna um DataFrame para consultas SELECT
             return conn.query(query_str, params=params if params else {}, ttl=0)
     except Exception as e:
+        # Log de erro silencioso para não expor dados sensíveis no frontend
         return None
 
 def init_db():
-    """Inicializa as tabelas essenciais (Notificações removidas)"""
+    """
+    Inicializa as tabelas essenciais v14.0 do Banco Riparitech.
+    Inclui a coluna 'completed_at' na tabela 'chores' para rastrear a data de realização.
+    """
     conn = get_connection()
     if conn:
-        run_query('''CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name TEXT NOT NULL, role TEXT, password TEXT, language TEXT DEFAULT 'pt');''', commit=True)
-        run_query('''CREATE TABLE IF NOT EXISTS transactions (id SERIAL PRIMARY KEY, user_id INTEGER, amount REAL, description TEXT, timestamp TIMESTAMP, type TEXT);''', commit=True)
-        # Tabela de notificações removida do protocolo de inicialização
-        run_query('''CREATE TABLE IF NOT EXISTS chores (id SERIAL PRIMARY KEY, description TEXT, reward REAL, status TEXT DEFAULT 'open', assigned_to INTEGER, created_at TIMESTAMP, deadline TIMESTAMP);''', commit=True)
+        # Tabela de Usuários (Login e Preferências)
+        run_query('''
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY, 
+                name TEXT NOT NULL, 
+                role TEXT, 
+                password TEXT, 
+                language TEXT DEFAULT 'pt'
+            );
+        ''', commit=True)
+        
+        # Tabela de Transações Financeiras (Extrato)
+        run_query('''
+            CREATE TABLE IF NOT EXISTS transactions (
+                id SERIAL PRIMARY KEY, 
+                user_id INTEGER, 
+                amount REAL, 
+                description TEXT, 
+                timestamp TIMESTAMP DEFAULT NOW(), 
+                type TEXT
+            );
+        ''', commit=True)
+        
+        # Tabela de Missões/Tarefas (Gestão e Prazos)
+        # v14.0: Adição de completed_at para auditoria de atrasos
+        run_query('''
+            CREATE TABLE IF NOT EXISTS chores (
+                id SERIAL PRIMARY KEY, 
+                description TEXT, 
+                reward REAL, 
+                status TEXT DEFAULT 'open', 
+                assigned_to INTEGER, 
+                created_at TIMESTAMP DEFAULT NOW(), 
+                deadline TIMESTAMP,
+                completed_at TIMESTAMP
+            );
+        ''', commit=True)
