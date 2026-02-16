@@ -79,7 +79,7 @@ def apply_styles():
             color: #fff !important;
             transition: all 0.3s ease !important;
             width: 100% !important;
-            text-transform: uppercase; letter-spacing: 1px;
+            text-transform: none; letter-spacing: 0px;
             white-space: nowrap !important;
         }
         .stButton>button:hover {
