@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 from database import run_query
 
-# Dicionário de traduções expandido para suporte multi-idioma (PT-BR, EN, ES)
+# Dicionário atualizado com suporte a rótulos de botões no cabeçalho
 TRANSLATIONS = {
     'pt': {
         'bal': 'Meu Saldo', 
@@ -12,6 +12,8 @@ TRANSLATIONS = {
         'tools': 'Ferramentas', 
         'admin': 'Comando', 
         'logout': 'Sair',
+        'refresh': 'Atualizar',
+        'notifs': 'Notificações',
         'home': 'Extrato e Histórico', 
         'transfer': 'Transferir', 
         'last_mov': 'Últimas Movimentações',
@@ -45,11 +47,13 @@ TRANSLATIONS = {
     },
     'en': {
         'bal': 'My Balance', 
-        'family_bal': '💰 Asset Monitoring (Balances)',
+        'family_bal': '💰 Asset Monitoring',
         'missions': 'Missions', 
         'tools': 'Tools', 
         'admin': 'Command', 
         'logout': 'Logout',
+        'refresh': 'Refresh',
+        'notifs': 'Notifications',
         'home': 'History', 
         'transfer': 'Transfer', 
         'last_mov': 'Recent Transactions',
@@ -59,7 +63,7 @@ TRANSLATIONS = {
         'how_much': 'Amount ($)', 
         'reason': 'Reason', 
         'send_now': 'SEND NOW 💸', 
-        'no_transfer': 'No one available for transfer.',
+        'no_transfer': 'No users found.',
         'calc': 'Calculator', 
         'fx': 'Exchange', 
         'panel': '🔎 Tasks', 
@@ -70,12 +74,12 @@ TRANSLATIONS = {
         'apply_fine': 'Apply Fine', 
         'approve': 'Approve', 
         'reject': 'Reject',
-        'desc': 'What needs to be done?', 
+        'desc': 'Description', 
         'value': 'Reward ($)', 
         'date': 'Due Date', 
         'time': 'Due Time', 
         'schedule': 'SCHEDULE MISSION',
-        'manual_entry': 'Manual Entry (Deposit/Withdraw)', 
+        'manual_entry': 'Manual Entry', 
         'deposit': 'Deposit', 
         'withdraw': 'Withdraw', 
         'execute': 'EXECUTE ENTRY',
@@ -83,11 +87,13 @@ TRANSLATIONS = {
     },
     'es': {
         'bal': 'Mi Saldo', 
-        'family_bal': '💰 Monitoreo de Activos (Saldos)',
+        'family_bal': '💰 Monitoreo de Activos',
         'missions': 'Misiones', 
         'tools': 'Herramientas', 
         'admin': 'Comando', 
         'logout': 'Salir',
+        'refresh': 'Actualizar',
+        'notifs': 'Notificaciones',
         'home': 'Historial', 
         'transfer': 'Transferir', 
         'last_mov': 'Últimos Movimientos',
@@ -97,7 +103,7 @@ TRANSLATIONS = {
         'how_much': 'Monto ($)', 
         'reason': 'Motivo', 
         'send_now': 'ENVIAR AHORA 💸', 
-        'no_transfer': 'Nadie disponible para transferencia.',
+        'no_transfer': 'Nadie disponible.',
         'calc': 'Calculadora', 
         'fx': 'Cambio', 
         'panel': '🔎 Tareas', 
@@ -108,12 +114,12 @@ TRANSLATIONS = {
         'apply_fine': 'Aplicar Multa', 
         'approve': 'Aprobar', 
         'reject': 'Rechazar',
-        'desc': '¿Qué hay que hacer?', 
+        'desc': 'Descripción', 
         'value': 'Recompensa ($)', 
         'date': 'Fecha Límite', 
         'time': 'Hora Límite', 
         'schedule': 'AGENDAR MISIÓN',
-        'manual_entry': 'Lanzamiento Manual (Depósito/Retiro)', 
+        'manual_entry': 'Lanzamiento Manual', 
         'deposit': 'Depósito', 
         'withdraw': 'Retiro', 
         'execute': 'EJECUTAR LANZAMIENTO',
@@ -122,19 +128,16 @@ TRANSLATIONS = {
 }
 
 def t(key):
-    """Função de tradução baseada no idioma selecionado na sessão"""
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
 @st.cache_data(ttl=600)
 def get_balance(uid):
-    """Calcula o saldo individual de um usuário"""
     res = run_query("SELECT SUM(amount) as total FROM transactions WHERE user_id=:uid", params={'uid': uid})
     val = res.iloc[0]['total'] if res is not None and not res.empty and pd.notnull(res.iloc[0]['total']) else 0.0
     return val
 
 def get_family_balances():
-    """Obtém o saldo de todos os usuários com perfil 'user' para o Admin"""
     query = """
         SELECT u.id, u.name, COALESCE(SUM(t.amount), 0) as balance 
         FROM users u 
