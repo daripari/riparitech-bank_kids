@@ -2,84 +2,119 @@
 import streamlit as st
 
 def apply_styles():
-    """Aplica o CSS v12.8 - Correção de Layout de Botões e Design Premium"""
+    """Aplica a interface Obsidian Liquid UI v13.0 - Disruptiva e Responsiva"""
     st.markdown("""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
         
-        /* --- CONFIGURAÇÃO DE BASE --- */
-        html, body, [class*="css"] { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #050505; 
-            color: #E5E5E5; 
+        /* --- RESET & ESTRUTURA GLOBAL --- */
+        html, body, [class*="css"] {
+            font-family: 'Outfit', sans-serif;
+            background: #020203;
+            color: #f0f0f0;
         }
-        .stApp { background-color: #050505; }
+        
+        .stApp {
+            background: radial-gradient(circle at 50% -20%, #1a1a2e 0%, #020203 80%);
+        }
+        
         header, footer, #MainMenu { visibility: hidden !important; }
+        .block-container { padding: 1rem !important; max-width: 1200px !important; }
 
-        /* --- LOGO IMPACTANTE --- */
-        .obsidian-logo {
-            font-size: 1.6rem; font-weight: 800; letter-spacing: -1px;
-            background: linear-gradient(90deg, #00C6FF, #0072FF);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            line-height: 1.1;
+        /* --- HEADER FLUTUANTE (DISRUPTIVO) --- */
+        .main-header {
+            position: sticky; top: 0; z-index: 1000;
+            background: rgba(10, 10, 15, 0.7);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 15px 20px;
+            margin: -1rem -1rem 1.5rem -1rem;
+            display: flex; justify-content: space-between; align-items: center;
         }
         
-        /* --- GLASS CARDS --- */
-        .glass-card {
-            background: rgba(25, 25, 28, 0.7);
-            backdrop-filter: blur(15px);
+        .logo-text {
+            font-weight: 800; font-size: 1.4rem; letter-spacing: -1.5px;
+            background: linear-gradient(135deg, #00f2ff, #7000ff);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        /* --- CARDS LIQUID GLASS --- */
+        .liquid-card {
+            background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 20px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 28px;
+            padding: 24px;
+            margin-bottom: 16px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+        .liquid-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(0, 242, 255, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 242, 255, 0.1);
         }
 
-        /* --- 🚀 BOTÕES PREMIUM (CORREÇÃO DE QUEBRA DE TEXTO) --- */
+        /* --- TIPOGRAFIA DE SALDO --- */
+        .hero-balance {
+            text-align: center; padding: 2rem 0;
+        }
+        .hero-label {
+            font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 4px; font-weight: 600;
+        }
+        .hero-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 4rem; font-weight: 800; color: #fff;
+            margin: 10px 0; letter-spacing: -3px;
+        }
+        
+        /* --- BOTÕES PREMIUM --- */
         .stButton>button {
-            border-radius: 12px !important;
-            height: 42px !important;
-            font-weight: 600 !important;
-            font-size: 0.85rem !important;
+            border-radius: 18px !important;
+            height: 52px !important;
+            font-weight: 700 !important;
+            font-size: 0.9rem !important;
+            background: rgba(255, 255, 255, 0.05) !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            background: rgba(30, 30, 35, 0.6) !important;
-            color: #FFFFFF !important;
-            transition: all 0.2s ease-in-out !important;
-            /* IMPEDE A QUEBRA DE TEXTO */
-            white-space: nowrap !important;
-            overflow: visible !important;
-            padding: 0 15px !important;
+            color: #fff !important;
+            transition: all 0.3s ease !important;
             width: 100% !important;
+            text-transform: uppercase; letter-spacing: 1px;
+            white-space: nowrap !important;
         }
-
         .stButton>button:hover {
-            border-color: #00C6FF !important;
-            color: #00C6FF !important;
-            background: rgba(40, 40, 45, 0.8) !important;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 198, 255, 0.2) !important;
+            background: #fff !important;
+            color: #000 !important;
+            transform: scale(1.02);
         }
-
-        /* BOTÃO PRIMÁRIO (LOGIN/LANÇAMENTOS) */
-        div[data-testid="stFormSubmitButton"] button, .stButton>button[kind="primary"] {
-            background: linear-gradient(135deg, #00C6FF, #0072FF) !important;
+        
+        div[data-testid="stFormSubmitButton"] button {
+            background: linear-gradient(135deg, #00f2ff, #0072ff) !important;
+            color: #000 !important;
             border: none !important;
-            font-weight: 700 !important;
         }
 
-        /* --- AJUSTE PARA O SELETOR DE IDIOMA (COMBO) --- */
-        .stSelectbox div[data-baseweb="select"] {
-            background-color: #121214 !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            border-radius: 12px !important;
-            height: 42px !important;
+        /* --- GRID RESPONSIVO --- */
+        @media (max-width: 768px) {
+            .hero-value { font-size: 2.8rem; }
+            .logo-text { font-size: 1.1rem; }
+            .liquid-card { padding: 16px; border-radius: 20px; }
+            .main-header { padding: 10px 15px; }
         }
 
-        /* --- MÉTRICAS --- */
-        div[data-testid="stMetricValue"] {
-            font-family: 'JetBrains Mono', monospace !important;
-            font-weight: 700 !important;
-            color: #00C6FF !important;
+        /* --- TABS --- */
+        .stTabs [data-baseweb="tab-list"] { background-color: transparent; gap: 8px; flex-wrap: wrap; }
+        .stTabs [data-baseweb="tab"] {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 14px;
+            padding: 8px 16px;
+            color: #888;
+        }
+        .stTabs [aria-selected="true"] {
+            background: #fff !important;
+            color: #000 !important;
+            border: none !important;
         }
     </style>
     """, unsafe_allow_html=True)
