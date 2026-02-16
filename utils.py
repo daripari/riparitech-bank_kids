@@ -3,13 +3,13 @@ import streamlit as st
 import pandas as pd
 from database import run_query
 
-# Dicionário de traduções v12.8 - Foco em PT-BR e Nomenclatura Simplificada
+# Dicionário de traduções v13.4 - Marca Riparitech e Aba de Câmbio
 TRANSLATIONS = {
     'pt': {
         'bal': 'Meu Saldo', 
         'family_bal': '💰 Monitoramento de Ativos (Saldos)',
         'missions': 'Missões', 
-        'tools': 'Ferramentas', 
+        'tools': 'Câmbio', # Alterado de 'Ferramentas' para 'Câmbio'
         'admin': 'Comando', 
         'logout': 'Sair',
         'refresh': 'Atualizar',
@@ -49,7 +49,7 @@ TRANSLATIONS = {
         'bal': 'My Balance', 
         'family_bal': '💰 Asset Monitoring (Balances)',
         'missions': 'Missions', 
-        'tools': 'Tools', 
+        'tools': 'Exchange', # Alterado para 'Exchange'
         'admin': 'Command', 
         'logout': 'Logout',
         'refresh': 'Refresh',
@@ -89,7 +89,7 @@ TRANSLATIONS = {
         'bal': 'Mi Saldo', 
         'family_bal': '💰 Monitoreo de Activos (Saldos)',
         'missions': 'Misiones', 
-        'tools': 'Herramientas', 
+        'tools': 'Cambio', # Alterado para 'Cambio'
         'admin': 'Comando', 
         'logout': 'Salir',
         'refresh': 'Actualizar',
@@ -119,7 +119,7 @@ TRANSLATIONS = {
         'date': 'Fecha Límite', 
         'time': 'Hora Límite', 
         'schedule': 'AGENDAR MISIÓN',
-        'manual_entry': 'Lanzamiento Manual', 
+        'manual_entry': 'Lançamento Manual', 
         'deposit': 'Depósito', 
         'withdraw': 'Retiro', 
         'execute': 'EJECUTAR LANZAMIENTO',
@@ -128,19 +128,16 @@ TRANSLATIONS = {
 }
 
 def t(key):
-    """Retorna a tradução para a chave solicitada com base no idioma da sessão."""
     lang = st.session_state.get('lang', 'pt')
     return TRANSLATIONS.get(lang, TRANSLATIONS['pt']).get(key, key)
 
 @st.cache_data(ttl=600)
 def get_balance(uid):
-    """Busca e calcula o saldo atual de um usuário específico."""
     res = run_query("SELECT SUM(amount) as total FROM transactions WHERE user_id=:uid", params={'uid': uid})
     val = res.iloc[0]['total'] if res is not None and not res.empty and pd.notnull(res.iloc[0]['total']) else 0.0
     return val
 
 def get_family_balances():
-    """Calcula o saldo de todos os usuários com papel 'user' para o painel Admin."""
     query = """
         SELECT u.id, u.name, COALESCE(SUM(t.amount), 0) as balance 
         FROM users u 
