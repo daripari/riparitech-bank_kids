@@ -23,7 +23,7 @@ def render_kid_view():
     """, unsafe_allow_html=True)
     
     # --- NAVEGAÇÃO POR ABAS (TABS) ---
-    t_ext, t_mis, t_tra, t_cam = st.tabs([t('home'), t('missions'), t('transfer'), t('tools')])
+    t_ext, t_mis, t_tra, t_cam = st.tabs([f"📜 {t('home')}", f"🎯 {t('missions')}", f"💸 {t('transfer')}", f"💱 {t('tools')}"])
     
     # --- ABA 1: EXTRATO ---
     with t_ext:
