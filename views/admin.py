@@ -43,7 +43,8 @@ def render_admin_view():
                 st.markdown(f"""
                 <div class="liquid-card" style="text-align:center;">
                     <div class="hero-label">{row['name'].upper()}</div>
-                    <div style="font-size:1.8rem; font-weight:800; color: 
+                    <div style="font-size:1.8rem; font-weight:800; color:var(--accent-color-1); font-family:'JetBrains Mono';">
+                        R$ {row['balance']:,.2f}
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -130,7 +131,8 @@ def render_admin_view():
                     
                     with r5:
                         # Cores para facilitar a identificação visual dos status
-                        s_colors = {'open': 'var(--accent-color-1)', 'pending': 
+                        s_colors = {'open': 'var(--accent-color-1)', 'pending': '#ffa500', 'paid': '#00ff00', 'canceled': '#ff4b4b', 'failed': '#ff4b4b'}
+                        color = s_colors.get(status, '#ffffff')
                         st.markdown(f"<span style='color:{color}; font-weight:bold;'>{t(f'status_{status}')}</span>", unsafe_allow_html=True)
                     
                     with r6:
@@ -271,7 +273,8 @@ def render_admin_view():
             if sel_user:
                 u_id = int(all_users[all_users['name'] == sel_user]['id'].values[0])
                 
-                # Busca o tema atual do usuário selecionadoECT theme FROM users WHERE id=:id", params={'id': u_id})
+                # Busca o tema atual do usuário selecionado
+                user_data = run_query("SELECT theme FROM users WHERE id=:id", params={'id': u_id})
                 current_theme_key = 'default'
                 if user_data is not None and not user_data.empty:
                     current_theme_key = user_data.iloc[0].get('theme', 'default') or 'default'
