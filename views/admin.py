@@ -194,26 +194,35 @@ def render_admin_view():
         st.markdown(f"##### {t('allowance_title')}")
         kids = run_query("SELECT id, name FROM users WHERE role='user'")
         
-        # Formulário de Criação
-        with st.form("new_allowance"):
-            c_k, c_f, c_d, c_v = st.columns([2, 1.5, 1.5, 1])
-            with c_k: target = st.selectbox(t('target_acc'), kids['name'].tolist() if kids is not None else [])
+        # Interface Reativa (Sem st.form para permitir atualização dinâmica dos campos)
+        c_k, c_f, c_d, c_v, c_b = st.columns([2, 1.5, 1.5, 1, 1])
+        
+        with c_k: 
+            target = st.selectbox(t('target_acc'), kids['name'].tolist() if kids is not None else [], key="al_target")
+        
+        with c_f: 
+            # Mapeamento de labels para valores internos
+            freq_map = {t('freq_monthly'): 'monthly', t('freq_weekly'): 'weekly', t('freq_daily'): 'daily'}
+            freq_label = st.selectbox(t('frequency'), list(freq_map.keys()), key="al_freq")
+            freq_val = freq_map[freq_label]
+        
+        with c_d:
+            # Lógica condicional para o campo de data baseada na frequência selecionada
+            day = 0
+            if freq_val == 'monthly':
+                day = st.number_input(t('day_of_month'), min_value=1, max_value=28, value=1, key="al_day_m")
+            elif freq_val == 'weekly':
+                day_label = st.selectbox(t('day_of_week'), t('weekdays'), key="al_day_w")
+                day = t('weekdays').index(day_label)
+            else: # daily
+                st.text_input(t('day_of_month'), value="-", disabled=True, key="al_day_d")
+        
+        with c_v: 
+            val = st.number_input(t('value'), min_value=1.0, step=5.0, key="al_val")
             
-            with c_f: 
-                freq_label = st.selectbox(t('frequency'), [t('freq_monthly'), t('freq_weekly')])
-                freq_val = 'monthly' if freq_label == t('freq_monthly') else 'weekly'
-            
-            with c_d:
-                if freq_val == 'monthly':
-                    day = st.number_input(t('day_of_month'), min_value=1, max_value=28, value=1)
-                else:
-                    # Mapeia dias da semana (0=Segunda, 6=Domingo)
-                    day_label = st.selectbox(t('day_of_week'), t('weekdays'))
-                    day = t('weekdays').index(day_label)
-            
-            with c_v: val = st.number_input(t('value'), min_value=1.0, step=5.0)
-            
-            if st.form_submit_button(t('execute'), use_container_width=True):
+        with c_b:
+            st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True) # Spacer para alinhar com inputs
+            if st.button(t('execute'), use_container_width=True, key="al_btn"):
                 kid_id = kids[kids['name']==target]['id'].values[0]
                 # Remove anterior se existir para evitar duplicidade
                 run_query("DELETE FROM allowances WHERE user_id=:u", {'u': int(kid_id)}, commit=True)
@@ -233,8 +242,16 @@ def render_admin_view():
             for _, row in active_allowances.iterrows():
                 c1, c2, c3 = st.columns([3, 2, 1])
                 
-                freq_display = t('freq_monthly') if row['frequency'] == 'monthly' else t('freq_weekly')
-                day_display = f"Dia {row['day_of_month']}" if row['frequency'] == 'monthly' else t('weekdays')[int(row['day_of_month'])]
+                # Lógica de exibição na lista
+                freq_map_inv = {'monthly': t('freq_monthly'), 'weekly': t('freq_weekly'), 'daily': t('freq_daily')}
+                freq_display = freq_map_inv.get(row['frequency'], row['frequency'])
+                
+                if row['frequency'] == 'daily':
+                    day_display = "-"
+                elif row['frequency'] == 'monthly':
+                    day_display = f"Dia {row['day_of_month']}"
+                else:
+                    day_display = t('weekdays')[int(row['day_of_month'])]
                 
                 c1.write(f"**{row['name']}**: R$ {row['amount']:.2f}")
                 c1.caption(f"{freq_display} - {day_display}")

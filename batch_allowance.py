@@ -42,6 +42,12 @@ def process_allowances_for_date(processing_date):
                         # Verifica se já não foi pago na data de processamento ou depois
                         if not last_paid or last_paid < processing_date:
                             should_pay = True
+                            
+                # Lógica Diária
+                elif freq == 'daily':
+                    # Paga todo dia, desde que ainda não tenha pago na data de processamento
+                    if not last_paid or last_paid < processing_date:
+                            should_pay = True
                 
                 if should_pay:
                     desc = f"Mesada Automática ({freq})"

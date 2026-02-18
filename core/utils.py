@@ -65,6 +65,7 @@ TRANSLATIONS = {
         'frequency': 'Frequência',
         'freq_monthly': 'Mensal',
         'freq_weekly': 'Semanal',
+        'freq_daily': 'Diária',
         'day_of_week': 'Dia da Semana',
         'weekdays': ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'],
         
@@ -155,6 +156,7 @@ TRANSLATIONS = {
         'frequency': 'Frequency',
         'freq_monthly': 'Monthly',
         'freq_weekly': 'Weekly',
+        'freq_daily': 'Daily',
         'day_of_week': 'Day of Week',
         'weekdays': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
         'manual_adjust': 'Manual Balance Adjustment',
@@ -239,6 +241,7 @@ TRANSLATIONS = {
         'frequency': 'Frecuencia',
         'freq_monthly': 'Mensual',
         'freq_weekly': 'Semanal',
+        'freq_daily': 'Diaria',
         'day_of_week': 'Día de la Semana',
         'weekdays': ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
         'manual_adjust': 'Ajuste Manual de Saldo',
