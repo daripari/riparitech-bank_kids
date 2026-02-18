@@ -271,7 +271,7 @@ def render_admin_view():
                 c_pw, c_del = st.columns(2)
                 with c_pw:
                     with st.popover(t('change_pass')): # Usando chave específica
-                        new_p = st.text_input(t('password'), type="password") # Usando chave genérica
+                        new_p = st.text_input(t('new_pass'), type="password") # Usando chave genérica
                         if st.button(f"💾 {t('confirm')}"):
                             hashed_pw = hashlib.sha256(new_p.encode()).hexdigest()
                             run_query("UPDATE users SET password=:p WHERE id=:id", {'p': hashed_pw, 'id': u_id}, commit=True)
