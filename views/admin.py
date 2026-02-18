@@ -2,6 +2,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import hashlib
 import time
 # Importando módulos do core
 from core.database import run_query
@@ -204,7 +205,8 @@ def render_admin_view():
                     with st.popover(t('loading')): # Usando chave genérica para exemplo
                         new_p = st.text_input(t('mgmt'), type="password") # Usando chave genérica
                         if st.button(t('confirm')):
-                            run_query("UPDATE users SET password=:p WHERE id=:id", {'p': new_p, 'id': u_id}, commit=True)
+                            hashed_pw = hashlib.sha256(new_p.encode()).hexdigest()
+                            run_query("UPDATE users SET password=:p WHERE id=:id", {'p': hashed_pw, 'id': u_id}, commit=True)
                             st.success(t('confirm'))
                 with c_del:
                     if st.button(t('delete_acc'), use_container_width=True):

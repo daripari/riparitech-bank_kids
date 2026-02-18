@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
+import hashlib
 import core.styles as styles
 import core.database as database
 import core.utils as utils
@@ -92,7 +93,8 @@ def render_login_liquid():
             p = st.text_input("SENHA", type="password", placeholder="••••••").strip()
             
             if st.button("AUTENTICAR", use_container_width=True, type="primary"):
-                df = run_query("SELECT * FROM users WHERE lower(name)=:u AND password=:p", params={'u': u, 'p': p})
+                hashed_p = hashlib.sha256(p.encode()).hexdigest()
+                df = run_query("SELECT * FROM users WHERE lower(name)=:u AND password=:p", params={'u': u, 'p': hashed_p})
                 if df is not None and not df.empty:
                     st.session_state.update({
                         'logged_in': True, 
