@@ -270,7 +270,7 @@ def render_admin_view():
                 u_id = int(all_users[all_users['name'] == sel_user]['id'].values[0])
                 c_pw, c_del = st.columns(2)
                 with c_pw:
-                    with st.popover(t('loading')): # Usando chave genérica para exemplo
+                    with st.popover(t('change_pass')): # Usando chave específica
                         new_p = st.text_input(t('mgmt'), type="password") # Usando chave genérica
                         if st.button(t('confirm')):
                             hashed_pw = hashlib.sha256(new_p.encode()).hexdigest()
