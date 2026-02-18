@@ -20,6 +20,7 @@ TRANSLATIONS = {
         'loading': 'Carregando...',
         'change_pass': '🔒 Alterar Senha',
         'password': 'Senha',
+        'pass_changed': 'Senha alterada com sucesso!',
         
         # Admin - Cabeçalhos
         'cmd_header': 'COMANDO RIPARITECH',
@@ -109,6 +110,7 @@ TRANSLATIONS = {
         'loading': 'Loading...',
         'change_pass': '🔒 Change Password',
         'password': 'Password',
+        'pass_changed': 'Password changed successfully!',
         'cmd_header': 'RIPARITECH COMMAND',
         'family_bal': '💰 Asset Monitoring',
         'panel': '🔎 Tasks',
@@ -186,6 +188,7 @@ TRANSLATIONS = {
         'loading': 'Cargando...',
         'change_pass': '🔒 Cambiar Contraseña',
         'password': 'Contraseña',
+        'pass_changed': '¡Contraseña cambiada con éxito!',
         'cmd_header': 'COMANDO RIPARITECH',
         'family_bal': '💰 Monitoreo de Activos',
         'panel': '🔎 Tareas',
