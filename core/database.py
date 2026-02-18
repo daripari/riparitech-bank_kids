@@ -90,9 +90,15 @@ def init_db():
                 user_id INTEGER, 
                 amount REAL, 
                 day_of_month INTEGER, 
-                last_paid DATE
+                last_paid DATE,
+                frequency TEXT DEFAULT 'monthly'
             );
         ''', commit=True)
+        
+        # Patch de Migração v14.3: Adicionar suporte a frequência
+        try:
+            run_query("ALTER TABLE allowances ADD COLUMN IF NOT EXISTS frequency TEXT DEFAULT 'monthly';", commit=True)
+        except: pass
         
         # Patch de Migração v14.1: Garantir que completed_at existe em tabelas antigas
         try:

@@ -23,36 +23,6 @@ def cleanup_old_tasks():
         # Falha silenciosa para não interromper a experiência do usuário
         pass
 
-def process_due_allowances():
-    """
-    Robô de Mesadas: Verifica se há mesadas agendadas para hoje (ou atrasadas neste mês) e executa o pagamento.
-    """
-    try:
-        # Busca todas as mesadas configuradas
-        allowances = run_query("SELECT * FROM allowances")
-        if allowances is not None and not allowances.empty:
-            now = datetime.now().date()
-            for _, row in allowances.iterrows():
-                pay_day = int(row['day_of_month'])
-                last_paid = pd.to_datetime(row['last_paid']).date() if pd.notnull(row['last_paid']) else None
-                
-                # Verifica se já foi pago neste mês/ano
-                paid_this_month = False
-                if last_paid:
-                    if last_paid.year == now.year and last_paid.month == now.month:
-                        paid_this_month = True
-                
-                # Se não foi pago e hoje é dia (ou passou do dia) de pagar
-                if not paid_this_month and now.day >= pay_day:
-                    # Executa o pagamento
-                    desc = f"{t('allowance_desc')} ({now.strftime('%B')})"
-                    run_query("INSERT INTO transactions (user_id, amount, description, timestamp, type) VALUES (:u, :a, :d, NOW(), 'Mesada')", 
-                              {'u': row['user_id'], 'a': row['amount'], 'd': desc}, commit=True)
-                    run_query("UPDATE allowances SET last_paid = :now WHERE id=:id", {'now': now, 'id': row['id']}, commit=True)
-                    st.toast(f"💰 Mesada processada para User ID {row['user_id']}!")
-    except Exception:
-        pass
-
 def render_admin_view():
     """
     Interface do Administrador v14.1 - Comando Riparitech.
@@ -60,7 +30,6 @@ def render_admin_view():
     """
     # Executa a limpeza automática de registros antigos
     cleanup_old_tasks()
-    process_due_allowances()
     
     st.markdown(f"<h4 style='letter-spacing:2px; font-weight:300; margin-bottom:20px;'>{t('cmd_header')}</h4>", unsafe_allow_html=True)
     
@@ -227,17 +196,29 @@ def render_admin_view():
         
         # Formulário de Criação
         with st.form("new_allowance"):
-            c_k, c_d, c_v = st.columns([2, 1, 1])
+            c_k, c_f, c_d, c_v = st.columns([2, 1.5, 1.5, 1])
             with c_k: target = st.selectbox(t('target_acc'), kids['name'].tolist() if kids is not None else [])
-            with c_d: day = st.number_input(t('day_of_month'), min_value=1, max_value=28, value=1) # Limitado a 28 para evitar problemas com Fev
+            
+            with c_f: 
+                freq_label = st.selectbox(t('frequency'), [t('freq_monthly'), t('freq_weekly')])
+                freq_val = 'monthly' if freq_label == t('freq_monthly') else 'weekly'
+            
+            with c_d:
+                if freq_val == 'monthly':
+                    day = st.number_input(t('day_of_month'), min_value=1, max_value=28, value=1)
+                else:
+                    # Mapeia dias da semana (0=Segunda, 6=Domingo)
+                    day_label = st.selectbox(t('day_of_week'), t('weekdays'))
+                    day = t('weekdays').index(day_label)
+            
             with c_v: val = st.number_input(t('value'), min_value=1.0, step=5.0)
             
             if st.form_submit_button(t('execute'), use_container_width=True):
                 kid_id = kids[kids['name']==target]['id'].values[0]
                 # Remove anterior se existir para evitar duplicidade
                 run_query("DELETE FROM allowances WHERE user_id=:u", {'u': int(kid_id)}, commit=True)
-                run_query("INSERT INTO allowances (user_id, amount, day_of_month) VALUES (:u, :a, :d)", 
-                          {'u': int(kid_id), 'a': val, 'd': day}, commit=True)
+                run_query("INSERT INTO allowances (user_id, amount, day_of_month, frequency) VALUES (:u, :a, :d, :f)", 
+                          {'u': int(kid_id), 'a': val, 'd': day, 'f': freq_val}, commit=True)
                 st.success(t('confirm'))
                 time.sleep(0.5); st.rerun()
         
@@ -245,13 +226,18 @@ def render_admin_view():
         
         # Listagem de Mesadas Ativas
         active_allowances = run_query("""
-            SELECT a.id, u.name, a.amount, a.day_of_month, a.last_paid 
+            SELECT a.id, u.name, a.amount, a.day_of_month, a.last_paid, a.frequency 
             FROM allowances a JOIN users u ON a.user_id = u.id
         """)
         if active_allowances is not None and not active_allowances.empty:
             for _, row in active_allowances.iterrows():
                 c1, c2, c3 = st.columns([3, 2, 1])
-                c1.write(f"**{row['name']}**: R$ {row['amount']:.2f} (Dia {row['day_of_month']})")
+                
+                freq_display = t('freq_monthly') if row['frequency'] == 'monthly' else t('freq_weekly')
+                day_display = f"Dia {row['day_of_month']}" if row['frequency'] == 'monthly' else t('weekdays')[int(row['day_of_month'])]
+                
+                c1.write(f"**{row['name']}**: R$ {row['amount']:.2f}")
+                c1.caption(f"{freq_display} - {day_display}")
                 c2.caption(f"Último pgto: {row['last_paid'] if row['last_paid'] else '-'}")
                 if c3.button("🗑️", key=f"del_al_{row['id']}"):
                     run_query("DELETE FROM allowances WHERE id=:id", {'id': row['id']}, commit=True)
