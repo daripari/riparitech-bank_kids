@@ -4,6 +4,7 @@ import pandas as pd
 import time
 # Importando módulos do core
 from core.database import run_query
+from core.themes import THEMES
 from core.utils import t, get_balance
 
 def render_kid_view():
@@ -20,7 +21,7 @@ def render_kid_view():
     if allowance is not None and not allowance.empty:
         day = allowance.iloc[0]['day_of_month']
         amt = allowance.iloc[0]['amount']
-        allowance_info = f"<div style='font-size:0.8rem; color:#00f2ff; margin-top:-10px; opacity:0.8;'>📅 {t('next_allowance')}: Dia {day} (R$ {amt:.0f})</div>"
+        allowance_info = f"<div style='font-size:0.8rem; color:var(--accent-color-1); margin-top:-10px; opacity:0.8;'>📅 {t('next_allowance')}: Dia {day} (R$ {amt:.0f})</div>"
 
     # --- SEÇÃO HERO: SALDO CENTRAL ---
     st.markdown(f"""
@@ -32,7 +33,7 @@ def render_kid_view():
     """, unsafe_allow_html=True)
     
     # --- NAVEGAÇÃO POR ABAS (TABS) ---
-    t_ext, t_mis, t_tra, t_cam = st.tabs([f"📜 {t('home')}", f"🎯 {t('missions')}", f"💸 {t('transfer')}", f"💱 {t('tools')}"])
+    t_ext, t_mis, t_tra, t_cam, t_prof = st.tabs([f"📜 {t('home')}", f"🎯 {t('missions')}", f"💸 {t('transfer')}", f"💱 {t('tools')}", f"👤 {t('profile_tab')}"])
     
     # --- ABA 1: EXTRATO ---
     with t_ext:
@@ -47,7 +48,7 @@ def render_kid_view():
         if hist is not None and not hist.empty:
             with st.container(border=True):
                 for _, r in hist.iterrows():
-                    cor = "#00f2ff" if r['amount'] >= 0 else "#ff4b4b"
+                    cor = "var(--accent-color-1)" if r['amount'] >= 0 else "#ff4b4b"
                     st.markdown(f"""
                     <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
                         <div style="font-size:0.9rem; color:#e0e0e0;">{r['description']}</div>
@@ -116,9 +117,37 @@ def render_kid_view():
         usd, eur = 5.05, 5.45
         c1, c2 = st.columns(2)
         with c1:
-            st.markdown(f"<div class='liquid-card' style='text-align:center;'><div class='hero-label'>DÓLAR (USD)</div><div style='font-size:1.8rem; font-weight:800; color:#00f2ff;'>US$ {balance/usd:,.2f}</div></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='liquid-card' style='text-align:center;'><div class='hero-label'>DÓLAR (USD)</div><div style='font-size:1.8rem; font-weight:800; color:var(--accent-color-1);'>US$ {balance/usd:,.2f}</div></div>", unsafe_allow_html=True)
         with c2:
-            st.markdown(f"<div class='liquid-card' style='text-align:center;'><div class='hero-label'>EURO (EUR)</div><div style='font-size:1.8rem; font-weight:800; color:#7000ff;'>€ {balance/eur:,.2f}</div></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='liquid-card' style='text-align:center;'><div class='hero-label'>EURO (EUR)</div><div style='font-size:1.8rem; font-weight:800; color:var(--accent-color-2);'>€ {balance/eur:,.2f}</div></div>", unsafe_allow_html=True)
+
+    # --- ABA 5: PERFIL ---
+    with t_prof:
+        st.markdown(f"##### {t('theme_select')}")
+        
+        theme_names = {k: v['name'] for k, v in THEMES.items()}
+        current_theme_key = st.session_state.get('user_theme', 'default')
+        
+        # Encontra o índice do tema atual para pré-selecionar no selectbox
+        current_theme_index = list(theme_names.keys()).index(current_theme_key)
+        
+        selected_theme_name = st.selectbox(
+            label=t('theme_select'), 
+            options=list(theme_names.values()), 
+            index=current_theme_index,
+            label_visibility="collapsed"
+        )
+        
+        # Encontra a chave interna do tema a partir do nome selecionado
+        selected_theme_key = [k for k, v in theme_names.items() if v == selected_theme_name][0]
+
+        if selected_theme_key != current_theme_key:
+            st.session_state.user_theme = selected_theme_key
+            run_query("UPDATE users SET theme=:theme WHERE id=:id", 
+                      {'theme': selected_theme_key, 'id': st.session_state.user_id}, commit=True)
+            st.toast(t('theme_changed'))
+            time.sleep(0.5)
+            st.rerun()
 
     # Rodapé Institucional
     st.markdown(f"<div style='text-align:center; color:#e0e0e0; opacity:0.5; font-size:0.6rem; margin-top:50px;'>BANCO RIPARITECH • v14.1 PREMIUM</div>", unsafe_allow_html=True)

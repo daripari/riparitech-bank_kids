@@ -6,6 +6,7 @@ import hashlib
 import time
 # Importando módulos do core
 from core.database import run_query
+from core.themes import THEMES
 from core.utils import t, get_family_balances
 
 def cleanup_old_tasks():
@@ -42,8 +43,7 @@ def render_admin_view():
                 st.markdown(f"""
                 <div class="liquid-card" style="text-align:center;">
                     <div class="hero-label">{row['name'].upper()}</div>
-                    <div style="font-size:1.8rem; font-weight:800; color:#00f2ff; font-family:'JetBrains Mono';">
-                        R$ {row['balance']:,.2f}
+                    <div style="font-size:1.8rem; font-weight:800; color: 
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -130,8 +130,7 @@ def render_admin_view():
                     
                     with r5:
                         # Cores para facilitar a identificação visual dos status
-                        s_colors = {'open': '#00f2ff', 'pending': '#ffa500', 'paid': '#00ff00', 'canceled': '#ff4b4b', 'failed': '#ff4b4b'}
-                        color = s_colors.get(status, '#ffffff')
+                        s_colors = {'open': 'var(--accent-color-1)', 'pending': 
                         st.markdown(f"<span style='color:{color}; font-weight:bold;'>{t(f'status_{status}')}</span>", unsafe_allow_html=True)
                     
                     with r6:
@@ -271,7 +270,13 @@ def render_admin_view():
             sel_user = st.selectbox(t('mgmt'), all_users['name'].tolist())
             if sel_user:
                 u_id = int(all_users[all_users['name'] == sel_user]['id'].values[0])
-                c_pw, c_del = st.columns(2)
+                
+                # Busca o tema atual do usuário selecionadoECT theme FROM users WHERE id=:id", params={'id': u_id})
+                current_theme_key = 'default'
+                if user_data is not None and not user_data.empty:
+                    current_theme_key = user_data.iloc[0].get('theme', 'default') or 'default'
+
+                c_pw, c_theme, c_del = st.columns([1.5, 2, 1.5])
                 with c_pw:
                     with st.popover(t('change_pass')): # Usando chave específica
                         new_p = st.text_input(t('new_pass'), type="password") # Usando chave genérica
@@ -279,6 +284,26 @@ def render_admin_view():
                             hashed_pw = hashlib.sha256(new_p.encode()).hexdigest()
                             run_query("UPDATE users SET password=:p WHERE id=:id", {'p': hashed_pw, 'id': u_id}, commit=True)
                             st.success(t('pass_changed'))
+                
+                with c_theme:
+                    theme_names = {k: v['name'] for k, v in THEMES.items()}
+                    current_theme_index = list(theme_names.keys()).index(current_theme_key)
+                    
+                    selected_theme_name = st.selectbox(
+                        label=t('theme_select'), 
+                        options=list(theme_names.values()), 
+                        index=current_theme_index,
+                        key=f"theme_sel_{u_id}"
+                    )
+                    selected_theme_key = [k for k, v in theme_names.items() if v == selected_theme_name][0]
+
+                    if selected_theme_key != current_theme_key:
+                        run_query("UPDATE users SET theme=:theme WHERE id=:id", {'theme': selected_theme_key, 'id': u_id}, commit=True)
+                        st.toast(t('theme_changed'))
+                        if u_id == st.session_state.user_id:
+                            st.session_state.user_theme = selected_theme_key
+                        time.sleep(0.5); st.rerun()
+
                 with c_del:
                     if st.button(t('delete_acc'), use_container_width=True):
                         if u_id != st.session_state.user_id:

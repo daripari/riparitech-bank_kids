@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
+from .themes import get_theme_css
 
-def apply_styles():
+def apply_styles(theme_name='default'):
     """Aplica a interface Obsidian Liquid UI v13.0 - Disruptiva e Responsiva"""
+    
+    theme_css = get_theme_css(theme_name)
+    
     st.markdown("""
     <style>
+        {theme_css}
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
         
         /* --- RESET & ESTRUTURA GLOBAL --- */
@@ -43,7 +48,7 @@ def apply_styles():
         
         .logo-text {
             font-weight: 800; font-size: 1.4rem; letter-spacing: -1.5px;
-            background: linear-gradient(135deg, #00f2ff, #7000ff);
+            background: linear-gradient(135deg, var(--accent-color-1), var(--accent-color-2));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
 
@@ -60,8 +65,8 @@ def apply_styles():
         .liquid-card:hover {
             transform: translateY(-5px);
             background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(0, 242, 255, 0.3);
-            box-shadow: 0 20px 40px rgba(0, 242, 255, 0.1);
+            border-color: color-mix(in srgb, var(--accent-color-1) 30%, transparent);
+            box-shadow: 0 20px 40px color-mix(in srgb, var(--accent-color-1) 10%, transparent);
         }
 
         /* --- TIPOGRAFIA DE SALDO --- */
@@ -92,14 +97,14 @@ def apply_styles():
             white-space: nowrap !important;
         }
         .stButton button:hover, div[data-testid="stPopover"] button:hover {
-            background: #999 !important;
-            color: #1a1a1a !important;
+            background: var(--accent-color-3) !important;
+            color: var(--accent-color-4) !important;
             transform: scale(1.02);
         }
         
         div[data-testid="stFormSubmitButton"] button {
-            background: linear-gradient(135deg, #00b8c5, #0052b9) !important;
-            color: #1a1a1a !important;
+            background: linear-gradient(135deg, var(--accent-color-1), var(--accent-color-2)) !important;
+            color: #fff !important;
             border: none !important;
             font-weight: 800 !important;
         }
@@ -122,8 +127,8 @@ def apply_styles():
             color: #e0e0e0;
         }
         .stTabs [aria-selected="true"] {
-            background: #999 !important;
-            color: #1a1a1a !important;
+            background: var(--accent-color-3) !important;
+            color: var(--accent-color-4) !important;
             border: none !important;
         }
         

@@ -23,7 +23,6 @@ st.set_page_config(
 
 # Inicializar o Banco de Dados e aplicar os estilos visuais Obsidian Liquid
 database.init_db()
-styles.apply_styles()
 
 # 2. INICIALIZAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
 if 'logged_in' not in st.session_state: 
@@ -36,6 +35,8 @@ if 'user_name' not in st.session_state:
     st.session_state.user_name = ''
 if 'user_id' not in st.session_state:
     st.session_state.user_id = None
+if 'user_theme' not in st.session_state:
+    st.session_state.user_theme = 'default'
 
 # 3. COMPONENTES DE INTERFACE (CABECALHO LIQUID)
 def render_liquid_header():
@@ -104,7 +105,8 @@ def render_login_liquid():
                         'user_id': int(df.iloc[0]['id']),
                         'user_name': df.iloc[0]['name'], 
                         'user_role': df.iloc[0]['role'],
-                        'lang': df.iloc[0]['language'] or 'pt'
+                        'lang': df.iloc[0]['language'] or 'pt',
+                        'user_theme': df.iloc[0].get('theme', 'default') or 'default'
                     })
                     st.rerun()
                 else:
@@ -154,6 +156,8 @@ def run_daily_batches():
 
 # 4. LOOP PRINCIPAL DA APLICAÇÃO
 def main():
+    # Aplica o tema do usuário a cada execução
+    styles.apply_styles(st.session_state.get('user_theme', 'default'))
     run_daily_batches()
     if not st.session_state.logged_in:
         render_login_liquid()

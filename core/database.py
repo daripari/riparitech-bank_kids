@@ -53,7 +53,8 @@ def init_db():
                 role TEXT, 
                 password TEXT, 
                 language TEXT DEFAULT 'pt'
-            );
+                , theme TEXT DEFAULT 'default'
+);
         ''', commit=True)
         
         # Tabela de Transações Financeiras (Extrato)
@@ -103,6 +104,11 @@ def init_db():
                 last_run_date DATE
             );
         ''', commit=True)
+        
+        # Patch de Migração v14.4: Adicionar suporte a temas
+        try:
+            run_query("ALTER TABLE users ADD COLUMN IF NOT EXISTS theme TEXT DEFAULT 'default';", commit=True)
+        except: pass
         
         # Patch de Migração v14.3: Adicionar suporte a frequência
         try:
