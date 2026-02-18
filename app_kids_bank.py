@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
 import hashlib
+import pandas as pd
+from datetime import datetime, timedelta
 import core.styles as styles
 import core.database as database
 import core.utils as utils
 import views.kid as views_kid
 import views.admin as views_admin
+from batch_allowance import process_allowances_for_date
 from core.database import run_query
 from core.utils import t
 
@@ -108,8 +111,50 @@ def render_login_liquid():
                     st.error("Acesso negado. Usuário ou senha incorretos.")
             st.markdown("</div>", unsafe_allow_html=True)
 
+def run_daily_batches():
+    """
+    Orquestrador de batches. Verifica a última execução e roda os processos
+    diários pendentes, incluindo um 'catch-up' para dias não executados.
+    """
+    try:
+        today = datetime.now().date()
+        batch_name = 'allowance_processor'
+        
+        # Busca a data da última execução
+        last_run_df = run_query("SELECT last_run_date FROM batch_control WHERE batch_name = :name", params={'name': batch_name})
+        
+        last_run_date = None
+        if last_run_df is not None and not last_run_df.empty:
+            last_run_date = pd.to_datetime(last_run_df.iloc[0]['last_run_date']).date()
+        
+        # Se nunca rodou, define a última execução como ontem para rodar para hoje
+        if last_run_date is None:
+            last_run_date = today - timedelta(days=1)
+            run_query("INSERT INTO batch_control (batch_name, last_run_date) VALUES (:name, :date)", 
+                      params={'name': batch_name, 'date': last_run_date}, commit=True)
+
+        # Se a última execução foi antes de hoje, processa os dias pendentes
+        if last_run_date < today:
+            days_to_process = (today - last_run_date).days
+            print(f"Batch de mesada pendente. Processando {days_to_process} dia(s).")
+            
+            for i in range(days_to_process):
+                date_to_process = last_run_date + timedelta(days=i + 1)
+                # Executa o batch de mesada para o dia específico
+                process_allowances_for_date(date_to_process)
+            
+            # Atualiza a data de controle para hoje após o sucesso
+            run_query("UPDATE batch_control SET last_run_date = :today WHERE batch_name = :name",
+                      params={'today': today, 'name': batch_name}, commit=True)
+            print("Catch-up de batches finalizado.")
+            
+    except Exception as e:
+        # Falha silenciosa para não quebrar a tela de login
+        print(f"ERRO no orquestrador de batches: {e}")
+
 # 4. LOOP PRINCIPAL DA APLICAÇÃO
 def main():
+    run_daily_batches()
     if not st.session_state.logged_in:
         render_login_liquid()
     else:

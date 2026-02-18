@@ -95,6 +95,15 @@ def init_db():
             );
         ''', commit=True)
         
+        # Tabela de Controle de Execução de Batches v14.3
+        run_query('''
+            CREATE TABLE IF NOT EXISTS batch_control (
+                id SERIAL PRIMARY KEY,
+                batch_name TEXT UNIQUE NOT NULL,
+                last_run_date DATE
+            );
+        ''', commit=True)
+        
         # Patch de Migração v14.3: Adicionar suporte a frequência
         try:
             run_query("ALTER TABLE allowances ADD COLUMN IF NOT EXISTS frequency TEXT DEFAULT 'monthly';", commit=True)
