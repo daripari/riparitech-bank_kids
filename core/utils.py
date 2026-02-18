@@ -25,6 +25,7 @@ TRANSLATIONS = {
         'panel': '🔎 Tarefas',
         'cashier': '💸 Lançamentos',
         'mgmt': '⚙️ Usuários',
+        'allowance_tab': '📅 Mesada',
         
         # Admin - Tarefas
         'tab_approvals': 'Aprovações',
@@ -52,6 +53,11 @@ TRANSLATIONS = {
         'status_canceled': 'CANCELADO',
         'status_failed': 'FALHOU',
         'btn_fine': '💸 Multar',
+        
+        # Admin - Mesada
+        'allowance_title': 'Configuração de Mesada',
+        'day_of_month': 'Dia do Pagamento (1-28)',
+        'allowance_desc': 'Mesada Automática',
         
         # Admin - Lançamentos e Usuários
         'manual_adjust': 'Ajuste de Saldo Manual',
@@ -85,6 +91,7 @@ TRANSLATIONS = {
         'insufficient': 'Saldo insuficiente.',
         'transfer_done': 'Transferência realizada com sucesso!',
         'fx_title': 'Conversão de Patrimônio',
+        'next_allowance': 'Próxima Mesada',
     },
     'en': {
         'bal': 'My Balance',
@@ -103,6 +110,7 @@ TRANSLATIONS = {
         'panel': '🔎 Tasks',
         'cashier': '💸 Entries',
         'mgmt': '⚙️ Users',
+        'allowance_tab': '📅 Allowance',
         'tab_approvals': 'Approvals',
         'tab_followup': 'Follow-up',
         'tab_new_mission': 'New Mission',
@@ -128,6 +136,9 @@ TRANSLATIONS = {
         'status_canceled': 'CANCELED',
         'status_failed': 'FAILED',
         'btn_fine': '💸 Fine',
+        'allowance_title': 'Allowance Setup',
+        'day_of_month': 'Payment Day (1-28)',
+        'allowance_desc': 'Automatic Allowance',
         'manual_adjust': 'Manual Balance Adjustment',
         'target_acc': 'Select Account',
         'op_type': 'Operation Type',
@@ -155,6 +166,7 @@ TRANSLATIONS = {
         'insufficient': 'Insufficient balance.',
         'transfer_done': 'Transfer completed successfully!',
         'fx_title': 'Wealth Conversion',
+        'next_allowance': 'Next Allowance',
     },
     'es': {
         'bal': 'Mi Saldo',
@@ -173,6 +185,7 @@ TRANSLATIONS = {
         'panel': '🔎 Tareas',
         'cashier': '💸 Movimientos',
         'mgmt': '⚙️ Usuarios',
+        'allowance_tab': '📅 Mesada',
         'tab_approvals': 'Aprobaciones',
         'tab_followup': 'Seguimiento',
         'tab_new_mission': 'Nueva Misión',
@@ -198,6 +211,9 @@ TRANSLATIONS = {
         'status_canceled': 'CANCELADO',
         'status_failed': 'FALLIDO',
         'btn_fine': '💸 Multar',
+        'allowance_title': 'Configuración de Mesada',
+        'day_of_month': 'Día de Pago (1-28)',
+        'allowance_desc': 'Mesada Automática',
         'manual_adjust': 'Ajuste Manual de Saldo',
         'target_acc': 'Elegir Cuenta',
         'op_type': 'Tipo de Operación',
@@ -225,6 +241,7 @@ TRANSLATIONS = {
         'insufficient': 'Saldo insuficiente.',
         'transfer_done': '¡Transferencia realizada!',
         'fx_title': 'Conversión de Patrimonio',
+        'next_allowance': 'Próxima Mesada',
     }
 }
 

@@ -83,6 +83,17 @@ def init_db():
             );
         ''', commit=True)
         
+        # Tabela de Mesadas (Agendamento Automático) v14.2
+        run_query('''
+            CREATE TABLE IF NOT EXISTS allowances (
+                id SERIAL PRIMARY KEY, 
+                user_id INTEGER, 
+                amount REAL, 
+                day_of_month INTEGER, 
+                last_paid DATE
+            );
+        ''', commit=True)
+        
         # Patch de Migração v14.1: Garantir que completed_at existe em tabelas antigas
         try:
             run_query("ALTER TABLE chores ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP;", commit=True)

@@ -14,11 +14,20 @@ def render_kid_view():
     uid = st.session_state.user_id
     balance = get_balance(uid)
     
+    # Verifica se tem mesada configurada
+    allowance = run_query("SELECT amount, day_of_month FROM allowances WHERE user_id=:uid", {'uid': uid})
+    allowance_info = ""
+    if allowance is not None and not allowance.empty:
+        day = allowance.iloc[0]['day_of_month']
+        amt = allowance.iloc[0]['amount']
+        allowance_info = f"<div style='font-size:0.8rem; color:#00f2ff; margin-top:-10px; opacity:0.8;'>📅 {t('next_allowance')}: Dia {day} (R$ {amt:.0f})</div>"
+
     # --- SEÇÃO HERO: SALDO CENTRAL ---
     st.markdown(f"""
     <div class="hero-balance">
         <div class="hero-label">{t('bal')}</div>
         <div class="hero-value">R$ {balance:,.2f}</div>
+        {allowance_info}
     </div>
     """, unsafe_allow_html=True)
     
