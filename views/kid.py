@@ -128,6 +128,10 @@ def render_kid_view():
         theme_names = {k: v['name'] for k, v in THEMES.items()}
         current_theme_key = st.session_state.get('user_theme', 'default')
         
+        # Fallback de segurança: se o tema salvo não existir, usa default
+        if current_theme_key not in theme_names:
+            current_theme_key = 'default'
+        
         # Encontra o índice do tema atual para pré-selecionar no selectbox
         current_theme_index = list(theme_names.keys()).index(current_theme_key)
         
@@ -135,7 +139,8 @@ def render_kid_view():
             label=t('theme_select'), 
             options=list(theme_names.values()), 
             index=current_theme_index,
-            label_visibility="collapsed"
+            label_visibility="collapsed",
+            key="kid_theme_selector"
         )
         
         # Encontra a chave interna do tema a partir do nome selecionado

@@ -290,6 +290,11 @@ def render_admin_view():
                 
                 with c_theme:
                     theme_names = {k: v['name'] for k, v in THEMES.items()}
+                    
+                    # Fallback de segurança se o tema do usuário for inválido
+                    if current_theme_key not in theme_names:
+                        current_theme_key = 'default'
+                        
                     current_theme_index = list(theme_names.keys()).index(current_theme_key)
                     
                     selected_theme_name = st.selectbox(

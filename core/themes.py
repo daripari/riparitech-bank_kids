@@ -2,43 +2,69 @@
 
 THEMES = {
     'default': {
-        'name': 'Cyber Blue',
-        'accent1': '#00f2ff',
-        'accent2': '#7000ff',
-        'accent3': '#999',
-        'accent4': '#1a1a1a',
+        'name': 'Obsidian (Padrão)',
+        'css': """
+            :root {
+                --accent-color-1: #00d2ff;
+                --accent-color-2: #3a7bd5;
+                --accent-color-3: #ffffff;
+                --accent-color-4: #000000;
+            }
+            .stApp { background: radial-gradient(circle at 50% -20%, #1a1a2e 0%, #020203 80%) !important; }
+        """
     },
-    'neon_pink': {
-        'name': 'Neon Pink',
-        'accent1': '#ff00ff',
-        'accent2': '#ff6ec7',
-        'accent3': '#ff6ec7',
-        'accent4': '#1a1a1a',
+    'cyberpunk': {
+        'name': 'Cyberpunk Neon',
+        'css': """
+            :root {
+                --accent-color-1: #ff00ff;
+                --accent-color-2: #00ffff;
+                --accent-color-3: #f0f0f0;
+                --accent-color-4: #121212;
+            }
+            .stApp { background: radial-gradient(circle at 50% -20%, #2b002b 0%, #050505 80%) !important; }
+        """
     },
-    'emerald_green': {
-        'name': 'Emerald Green',
-        'accent1': '#00ff7f',
-        'accent2': '#00c853',
-        'accent3': '#00c853',
-        'accent4': '#ffffff',
+    'nature': {
+        'name': 'Floresta Mística',
+        'css': """
+            :root {
+                --accent-color-1: #00ff87;
+                --accent-color-2: #60efff;
+                --accent-color-3: #ffffff;
+                --accent-color-4: #002200;
+            }
+            .stApp { background: radial-gradient(circle at 50% -20%, #0f2027 0%, #203a43 80%) !important; }
+        """
     },
-    'solar_orange': {
-        'name': 'Solar Orange',
-        'accent1': '#ffab00',
-        'accent2': '#ff6d00',
-        'accent3': '#ffab00',
-        'accent4': '#1a1a1a',
+    'sunset': {
+        'name': 'Pôr do Sol',
+        'css': """
+            :root {
+                --accent-color-1: #ff512f;
+                --accent-color-2: #dd2476;
+                --accent-color-3: #ffffff;
+                --accent-color-4: #2e0e0e;
+            }
+            .stApp { background: radial-gradient(circle at 50% -20%, #2c3e50 0%, #000000 80%) !important; }
+        """
+    },
+    'ocean': {
+        'name': 'Profundezas do Oceano',
+        'css': """
+            :root {
+                --accent-color-1: #2b5876;
+                --accent-color-2: #4e4376;
+                --accent-color-3: #e0e0e0;
+                --accent-color-4: #000011;
+            }
+            .stApp { background: radial-gradient(circle at 50% -20%, #141e30 0%, #243b55 80%) !important; }
+        """
     }
 }
 
-def get_theme_css(theme_name='default'):
-    """Gera o bloco CSS com as variáveis de cor para o tema selecionado."""
-    theme = THEMES.get(theme_name, THEMES['default'])
-    return f"""
-    :root {{
-        --accent-color-1: {theme['accent1']};
-        --accent-color-2: {theme['accent2']};
-        --accent-color-3: {theme['accent3']};
-        --accent-color-4: {theme['accent4']};
-    }}
-    """
+def get_theme_css(theme_key):
+    """Retorna o CSS específico do tema ou o default se não encontrado"""
+    if theme_key not in THEMES:
+        theme_key = 'default'
+    return THEMES[theme_key]['css']
