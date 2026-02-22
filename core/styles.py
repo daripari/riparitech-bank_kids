@@ -128,8 +128,11 @@ def apply_styles(theme_name='default'):
         }}
         .stTabs [aria-selected="true"] {{
             background: var(--accent-color-3) !important;
-            color: var(--accent-color-4) !important;
+            color: #000000 !important;
             border: none !important;
+        }}
+        .stTabs [aria-selected="true"] p {{
+            color: #000000 !important;
         }}
         
         /* --- POPOVER (MULTAS) --- */
