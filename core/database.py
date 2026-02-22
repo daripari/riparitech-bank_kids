@@ -125,3 +125,11 @@ def init_db():
         try:
             run_query("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_config TEXT DEFAULT 'default,default,default';", commit=True)
         except: pass
+        
+        # Patch de Migração v14.6: Aumentar precisão numérica (REAL -> DOUBLE PRECISION)
+        # Corrige problema de arredondamento em saldos muito altos (milhões)
+        try:
+            run_query("ALTER TABLE transactions ALTER COLUMN amount TYPE DOUBLE PRECISION;", commit=True)
+            run_query("ALTER TABLE chores ALTER COLUMN reward TYPE DOUBLE PRECISION;", commit=True)
+            run_query("ALTER TABLE allowances ALTER COLUMN amount TYPE DOUBLE PRECISION;", commit=True)
+        except: pass
