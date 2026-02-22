@@ -114,13 +114,42 @@ def render_kid_view():
 
     # --- ABA 4: CÂMBIO ---
     with t_cam:
-        st.markdown(f"##### {t('fx')}")
-        usd, eur = 5.05, 5.45
-        c1, c2 = st.columns(2)
-        with c1:
-            st.markdown(f"<div class='liquid-card' style='text-align:center;'><div class='hero-label'>DÓLAR (USD)</div><div style='font-size:1.8rem; font-weight:800; color:var(--accent-color-1);'>US$ {balance/usd:,.2f}</div></div>", unsafe_allow_html=True)
-        with c2:
-            st.markdown(f"<div class='liquid-card' style='text-align:center;'><div class='hero-label'>EURO (EUR)</div><div style='font-size:1.8rem; font-weight:800; color:var(--accent-color-2);'>€ {balance/eur:,.2f}</div></div>", unsafe_allow_html=True)
+        st.markdown(f"##### {t('fx_title')}")
+        
+        # Taxas de câmbio (1 unidade da moeda estrangeira = X BRL)
+        rates = {
+            'EUR': {'name': 'EURO', 'rate': 5.45, 'symbol': '€'},
+            'GBP': {'name': 'LIBRA ESTERLINA', 'rate': 6.60, 'symbol': '£'},
+            'CHF': {'name': 'FRANCO SUÍÇO', 'rate': 5.60, 'symbol': 'CHF'},
+            'USD': {'name': 'DÓLAR AMERICANO', 'rate': 5.05, 'symbol': 'US$'},
+            'CAD': {'name': 'DÓLAR CANADENSE', 'rate': 3.70, 'symbol': 'C$'},
+            'AUD': {'name': 'DÓLAR AUSTRALIANO', 'rate': 3.40, 'symbol': 'A$'},
+            'CNY': {'name': 'YUAN CHINÊS', 'rate': 0.70, 'symbol': '¥'},
+            'UYU': {'name': 'PESO URUGUAIO', 'rate': 0.13, 'symbol': '$U'},
+            'INR': {'name': 'RUPIA INDIANA', 'rate': 0.064, 'symbol': '₹'},
+            'JPY': {'name': 'IENE JAPONÊS', 'rate': 0.032, 'symbol': '¥'},
+            'ARS': {'name': 'PESO ARGENTINO', 'rate': 0.0057, 'symbol': '$'},
+            'KRW': {'name': 'WON SUL-COREANO', 'rate': 0.0037, 'symbol': '₩'},
+        }
+
+        # Layout em 3 colunas
+        col_definitions = st.columns(3)
+        # Repete a lista de colunas para criar um grid
+        cols = col_definitions * (len(rates) // 3 + 1) 
+
+        for i, (code, data) in enumerate(rates.items()):
+            with cols[i]:
+                converted_value = balance / data['rate']
+                # Alterna as cores para variedade visual
+                color = 'var(--accent-color-1)' if i % 2 == 0 else 'var(--accent-color-2)'
+                st.markdown(f"""
+                <div class='liquid-card' style='text-align:center;'>
+                    <div class='hero-label'>{data['name']} ({code})</div>
+                    <div style='font-size:1.8rem; font-weight:800; color:{color}; font-family: "JetBrains Mono", monospace;'>
+                        {data['symbol']} {converted_value:,.2f}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
 
     # --- ABA 5: PERFIL ---
     with t_prof:
