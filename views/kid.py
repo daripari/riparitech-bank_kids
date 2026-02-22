@@ -130,6 +130,12 @@ def render_kid_view():
             'JPY': {'name': 'IENE JAPONÊS', 'rate': 0.032, 'symbol': '¥'},
             'ARS': {'name': 'PESO ARGENTINO', 'rate': 0.0057, 'symbol': '$'},
             'KRW': {'name': 'WON SUL-COREANO', 'rate': 0.0037, 'symbol': '₩'},
+            'CLP': {'name': 'PESO CHILENO', 'rate': 0.0053, 'symbol': '$'},
+            'MXN': {'name': 'PESO MEXICANO', 'rate': 0.30, 'symbol': '$'},
+            'CUP': {'name': 'PESO CUBANO', 'rate': 0.21, 'symbol': '$'},
+            'VES': {'name': 'BOLÍVAR VENEZUELANO', 'rate': 0.14, 'symbol': 'Bs.'},
+            'BOB': {'name': 'BOLIVIANO', 'rate': 0.73, 'symbol': 'Bs.'},
+            'COP': {'name': 'PESO COLOMBIANO', 'rate': 0.0013, 'symbol': '$'},
         }
 
         # Layout em 3 colunas
