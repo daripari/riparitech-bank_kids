@@ -8,6 +8,7 @@ import time
 from core.database import run_query
 from core.themes import THEMES
 from core.utils import t, get_family_balances
+from core.avatars import render_avatar
 
 def cleanup_old_tasks():
     """
@@ -39,12 +40,18 @@ def render_admin_view():
     if df_saldos is not None and not df_saldos.empty:
         cols = st.columns(len(df_saldos))
         for i, row in df_saldos.iterrows():
+            avatar_html = render_avatar(row.get('avatar_config', 'default,default,default'), size=50)
             with cols[i]:
                 st.markdown(f"""
                 <div class="liquid-card" style="text-align:center;">
-                    <div class="hero-label">{row['name'].upper()}</div>
-                    <div style="font-size:1.8rem; font-weight:800; color:var(--accent-color-1); font-family:'JetBrains Mono';">
-                        R$ {row['balance']:,.2f}
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        {avatar_html}
+                        <div>
+                            <div class="hero-label" style="text-align:left;">{row['name'].upper()}</div>
+                            <div style="font-size:1.5rem; font-weight:800; color:var(--accent-color-1); font-family:'JetBrains Mono'; text-align:left;">
+                                R$ {row['balance']:,.2f}
+                            </div>
+                        </div>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)

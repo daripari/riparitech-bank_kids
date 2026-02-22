@@ -100,11 +100,16 @@ TRANSLATIONS = {
         'send_now': 'ENVIAR AGORA 💸',
         'insufficient': 'Saldo insuficiente.',
         'transfer_done': 'Transferência realizada com sucesso!',
-        'profile_tab': '👤 Perfil',
+        'profile_tab': 'Avatar',
         'theme_select': '🎨 Tema da Interface',
         'theme_changed': 'Tema atualizado!',
         'fx_title': 'Conversão de Patrimônio',
         'next_allowance': 'Próxima Mesada',
+        'avatar_builder': 'Monte seu Avatar',
+        'face': 'Rosto',
+        'hair': 'Cabelo',
+        'clothes': 'Roupa',
+        'save_avatar': 'Salvar Avatar',
     },
     'en': {
         'bal': 'My Balance',
@@ -188,11 +193,16 @@ TRANSLATIONS = {
         'send_now': 'SEND NOW 💸',
         'insufficient': 'Insufficient balance.',
         'transfer_done': 'Transfer completed successfully!',
-        'profile_tab': '👤 Profile',
+        'profile_tab': 'Avatar',
         'theme_select': '🎨 Interface Theme',
         'theme_changed': 'Theme updated!',
         'fx_title': 'Wealth Conversion',
         'next_allowance': 'Next Allowance',
+        'avatar_builder': 'Build your Avatar',
+        'face': 'Face',
+        'hair': 'Hair',
+        'clothes': 'Clothes',
+        'save_avatar': 'Save Avatar',
     },
     'es': {
         'bal': 'Mi Saldo',
@@ -276,11 +286,16 @@ TRANSLATIONS = {
         'send_now': 'ENVIAR AHORA 💸',
         'insufficient': 'Saldo insuficiente.',
         'transfer_done': '¡Transferencia realizada!',
-        'profile_tab': '👤 Perfil',
+        'profile_tab': 'Avatar',
         'theme_select': '🎨 Tema de la Interfaz',
         'theme_changed': '¡Tema actualizado!',
         'fx_title': 'Conversión de Patrimonio',
         'next_allowance': 'Próxima Mesada',
+        'avatar_builder': 'Crea tu Avatar',
+        'face': 'Cara',
+        'hair': 'Pelo',
+        'clothes': 'Ropa',
+        'save_avatar': 'Guardar Avatar',
     }
 }
 
@@ -296,10 +311,10 @@ def get_balance(uid):
 
 def get_family_balances():
     query = """
-        SELECT u.id, u.name, COALESCE(SUM(t.amount), 0) as balance 
+        SELECT u.id, u.name, u.avatar_config, COALESCE(SUM(t.amount), 0) as balance 
         FROM users u 
         LEFT JOIN transactions t ON u.id = t.user_id 
         WHERE u.role = 'user' 
-        GROUP BY u.name, u.id ORDER BY u.name
+        GROUP BY u.id, u.name, u.avatar_config ORDER BY u.name
     """
     return run_query(query)

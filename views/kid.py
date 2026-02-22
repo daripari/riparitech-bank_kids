@@ -6,6 +6,7 @@ import time
 from core.database import run_query
 from core.themes import THEMES
 from core.utils import t, get_balance
+from core.avatars import render_avatar, get_avatar_part_names
 
 def render_kid_view():
     """
@@ -123,33 +124,55 @@ def render_kid_view():
 
     # --- ABA 5: PERFIL ---
     with t_prof:
-        st.markdown(f"##### {t('theme_select')}")
+        st.markdown(f"### {t('avatar_builder')}")
+
+        # Layout: Coluna para o preview, coluna para as opções
+        col_preview, col_options = st.columns([1, 1.5])
+
+        with col_options:
+            with st.form("avatar_form"):
+                # Carrega a configuração atual
+                current_config = st.session_state.get('user_avatar_config', 'default,default,default').split(',')
+                
+                # Seletores para cada parte do avatar
+                face_options = get_avatar_part_names('face')
+                hair_options = get_avatar_part_names('hair')
+                clothes_options = get_avatar_part_names('clothes')
+
+                selected_face = st.selectbox(t('face'), face_options, index=face_options.index(current_config[0]))
+                selected_hair = st.selectbox(t('hair'), hair_options, index=hair_options.index(current_config[1]))
+                selected_clothes = st.selectbox(t('clothes'), clothes_options, index=clothes_options.index(current_config[2]))
+
+                if st.form_submit_button(f"💾 {t('save_avatar')}", use_container_width=True):
+                    new_config_string = f"{selected_face},{selected_hair},{selected_clothes}"
+                    
+                    # Atualiza o banco de dados
+                    run_query("UPDATE users SET avatar_config=:config WHERE id=:id", 
+                              {'config': new_config_string, 'id': st.session_state.user_id}, commit=True)
+                    
+                    # Atualiza o estado da sessão
+                    st.session_state.user_avatar_config = new_config_string
+                    
+                    st.toast("Avatar salvo com sucesso! ✨")
+                    time.sleep(0.5)
+                    st.rerun()
+
+        with col_preview:
+            st.markdown("<div style='display: flex; justify-content: center; align-items: center; height: 100%;'>", unsafe_allow_html=True)
+            st.markdown(render_avatar(st.session_state.user_avatar_config, size=200), unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
         
+        st.markdown("---")
+        st.markdown(f"##### {t('theme_select')}")
         theme_names = {k: v['name'] for k, v in THEMES.items()}
         current_theme_key = st.session_state.get('user_theme', 'default')
-        
-        # Fallback de segurança: se o tema salvo não existir, usa default
-        if current_theme_key not in theme_names:
-            current_theme_key = 'default'
-        
-        # Encontra o índice do tema atual para pré-selecionar no selectbox
+        if current_theme_key not in theme_names: current_theme_key = 'default'
         current_theme_index = list(theme_names.keys()).index(current_theme_key)
-        
-        selected_theme_name = st.selectbox(
-            label=t('theme_select'), 
-            options=list(theme_names.values()), 
-            index=current_theme_index,
-            label_visibility="collapsed",
-            key="kid_theme_selector"
-        )
-        
-        # Encontra a chave interna do tema a partir do nome selecionado
+        selected_theme_name = st.selectbox(label=t('theme_select'), options=list(theme_names.values()), index=current_theme_index, label_visibility="collapsed", key="kid_theme_selector")
         selected_theme_key = [k for k, v in theme_names.items() if v == selected_theme_name][0]
-
         if selected_theme_key != current_theme_key:
             st.session_state.user_theme = selected_theme_key
-            run_query("UPDATE users SET theme=:theme WHERE id=:id", 
-                      {'theme': selected_theme_key, 'id': st.session_state.user_id}, commit=True)
+            run_query("UPDATE users SET theme=:theme WHERE id=:id", {'theme': selected_theme_key, 'id': st.session_state.user_id}, commit=True)
             st.toast(t('theme_changed'))
             time.sleep(0.5)
             st.rerun()

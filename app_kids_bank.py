@@ -37,6 +37,8 @@ if 'user_id' not in st.session_state:
     st.session_state.user_id = None
 if 'user_theme' not in st.session_state:
     st.session_state.user_theme = 'default'
+if 'user_avatar_config' not in st.session_state:
+    st.session_state.user_avatar_config = 'default,default,default'
 
 # 3. COMPONENTES DE INTERFACE (CABECALHO LIQUID)
 def render_liquid_header():
@@ -107,7 +109,8 @@ def render_login_liquid():
                         'user_role': df.iloc[0]['role'],
                         'lang': df.iloc[0]['language'] or 'pt',
                         'user_theme': df.iloc[0].get('theme', 'default') or 'default'
-                    })
+                        , 'user_avatar_config': df.iloc[0].get('avatar_config', 'default,default,default') or 'default,default,default'
+                    }) # Adiciona a config do avatar
                     st.rerun()
                 else:
                     st.error("Acesso negado. Usuário ou senha incorretos.")

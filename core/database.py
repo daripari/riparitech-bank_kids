@@ -53,7 +53,8 @@ def init_db():
                 role TEXT, 
                 password TEXT, 
                 language TEXT DEFAULT 'pt'
-                , theme TEXT DEFAULT 'default'
+                , theme TEXT DEFAULT 'default',
+                avatar_config TEXT DEFAULT 'default,default,default'
 );
         ''', commit=True)
         
@@ -118,4 +119,9 @@ def init_db():
         # Patch de Migração v14.1: Garantir que completed_at existe em tabelas antigas
         try:
             run_query("ALTER TABLE chores ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP;", commit=True)
+        except: pass
+        
+        # Patch de Migração v14.5: Adicionar suporte a avatares
+        try:
+            run_query("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_config TEXT DEFAULT 'default,default,default';", commit=True)
         except: pass
