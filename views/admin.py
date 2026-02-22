@@ -283,7 +283,7 @@ def render_admin_view():
                 u_id = int(all_users[all_users['name'] == sel_user]['id'].values[0])
                 
                 # Busca o tema atual do usuário selecionado
-                user_data = run_query("SELECT theme FROM users WHERE id=:id", params={'id': u_id})
+                user_data = run_query("SELECT theme, background_url FROM users WHERE id=:id", params={'id': u_id})
                 current_theme_key = 'default'
                 if user_data is not None and not user_data.empty:
                     current_theme_key = user_data.iloc[0].get('theme', 'default') or 'default'
@@ -320,6 +320,17 @@ def render_admin_view():
                         if u_id == st.session_state.user_id:
                             st.session_state.user_theme = selected_theme_key
                         time.sleep(0.5); st.rerun()
+                        
+                    # Background selection
+                    current_bg = user_data.iloc[0].get('background_url') or ""
+                    new_bg = st.text_input(f"{t('bg_image_label')}", value=current_bg, placeholder=t('bg_image_placeholder'), key=f"bg_{u_id}")
+                    if new_bg != current_bg:
+                         val_to_save = new_bg if new_bg.strip() else None
+                         run_query("UPDATE users SET background_url=:bg WHERE id=:id", {'bg': val_to_save, 'id': u_id}, commit=True)
+                         if u_id == st.session_state.user_id:
+                             st.session_state.user_background = val_to_save
+                         st.toast(t('bg_updated'))
+                         time.sleep(0.5); st.rerun()
 
                 with c_del:
                     if st.button(t('delete_acc'), use_container_width=True):

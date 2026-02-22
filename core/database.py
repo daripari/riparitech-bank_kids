@@ -133,3 +133,8 @@ def init_db():
             run_query("ALTER TABLE chores ALTER COLUMN reward TYPE DOUBLE PRECISION;", commit=True)
             run_query("ALTER TABLE allowances ALTER COLUMN amount TYPE DOUBLE PRECISION;", commit=True)
         except: pass
+        
+        # Patch de Migração v14.7: Adicionar suporte a imagem de fundo personalizada
+        try:
+            run_query("ALTER TABLE users ADD COLUMN IF NOT EXISTS background_url TEXT;", commit=True)
+        except: pass

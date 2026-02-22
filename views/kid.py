@@ -220,6 +220,19 @@ def render_kid_view():
             st.toast(t('theme_changed'))
             time.sleep(0.5)
             st.rerun()
+            
+        st.markdown("---")
+        st.markdown(f"##### {t('bg_image_label')}")
+        current_bg = st.session_state.get('user_background') or ""
+        new_bg = st.text_input(t('bg_image_label'), value=current_bg, placeholder=t('bg_image_placeholder'), label_visibility="collapsed")
+        
+        if new_bg != current_bg:
+            val_to_save = new_bg if new_bg.strip() else None
+            run_query("UPDATE users SET background_url=:bg WHERE id=:id", {'bg': val_to_save, 'id': st.session_state.user_id}, commit=True)
+            st.session_state.user_background = val_to_save
+            st.toast(t('bg_updated'))
+            time.sleep(0.5)
+            st.rerun()
 
     # Rodapé Institucional
     st.markdown(f"<div style='text-align:center; color:#e0e0e0; opacity:0.5; font-size:0.6rem; margin-top:50px;'>BANCO RIPARITECH • v14.1 PREMIUM</div>", unsafe_allow_html=True)

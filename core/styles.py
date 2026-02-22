@@ -2,10 +2,21 @@
 import streamlit as st
 from .themes import get_theme_css
 
-def apply_styles(theme_name='default'):
+def apply_styles(theme_name='default', background_url=None):
     """Aplica a interface Obsidian Liquid UI v13.0 - Disruptiva e Responsiva"""
     
     theme_css = get_theme_css(theme_name)
+    
+    custom_bg_css = ""
+    if background_url and background_url.strip():
+        custom_bg_css = f"""
+        .stApp {{
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.8)), url('{background_url}') !important;
+            background-size: cover !important;
+            background-position: center !important;
+            background-attachment: fixed !important;
+        }}
+        """
     
     st.markdown(f"""
     <style>
@@ -157,5 +168,6 @@ def apply_styles(theme_name='default'):
         [data-testid="stPopoverBody"] button:hover * {{
             color: #1a1a1a !important;
         }}
+        {custom_bg_css}
     </style>
     """, unsafe_allow_html=True)

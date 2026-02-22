@@ -110,6 +110,9 @@ TRANSLATIONS = {
         'hair': 'Cabelo',
         'clothes': 'Roupa',
         'save_avatar': 'Salvar Avatar',
+        'bg_image_label': 'Imagem de Fundo (URL)',
+        'bg_image_placeholder': 'Cole o link da imagem aqui...',
+        'bg_updated': 'Fundo atualizado!',
     },
     'en': {
         'bal': 'My Balance',
@@ -203,6 +206,9 @@ TRANSLATIONS = {
         'hair': 'Hair',
         'clothes': 'Clothes',
         'save_avatar': 'Save Avatar',
+        'bg_image_label': 'Background Image (URL)',
+        'bg_image_placeholder': 'Paste image link here...',
+        'bg_updated': 'Background updated!',
     },
     'es': {
         'bal': 'Mi Saldo',
@@ -296,6 +302,9 @@ TRANSLATIONS = {
         'hair': 'Pelo',
         'clothes': 'Ropa',
         'save_avatar': 'Guardar Avatar',
+        'bg_image_label': 'Imagen de Fondo (URL)',
+        'bg_image_placeholder': 'Pega el enlace de la imagen aquí...',
+        'bg_updated': '¡Fondo actualizado!',
     },
     'fr': {
         'bal': 'Mon Solde',
@@ -389,6 +398,9 @@ TRANSLATIONS = {
         'hair': 'Cheveux',
         'clothes': 'Vêtements',
         'save_avatar': 'Enregistrer l\'Avatar',
+        'bg_image_label': 'Image de fond (URL)',
+        'bg_image_placeholder': 'Collez le lien de l\'image ici...',
+        'bg_updated': 'Arrière-plan mis à jour !',
     },
     'de': {
         'bal': 'Mein Kontostand',
@@ -482,6 +494,9 @@ TRANSLATIONS = {
         'hair': 'Haare',
         'clothes': 'Kleidung',
         'save_avatar': 'Avatar speichern',
+        'bg_image_label': 'Hintergrundbild (URL)',
+        'bg_image_placeholder': 'Bildlink hier einfügen...',
+        'bg_updated': 'Hintergrund aktualisiert!',
     },
     'it': {
         'bal': 'Il Mio Saldo',
@@ -575,6 +590,9 @@ TRANSLATIONS = {
         'hair': 'Capelli',
         'clothes': 'Vestiti',
         'save_avatar': 'Salva Avatar',
+        'bg_image_label': 'Immagine di Sfondo (URL)',
+        'bg_image_placeholder': 'Incolla il link dell\'immagine qui...',
+        'bg_updated': 'Sfondo aggiornato!',
     },
     'ja': {
         'bal': '残高',
@@ -668,6 +686,9 @@ TRANSLATIONS = {
         'hair': '髪',
         'clothes': '服',
         'save_avatar': 'アバターを保存',
+        'bg_image_label': '背景画像 (URL)',
+        'bg_image_placeholder': 'ここに画像リンクを貼り付け...',
+        'bg_updated': '背景が更新されました！',
     },
     'zh': {
         'bal': '我的余额',
@@ -761,6 +782,9 @@ TRANSLATIONS = {
         'hair': '发型',
         'clothes': '衣服',
         'save_avatar': '保存头像',
+        'bg_image_label': '背景图片 (URL)',
+        'bg_image_placeholder': '在此粘贴图片链接...',
+        'bg_updated': '背景已更新！',
     },
     'hi': {
         'bal': 'मेरा बैलेंस',
@@ -854,6 +878,9 @@ TRANSLATIONS = {
         'hair': 'बाल',
         'clothes': 'कपड़े',
         'save_avatar': 'अवतार सहेजें',
+        'bg_image_label': 'पृष्ठभूमि छवि (URL)',
+        'bg_image_placeholder': 'छवि लिंक यहाँ पेस्ट करें...',
+        'bg_updated': 'पृष्ठभूमि अपडेट की गई!',
     }
 }
 

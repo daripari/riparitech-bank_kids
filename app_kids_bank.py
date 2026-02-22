@@ -39,6 +39,8 @@ if 'user_theme' not in st.session_state:
     st.session_state.user_theme = 'default'
 if 'user_avatar_config' not in st.session_state:
     st.session_state.user_avatar_config = 'default,default,default'
+if 'user_background' not in st.session_state:
+    st.session_state.user_background = None
 
 # 3. COMPONENTES DE INTERFACE (CABECALHO LIQUID)
 def render_liquid_header():
@@ -112,6 +114,7 @@ def render_login_liquid():
                         'user_role': df.iloc[0]['role'],
                         'lang': df.iloc[0]['language'] or 'pt',
                         'user_theme': df.iloc[0].get('theme', 'default') or 'default'
+                        , 'user_background': df.iloc[0].get('background_url')
                     })
                     
                     # Tratamento seguro para o avatar config
@@ -169,7 +172,7 @@ def run_daily_batches():
 # 4. LOOP PRINCIPAL DA APLICAÇÃO
 def main():
     # Aplica o tema do usuário a cada execução
-    styles.apply_styles(st.session_state.get('user_theme', 'default'))
+    styles.apply_styles(st.session_state.get('user_theme', 'default'), st.session_state.get('user_background'))
     run_daily_batches()
     if not st.session_state.logged_in:
         render_login_liquid()
