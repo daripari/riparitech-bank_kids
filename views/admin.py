@@ -322,17 +322,33 @@ def render_admin_view():
                         time.sleep(0.5); st.rerun()
                         
                     # Background selection
-                    raw_bg = user_data.iloc[0].get('background_url')
-                    current_bg = raw_bg if isinstance(raw_bg, str) else ""
-                    
-                    new_bg = st.text_input(f"{t('bg_image_label')}", value=current_bg, placeholder=t('bg_image_placeholder'), key=f"bg_{u_id}")
-                    if new_bg != current_bg:
-                         val_to_save = new_bg if new_bg.strip() else None
-                         run_query("UPDATE users SET background_url=:bg WHERE id=:id", {'bg': val_to_save, 'id': u_id}, commit=True)
-                         if u_id == st.session_state.user_id:
-                             st.session_state.user_background = val_to_save
-                         st.toast(t('bg_updated'))
-                         time.sleep(0.5); st.rerun()
+                    uploaded_file = st.file_uploader(
+                        t('bg_image_label'), 
+                        type=['png', 'jpg', 'jpeg', 'gif', 'webp'], 
+                        key=f"bg_upload_{u_id}"
+                    )
+
+                    if uploaded_file is not None:
+                        import base64
+                        file_bytes = uploaded_file.getvalue()
+                        base64_encoded = base64.b64encode(file_bytes).decode()
+                        data_uri = f"data:{uploaded_file.type};base64,{base64_encoded}"
+
+                        run_query("UPDATE users SET background_url=:bg WHERE id=:id", {'bg': data_uri, 'id': u_id}, commit=True)
+                        if u_id == st.session_state.user_id:
+                            st.session_state.user_background = data_uri
+                        st.toast(t('bg_updated'))
+                        time.sleep(0.5)
+                        st.rerun()
+
+                    if user_data.iloc[0].get('background_url'):
+                        if st.button(f"🗑️ {t('remove_bg')}", key=f"rm_bg_{u_id}"):
+                            run_query("UPDATE users SET background_url=NULL WHERE id=:id", {'id': u_id}, commit=True)
+                            if u_id == st.session_state.user_id:
+                                st.session_state.user_background = None
+                            st.toast(t('bg_removed'))
+                            time.sleep(0.5)
+                            st.rerun()
 
                 with c_del:
                     if st.button(t('delete_acc'), use_container_width=True):

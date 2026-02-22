@@ -220,19 +220,36 @@ def render_kid_view():
             st.toast(t('theme_changed'))
             time.sleep(0.5)
             st.rerun()
-            
+
         st.markdown("---")
         st.markdown(f"##### {t('bg_image_label')}")
-        current_bg = st.session_state.get('user_background') or ""
-        new_bg = st.text_input(t('bg_image_label'), value=current_bg, placeholder=t('bg_image_placeholder'), label_visibility="collapsed")
         
-        if new_bg != current_bg:
-            val_to_save = new_bg if new_bg.strip() else None
-            run_query("UPDATE users SET background_url=:bg WHERE id=:id", {'bg': val_to_save, 'id': st.session_state.user_id}, commit=True)
-            st.session_state.user_background = val_to_save
+        uploaded_file = st.file_uploader(
+            t('bg_image_label'), 
+            type=['png', 'jpg', 'jpeg', 'gif', 'webp'], 
+            label_visibility="collapsed",
+            key="bg_uploader_kid"
+        )
+
+        if uploaded_file is not None:
+            import base64
+            file_bytes = uploaded_file.getvalue()
+            base64_encoded = base64.b64encode(file_bytes).decode()
+            data_uri = f"data:{uploaded_file.type};base64,{base64_encoded}"
+
+            run_query("UPDATE users SET background_url=:bg WHERE id=:id", {'bg': data_uri, 'id': st.session_state.user_id}, commit=True)
+            st.session_state.user_background = data_uri
             st.toast(t('bg_updated'))
             time.sleep(0.5)
             st.rerun()
+
+        if st.session_state.get('user_background'):
+            if st.button(f"🗑️ {t('remove_bg')}", use_container_width=True, key="remove_bg_kid"):
+                run_query("UPDATE users SET background_url=NULL WHERE id=:id", {'id': st.session_state.user_id}, commit=True)
+                st.session_state.user_background = None
+                st.toast(t('bg_removed'))
+                time.sleep(0.5)
+                st.rerun()
 
     # Rodapé Institucional
     st.markdown(f"<div style='text-align:center; color:#e0e0e0; opacity:0.5; font-size:0.6rem; margin-top:50px;'>BANCO RIPARITECH • v14.1 PREMIUM</div>", unsafe_allow_html=True)
