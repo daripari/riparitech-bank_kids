@@ -109,8 +109,14 @@ def render_login_liquid():
                         'user_role': df.iloc[0]['role'],
                         'lang': df.iloc[0]['language'] or 'pt',
                         'user_theme': df.iloc[0].get('theme', 'default') or 'default'
-                        , 'user_avatar_config': df.iloc[0].get('avatar_config', 'default,default,default') or 'default,default,default'
-                    }) # Adiciona a config do avatar
+                    })
+                    
+                    # Tratamento seguro para o avatar config
+                    raw_avatar = df.iloc[0].get('avatar_config')
+                    if pd.isna(raw_avatar) or not isinstance(raw_avatar, str):
+                        raw_avatar = 'default,default,default'
+                    st.session_state.user_avatar_config = raw_avatar
+                    
                     st.rerun()
                 else:
                     st.error("Acesso negado. Usuário ou senha incorretos.")

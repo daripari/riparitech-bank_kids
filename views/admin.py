@@ -40,7 +40,9 @@ def render_admin_view():
     if df_saldos is not None and not df_saldos.empty:
         cols = st.columns(len(df_saldos))
         for i, row in df_saldos.iterrows():
-            avatar_html = render_avatar(row.get('avatar_config', 'default,default,default'), size=50)
+            config = row.get('avatar_config')
+            if not isinstance(config, str): config = 'default,default,default'
+            avatar_html = render_avatar(config, size=50)
             with cols[i]:
                 st.markdown(f"""
                 <div class="liquid-card" style="text-align:center;">

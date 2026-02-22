@@ -132,16 +132,25 @@ def render_kid_view():
         with col_options:
             with st.form("avatar_form"):
                 # Carrega a configuração atual
-                current_config = st.session_state.get('user_avatar_config', 'default,default,default').split(',')
+                raw_config = st.session_state.get('user_avatar_config', 'default,default,default')
+                if not isinstance(raw_config, str): raw_config = 'default,default,default'
+                
+                current_config = raw_config.split(',')
+                if len(current_config) != 3: current_config = ['default', 'default', 'default']
                 
                 # Seletores para cada parte do avatar
                 face_options = get_avatar_part_names('face')
                 hair_options = get_avatar_part_names('hair')
                 clothes_options = get_avatar_part_names('clothes')
 
-                selected_face = st.selectbox(t('face'), face_options, index=face_options.index(current_config[0]))
-                selected_hair = st.selectbox(t('hair'), hair_options, index=hair_options.index(current_config[1]))
-                selected_clothes = st.selectbox(t('clothes'), clothes_options, index=clothes_options.index(current_config[2]))
+                # Índices seguros (se a opção salva não existir mais, usa a primeira/default)
+                idx_face = face_options.index(current_config[0]) if current_config[0] in face_options else 0
+                idx_hair = hair_options.index(current_config[1]) if current_config[1] in hair_options else 0
+                idx_clothes = clothes_options.index(current_config[2]) if current_config[2] in clothes_options else 0
+
+                selected_face = st.selectbox(t('face'), face_options, index=idx_face)
+                selected_hair = st.selectbox(t('hair'), hair_options, index=idx_hair)
+                selected_clothes = st.selectbox(t('clothes'), clothes_options, index=idx_clothes)
 
                 if st.form_submit_button(f"💾 {t('save_avatar')}", use_container_width=True):
                     new_config_string = f"{selected_face},{selected_hair},{selected_clothes}"

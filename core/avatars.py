@@ -32,7 +32,11 @@ def render_avatar(config_string="default,default,default", size=100):
     Renderiza um avatar SVG com base em uma string de configuração.
     A ordem de renderização é Rosto -> Roupa -> Cabelo.
     """
-    if not config_string or len(config_string.split(',')) != 3:
+    # Validação de segurança: garante que é string
+    if not isinstance(config_string, str):
+        config_string = "default,default,default"
+        
+    if len(config_string.split(',')) != 3:
         config_string = "default,default,default"
         
     face_key, hair_key, clothes_key = config_string.split(',')
