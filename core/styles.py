@@ -7,7 +7,7 @@ def apply_styles(theme_name='default'):
     
     theme_css = get_theme_css(theme_name)
     
-    st.markdown("""
+    st.markdown(f"""
     <style>
         {theme_css}
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
