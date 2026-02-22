@@ -322,7 +322,9 @@ def render_admin_view():
                         time.sleep(0.5); st.rerun()
                         
                     # Background selection
-                    current_bg = user_data.iloc[0].get('background_url') or ""
+                    raw_bg = user_data.iloc[0].get('background_url')
+                    current_bg = raw_bg if isinstance(raw_bg, str) else ""
+                    
                     new_bg = st.text_input(f"{t('bg_image_label')}", value=current_bg, placeholder=t('bg_image_placeholder'), key=f"bg_{u_id}")
                     if new_bg != current_bg:
                          val_to_save = new_bg if new_bg.strip() else None

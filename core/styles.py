@@ -8,7 +8,7 @@ def apply_styles(theme_name='default', background_url=None):
     theme_css = get_theme_css(theme_name)
     
     custom_bg_css = ""
-    if background_url and background_url.strip():
+    if isinstance(background_url, str) and background_url.strip():
         custom_bg_css = f"""
         .stApp {{
             background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.8)), url('{background_url}') !important;

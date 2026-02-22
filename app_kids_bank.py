@@ -107,6 +107,11 @@ def render_login_liquid():
                 hashed_p = hashlib.sha256(p.encode()).hexdigest()
                 df = run_query("SELECT * FROM users WHERE lower(name)=:u AND password=:p", params={'u': u, 'p': hashed_p})
                 if df is not None and not df.empty:
+                    # Tratamento seguro para background (evita NaN/Null)
+                    raw_bg = df.iloc[0].get('background_url')
+                    if pd.isna(raw_bg) or not isinstance(raw_bg, str):
+                        raw_bg = None
+
                     st.session_state.update({
                         'logged_in': True, 
                         'user_id': int(df.iloc[0]['id']),
@@ -114,7 +119,7 @@ def render_login_liquid():
                         'user_role': df.iloc[0]['role'],
                         'lang': df.iloc[0]['language'] or 'pt',
                         'user_theme': df.iloc[0].get('theme', 'default') or 'default'
-                        , 'user_background': df.iloc[0].get('background_url')
+                        , 'user_background': raw_bg
                     })
                     
                     # Tratamento seguro para o avatar config
