@@ -45,13 +45,5 @@ def render_avatar(config_string="default,default,default", size=100):
     hair_svg = AVATAR_PARTS['hair'].get(hair_key, AVATAR_PARTS['hair']['default'])
     clothes_svg = AVATAR_PARTS['clothes'].get(clothes_key, AVATAR_PARTS['clothes']['default'])
 
-    svg_code = f"""
-    <svg width="{size}" height="{size}" viewBox="0 0 100 100" style="overflow: visible;">
-        <g>
-            {face_svg}
-            {clothes_svg}
-            {hair_svg}
-        </g>
-    </svg>
-    """
+    svg_code = f'<svg width="{size}" height="{size}" viewBox="0 0 100 100" style="overflow: visible;"><g>{face_svg}{clothes_svg}{hair_svg}</g></svg>'
     return svg_code
