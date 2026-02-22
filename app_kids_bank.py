@@ -58,7 +58,10 @@ def render_liquid_header():
     
     with c_lang:
         # Seletor de Idioma
-        langs = {'🇧🇷 PT': 'pt', '🇺🇸 EN': 'en', '🇪🇸 ES': 'es'}
+        langs = {
+            '🇧🇷 PT': 'pt', '🇺🇸 EN': 'en', '🇪🇸 ES': 'es', '🇫🇷 FR': 'fr', 
+            '🇩🇪 DE': 'de', '🇮🇹 IT': 'it', '🇯🇵 JA': 'ja', '🇨🇳 ZH': 'zh', '🇮🇳 HI': 'hi'
+        }
         curr = st.session_state.lang
         idx = list(langs.values()).index(curr) if curr in langs.values() else 0
         sel = st.selectbox("L", options=list(langs.keys()), index=idx, label_visibility="collapsed", key="liquid_lang")
