@@ -239,10 +239,10 @@ def render_kid_view():
             # Otimização de Imagem: Redimensionar e Comprimir para evitar instabilidade
             image = Image.open(uploaded_file)
             if image.mode in ('RGBA', 'P'): image = image.convert('RGB')
-            image.thumbnail((1920, 1080)) # Limita a Full HD
+            image.thumbnail((1024, 1024)) # Reduzido para garantir performance máxima
             
             buffered = io.BytesIO()
-            image.save(buffered, format="JPEG", quality=70) # Comprime para JPEG leve
+            image.save(buffered, format="JPEG", quality=50, optimize=True) # Compressão agressiva
             
             base64_encoded = base64.b64encode(buffered.getvalue()).decode()
             data_uri = f"data:image/jpeg;base64,{base64_encoded}"
