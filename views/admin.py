@@ -330,9 +330,19 @@ def render_admin_view():
 
                     if uploaded_file is not None:
                         import base64
-                        file_bytes = uploaded_file.getvalue()
-                        base64_encoded = base64.b64encode(file_bytes).decode()
-                        data_uri = f"data:{uploaded_file.type};base64,{base64_encoded}"
+                        import io
+                        from PIL import Image
+                        
+                        # Otimização de Imagem: Redimensionar e Comprimir
+                        image = Image.open(uploaded_file)
+                        if image.mode in ('RGBA', 'P'): image = image.convert('RGB')
+                        image.thumbnail((1920, 1080))
+                        
+                        buffered = io.BytesIO()
+                        image.save(buffered, format="JPEG", quality=70)
+                        
+                        base64_encoded = base64.b64encode(buffered.getvalue()).decode()
+                        data_uri = f"data:image/jpeg;base64,{base64_encoded}"
 
                         run_query("UPDATE users SET background_url=:bg WHERE id=:id", {'bg': data_uri, 'id': u_id}, commit=True)
                         if u_id == st.session_state.user_id:
