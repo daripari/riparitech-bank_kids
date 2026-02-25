@@ -102,6 +102,10 @@ def render_login_liquid():
             
             if st.button("AUTENTICAR", use_container_width=True, type="primary"):
                 hashed_p = hashlib.sha256(p.encode()).hexdigest()
+                
+                # Debug: Tenta buscar o usuário sem senha para ver se ele existe
+                # user_check = run_query("SELECT * FROM users WHERE lower(name)=:u", params={'u': u})
+                
                 df = run_query("SELECT * FROM users WHERE lower(name)=:u AND password=:p", params={'u': u, 'p': hashed_p})
                 if df is not None and not df.empty:
                     # Tratamento seguro para background (evita NaN/Null)
@@ -128,6 +132,12 @@ def render_login_liquid():
                     st.rerun()
                 else:
                     st.error("Acesso negado. Usuário ou senha incorretos.")
+                    # Debug visual para ajudar a diagnosticar
+                    # st.write(f"Hash gerado: {hashed_p}")
+                    # if user_check is not None and not user_check.empty:
+                    #    st.write(f"Usuário encontrado no banco, mas senha não confere. Hash no banco: {user_check.iloc[0]['password']}")
+                    # else:
+                    #    st.write("Usuário não encontrado no banco de dados.")
             st.markdown("</div>", unsafe_allow_html=True)
             
             # --- MODO DE RECUPERAÇÃO (DEBUG) ---
@@ -142,6 +152,7 @@ def render_login_liquid():
                     
                     # 2. Recria o usuário admin limpo
                     run_query("INSERT INTO users (name, role, password) VALUES ('admin', 'admin', :p)", {'p': p_hash}, commit=True)
+                    st.cache_data.clear() # Força limpeza extra
                     
                     st.success("Usuário 'admin' recriado com sucesso! Senha: 'admin'")
 
