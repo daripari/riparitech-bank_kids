@@ -135,20 +135,15 @@ def render_login_liquid():
             with st.expander("🆘 Recuperar Acesso (Admin)"):
                 st.warning("Isso resetará a senha do usuário 'admin' para 'admin'.")
                 if st.button("Resetar Admin"):
-                    p_hash = hashlib.sha256("admin".encode()).hexdigest()
-                    # Tenta atualizar, se não existir, insere
-                    run_query("INSERT INTO users (name, role, password) VALUES ('admin', 'admin', :p) ON CONFLICT (id) DO UPDATE SET password = :p", {'p': p_hash}, commit=True)
-                    # Nota: O comando acima pode falhar se o ID não for serial ou se houver restrições. 
-                    # Vamos usar uma abordagem mais compatível: Delete e Insert ou Update simples.
+                    p_hash = hashlib.sha256("admin".encode()).hexdigest() 
                     
-                    # Verifica se admin existe
-                    adm = run_query("SELECT id FROM users WHERE name='admin'")
-                    if adm is not None and not adm.empty:
-                        run_query("UPDATE users SET password=:p WHERE name='admin'", {'p': p_hash}, commit=True)
-                        st.success("Senha do admin atualizada para 'admin'!")
-                    else:
-                        run_query("INSERT INTO users (name, role, password) VALUES ('admin', 'admin', :p)", {'p': p_hash}, commit=True)
-                        st.success("Usuário admin criado com senha 'admin'!")
+                    # 1. Tenta deletar qualquer usuário que se pareça com admin para limpar conflitos
+                    run_query("DELETE FROM users WHERE lower(name) = 'admin'", commit=True)
+                    
+                    # 2. Recria o usuário admin limpo
+                    run_query("INSERT INTO users (name, role, password) VALUES ('admin', 'admin', :p)", {'p': p_hash}, commit=True)
+                    
+                    st.success("Usuário 'admin' recriado com sucesso! Senha: 'admin'")
 
 def run_daily_batches():
     """
