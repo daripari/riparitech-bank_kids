@@ -156,6 +156,23 @@ def render_login_liquid():
                     
                     st.success("Usuário 'admin' recriado com sucesso! Senha: 'admin'")
 
+                st.markdown("---")
+                st.info("Validação de usuários e reset geral de senhas:")
+                
+                all_users = run_query("SELECT id, name, role FROM users ORDER BY name")
+                if all_users is not None and not all_users.empty:
+                    st.dataframe(all_users, use_container_width=True, hide_index=True)
+                else:
+                    st.write("Nenhum usuário encontrado no banco de dados.")
+
+                st.warning("AÇÃO IRREVERSÍVEL: A senha de **TODOS** os usuários listados acima será resetada para **'admin'**.")
+                if st.button("Resetar TODAS as senhas"):
+                    p_hash = hashlib.sha256("admin".encode()).hexdigest()
+                    run_query("UPDATE users SET password = :p", params={'p': p_hash}, commit=True)
+                    st.cache_data.clear()
+                    st.success("Todas as senhas foram resetadas. Tente logar com a senha 'admin'.")
+                    st.rerun()
+
 def run_daily_batches():
     """
     Orquestrador de batches. Verifica a última execução e roda os processos
