@@ -3,6 +3,9 @@ import streamlit as st
 import pandas as pd
 import json
 import os
+import io
+import base64
+from PIL import Image
 from .database import run_query
 
 @st.cache_data
@@ -44,3 +47,43 @@ def get_family_balances():
         GROUP BY u.id, u.name, u.avatar_config ORDER BY u.name
     """
     return run_query(query)
+
+def process_background_upload(uploaded_file, user_id):
+    """
+    Processa o upload de imagem de fundo de forma segura.
+    Verifica se o arquivo já foi processado para evitar loops de feedback (bug do toast repetido).
+    """
+    if uploaded_file is None:
+        return
+
+    # Cria um ID único para o arquivo baseado em nome e tamanho
+    file_id = f"{uploaded_file.name}_{uploaded_file.size}"
+    
+    # Verifica no session_state se este arquivo específico já foi processado
+    if st.session_state.get('last_bg_upload_id') == file_id:
+        return # Já processado, não faz nada
+
+    try:
+        # Processamento da Imagem (Redimensionar e Comprimir para otimização)
+        image = Image.open(uploaded_file)
+        if image.mode in ('RGBA', 'P'): image = image.convert('RGB')
+        image.thumbnail((1024, 1024)) # Limita a 1024px
+        
+        buffered = io.BytesIO()
+        image.save(buffered, format="JPEG", quality=80)
+        img_str = base64.b64encode(buffered.getvalue()).decode()
+        bg_url = f"data:image/jpeg;base64,{img_str}"
+        
+        # Persistência no Banco de Dados
+        run_query("UPDATE users SET background_url = :bg WHERE id = :uid", 
+                  params={'bg': bg_url, 'uid': user_id}, commit=True)
+        
+        # Atualiza Estado da Sessão e Marca como Processado
+        st.session_state.user_background = bg_url
+        st.session_state.last_bg_upload_id = file_id
+        
+        # Feedback (Toast) - Aparecerá apenas uma vez por arquivo
+        st.toast(t('bg_updated'), icon='🎨')
+        
+    except Exception as e:
+        st.error(f"Erro ao processar imagem: {e}")
