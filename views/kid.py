@@ -5,7 +5,7 @@ import time
 # Importando módulos do core
 from core.database import run_query
 from core.themes import THEMES
-from core.utils import t, get_balance
+from core.utils import t, get_balance, process_background_upload
 from core.avatars import render_avatar, get_avatar_part_names
 
 def render_kid_view():
@@ -232,26 +232,8 @@ def render_kid_view():
         )
 
         if uploaded_file is not None:
-            import base64
-            import io
-            from PIL import Image
-            
-            # Otimização de Imagem: Redimensionar e Comprimir para evitar instabilidade
-            image = Image.open(uploaded_file)
-            if image.mode in ('RGBA', 'P'): image = image.convert('RGB')
-            image.thumbnail((1024, 1024)) # Reduzido para garantir performance máxima
-            
-            buffered = io.BytesIO()
-            image.save(buffered, format="JPEG", quality=50, optimize=True) # Compressão agressiva
-            
-            base64_encoded = base64.b64encode(buffered.getvalue()).decode()
-            data_uri = f"data:image/jpeg;base64,{base64_encoded}"
-
-            run_query("UPDATE users SET background_url=:bg WHERE id=:id", {'bg': data_uri, 'id': st.session_state.user_id}, commit=True)
-            st.session_state.user_background = data_uri
-            st.toast(t('bg_updated'))
-            time.sleep(0.5)
-            st.rerun()
+            # Chama a função utilitária que contém a lógica de processamento e o controle de estado
+            process_background_upload(uploaded_file, st.session_state.user_id)
 
         if st.session_state.get('user_background'):
             if st.button(f"🗑️ {t('remove_bg')}", use_container_width=True, key="remove_bg_kid"):
