@@ -25,22 +25,19 @@ st.set_page_config(
 database.init_db()
 
 # 2. INICIALIZAÇÃO DO ESTADO DA SESSÃO (SESSION STATE)
-if 'logged_in' not in st.session_state: 
-    st.session_state.logged_in = False
-if 'user_role' not in st.session_state: 
-    st.session_state.user_role = ''
-if 'lang' not in st.session_state: 
-    st.session_state.lang = 'pt'
-if 'user_name' not in st.session_state: 
-    st.session_state.user_name = ''
-if 'user_id' not in st.session_state:
-    st.session_state.user_id = None
-if 'user_theme' not in st.session_state:
-    st.session_state.user_theme = 'default'
-if 'user_avatar_config' not in st.session_state:
-    st.session_state.user_avatar_config = 'default,default,default'
-if 'user_background' not in st.session_state:
-    st.session_state.user_background = None
+default_session_state = {
+    'logged_in': False,
+    'user_role': '',
+    'lang': 'pt',
+    'user_name': '',
+    'user_id': None,
+    'user_theme': 'default',
+    'user_avatar_config': 'default,default,default',
+    'user_background': None
+}
+for key, value in default_session_state.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
 
 # 3. COMPONENTES DE INTERFACE (CABECALHO LIQUID)
 def render_liquid_header():
