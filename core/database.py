@@ -33,8 +33,7 @@ def run_query(query_str, params=None, commit=False):
             return True
         else:
             # Retorna um DataFrame para consultas SELECT
-            # Envolvemos em text() para garantir que o binding de parâmetros (:param) funcione corretamente
-            return conn.query(text(query_str), params=params if params else {}, ttl=0)
+            return conn.query(query_str, params=params if params else {}, ttl=0)
     except Exception as e:
         # Log de erro no console para debug (não expõe no frontend)
         print(f"Erro no Banco de Dados: {e}")
